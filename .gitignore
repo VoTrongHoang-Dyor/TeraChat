@@ -1,0 +1,45 @@
+# ==========================================# 
+TeraChat - .gitignore
+# ==========================================# 
+# Môi trường ảo
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv/
+# File hệ thống
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+$RECYCLE.BIN/
+Desktop.ini
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+.directory
+.Trash-*
+.fuse_hidden*
+# Cấu hình
+.agents/
+config/
+lessons/
+phase/
+*.swp
+*.swo
+*~
+.cursorrules.local
+.cursorrules
+.vscode/
+.idea/
+.antigravity/
+.cursor/
+# Công cụ, scripts phát triển nội bộ
+Tools/
+tests/
+docs/MCP/

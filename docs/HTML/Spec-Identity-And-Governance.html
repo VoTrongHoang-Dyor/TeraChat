@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#spec_identity_and_governancemd-terachat-enterprise-platform" class="nav-link" style="">Spec-Identity-And-Governance.md — TeraChat Enterprise Platform</a>
+<a href="#1-executive-summary-trust-boundaries" class="nav-link" style="padding-left:0.8rem;">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</a>
+<a href="#11-muc-tieu-trach-nhiem" class="nav-link" style="padding-left:1.6rem;">1.1 Mục tiêu &amp; Trách nhiệm</a>
+<a href="#12-audience-note-cho-ciso-security-audit" class="nav-link" style="padding-left:1.6rem;">1.2 Audience Note cho CISO Security Audit</a>
+<a href="#13-trust-boundaries" class="nav-link" style="padding-left:1.6rem;">1.3 Trust Boundaries</a>
+<a href="#2-system-architecture" class="nav-link" style="padding-left:0.8rem;">§2 — SYSTEM ARCHITECTURE</a>
+<a href="#21-opa-policy-enforcement-points" class="nav-link" style="padding-left:1.6rem;">2.1 OPA Policy Enforcement Points</a>
+<a href="#22-identity-federation-flow" class="nav-link" style="padding-left:1.6rem;">2.2 Identity Federation Flow</a>
+<a href="#23-audit-trail-architecture" class="nav-link" style="padding-left:1.6rem;">2.3 Audit Trail Architecture</a>
+<a href="#3-data-model-encryption-state" class="nav-link" style="padding-left:0.8rem;">§3 — DATA MODEL &amp; ENCRYPTION STATE</a>
+<a href="#31-identity-objects" class="nav-link" style="padding-left:1.6rem;">3.1 Identity Objects</a>
+<a href="#32-opa-policy-objects" class="nav-link" style="padding-left:1.6rem;">3.2 OPA Policy Objects</a>
+<a href="#33-tapp-capability-permission-objects" class="nav-link" style="padding-left:1.6rem;">3.3 .tapp Capability Permission Objects</a>
+<a href="#34-audit-log-objects" class="nav-link" style="padding-left:1.6rem;">3.4 Audit Log Objects</a>
+<a href="#4-protocol-execution-contract" class="nav-link" style="padding-left:0.8rem;">§4 — PROTOCOL &amp; EXECUTION CONTRACT</a>
+<a href="#41-opa-abac-policy-evaluation" class="nav-link" style="padding-left:1.6rem;">4.1 OPA ABAC Policy Evaluation</a>
+<a href="#42-scim-20-offboarding-protocol" class="nav-link" style="padding-left:1.6rem;">4.2 SCIM 2.0 Offboarding Protocol</a>
+<a href="#43-approval-cryptographic-action-model" class="nav-link" style="padding-left:1.6rem;">4.3 Approval Cryptographic Action Model</a>
+<a href="#44-tenant-isolation-protocol" class="nav-link" style="padding-left:1.6rem;">4.4 Tenant Isolation Protocol</a>
+<a href="#45-tapp-permission-check-protocol" class="nav-link" style="padding-left:1.6rem;">4.5 .tapp Permission Check Protocol</a>
+<a href="#5-state-machine" class="nav-link" style="padding-left:0.8rem;">§5 — STATE MACHINE</a>
+<a href="#51-user-lifecycle-state" class="nav-link" style="padding-left:1.6rem;">5.1 User Lifecycle State</a>
+<a href="#52-tapp-permission-state" class="nav-link" style="padding-left:1.6rem;">5.2 .tapp Permission State</a>
+<a href="#53-legal-hold-state" class="nav-link" style="padding-left:1.6rem;">5.3 Legal Hold State</a>
+<a href="#6-api-ipc-event-bus" class="nav-link" style="padding-left:0.8rem;">§6 — API / IPC / EVENT BUS</a>
+<a href="#61-opa-host-abi-for-wasm-boundary" class="nav-link" style="padding-left:1.6rem;">6.1 OPA Host ABI (for WASM Boundary)</a>
+<a href="#62-signals-governance-domain" class="nav-link" style="padding-left:1.6rem;">6.2 Signals (Governance Domain)</a>
+<a href="#7-platform-matrix-constraints" class="nav-link" style="padding-left:0.8rem;">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</a>
+<a href="#8-non-functional-requirements-nfr" class="nav-link" style="padding-left:0.8rem;">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</a>
+<a href="#9-security-threat-model" class="nav-link" style="padding-left:0.8rem;">§9 — SECURITY &amp; THREAT MODEL</a>
+<a href="#10-failure-model-recovery" class="nav-link" style="padding-left:0.8rem;">§10 — FAILURE MODEL &amp; RECOVERY</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="spec_identity_and_governancemd-terachat-enterprise-platform">Spec-Identity-And-Governance.md — TeraChat Enterprise Platform</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-GOV&quot;
+title: &quot;TeraChat — Identity, RBAC &amp; Governance Specification&quot;
+version: &quot;1.0.0&quot;
+status: &quot;ACTIVE&quot;
+audience: &quot;System Architect, Security Engineer, CISO, Compliance Officer, IT Admin&quot;
+purpose: &quot;Đặc tả quản trị doanh nghiệp, phân quyền role-based, OPA policy enforcement, identity federation (OIDC/SAML/SCIM), audit trail không thể xóa, và tenant isolation. CISO của doanh nghiệp khách hàng sẽ thẩm định file này đầu tiên.&quot;
+depends_on: [&quot;TERA-CORE&quot;, &quot;TERA-SYNC&quot;]
+constraints_global:
+  - &quot;Ed25519 signed, append-only Audit Log — không thể delete/modify&quot;
+  - &quot;OPA Policy phải pass Z3 formal verification trước khi deploy&quot;
+  - &quot;SCIM offboarding: nhân viên nghỉ phải bị revoke trong &lt; 30s&quot;
+  - &quot;.tapp capability permissions: khai báo trong Manifest, không xin runtime&quot;
+  - &quot;Legal Hold flag: bắt buộc trước khi vacuum tombstones liên quan&quot;
+  - &quot;Approval action: bắt buộc ký Ed25519 — không chỉ là database flag&quot;
+
+</code></pre>
+<blockquote>
+<p><strong>Status:</strong> <code>ACTIVE — Implementation Reference</code>
+<strong>Audience:</strong> Security Engineer · CISO · IT Admin · Compliance Officer
+<strong>Last Updated:</strong> 2026-03-29
+<strong>Depends On:</strong> → TERA-CORE · → TERA-SYNC
+<strong>Consumed By:</strong> → TERA-RUNTIME · → TERA-ENCLAVE · → TERA-ECO · → TERA-CLIENT</p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary-trust-boundaries">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</h2>
+<h3 id="11-muc-tieu-trach-nhiem">1.1 Mục tiêu &amp; Trách nhiệm</h3>
+<p>File này <strong>chịu trách nhiệm</strong> cho:
+- OPA (Open Policy Agent) ABAC rules
+- OIDC / SAML / SCIM 2.0 Identity Broker
+- <code>.tapp</code> Capability Permissions (quyền hạn ngặt nghèo)
+- Audit Trail (Ed25519 signed, append-only, không thể xóa)
+- Tenant Isolation Model
+- Role-based access control (RBAC)
+- Legal Hold
+- Approval Cryptographic Action Model (non-repudiation)</p>
+<p>File này <strong>KHÔNG chịu trách nhiệm</strong> cho:
+- Crypto primitives → <code>TERA-CORE</code>
+- Storage backend → <code>TERA-SYNC</code>
+- AI inference → <code>TERA-ENCLAVE</code>
+- App signing &amp; distribution → <code>TERA-ECO</code></p>
+<h3 id="12-audience-note-cho-ciso-security-audit">1.2 Audience Note cho CISO Security Audit</h3>
+<blockquote>
+<p>Đây là file thẩm định đầu tiên cho bất kỳ Enterprise Security Audit (ISO 27001, SOC 2, GDPR).
+Kết hợp với <code>TERA-CORE</code> để có full cryptographic security model.</p>
+</blockquote>
+<h3 id="13-trust-boundaries">1.3 Trust Boundaries</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Bên trong tin tưởng</th>
+<th>Bên ngoài không tin tưởng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPA Policy Engine</td>
+<td>Verified policy bundles</td>
+<td>Unverified policy sources</td>
+</tr>
+<tr>
+<td>Identity Broker (Keycloak/Dex)</td>
+<td>OIDC/SAML assertions</td>
+<td>Raw credentials</td>
+</tr>
+<tr>
+<td>Audit Log (append-only CRDT)</td>
+<td>Ed25519 signed entries</td>
+<td>Unsigned entries (rejected)</td>
+</tr>
+<tr>
+<td>Tenant isolation boundary</td>
+<td>Own org data</td>
+<td>Cross-tenant data</td>
+</tr>
+<tr>
+<td>.tapp capability scope</td>
+<td>Declared permissions only</td>
+<td>Runtime permission requests</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-system-architecture">§2 — SYSTEM ARCHITECTURE</h2>
+<h3 id="21-opa-policy-enforcement-points">2.1 OPA Policy Enforcement Points</h3>
+<pre><code class="language-text">API GATEWAY
+     │
+     ├──[OPA Policy Engine] ← GeoHash IndexPing
+     │       │
+     │   Policy Decision
+     │       │
+     │       ├── ALLOW: route request
+     │       └── DENY: return 403 + append Audit_Log_Entry
+     │
+CLIENT DEVICE RUST CORE
+     │
+     ├──[OPA Host ABI Boundary] ← WASM capability check
+             │
+         Policy Decision
+             │
+             ├── ALLOW: execute Host Function
+             └── DENY: WasmSandboxTerminated signal
+</code></pre>
+<h3 id="22-identity-federation-flow">2.2 Identity Federation Flow</h3>
+<pre><code class="language-text">[Enterprise IdP: Azure AD / Okta / Google Workspace]
+          │ SAML Assertion / OIDC ID Token
+          ▼
+[Identity Broker: Keycloak/Dex]
+          │ Map to TeraChat Role + Ed25519 Capability Token
+          ▼
+[TeraChat API Gateway]
+          │ Verify Capability Token
+          ▼
+[Rust Core: enforce role-based IPC permissions]
+          │
+[SCIM Listener: sync user provisioning/deprovisioning]
+          │ employee exits
+          ▼
+[Automatic revocation &lt; 30s: MLS Epoch rotation + key revoke]
+</code></pre>
+<h3 id="23-audit-trail-architecture">2.3 Audit Trail Architecture</h3>
+<pre><code class="language-text">[Any governance action (Approve, Revoke, Admin change, .tapp install)]
+          │
+          ├── Ed25519 sign with DeviceIdentityKey
+          ├── Append to Audit_Log (append-only CRDT chain)
+          │       ├── Cannot delete
+          │       └── Cannot modify (CRDT append-only)
+          └── Replicate to Admin Console viewer
+</code></pre>
+<hr />
+<h2 id="3-data-model-encryption-state">§3 — DATA MODEL &amp; ENCRYPTION STATE</h2>
+<h3 id="31-identity-objects">3.1 Identity Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OidcCapabilityToken</code></td>
+<td>Ed25519-signed JWT</td>
+<td>RAM only</td>
+<td>Per session (TTL configured)</td>
+<td>Maps SAML assertion → TeraChat role</td>
+</tr>
+<tr>
+<td><code>ScimProvisionEvent</code></td>
+<td><code>{user_id, action, timestamp, saml_attributes}</code></td>
+<td>Relational (Enclave)</td>
+<td>Permanent</td>
+<td>Ed25519 signed; append-only</td>
+</tr>
+<tr>
+<td><code>RoleAssignment</code></td>
+<td><code>{user_id, role, scope, granted_by, hlc}</code></td>
+<td><code>cold_state.db</code></td>
+<td>Until revoked</td>
+<td>Signed by granting Admin</td>
+</tr>
+<tr>
+<td><code>DelegationToken</code></td>
+<td><code>{source_id, capability, target_id, ttl, sig}</code></td>
+<td>In-flight + RAM</td>
+<td>Per delegation session</td>
+<td>Ed25519 signed; expiry enforced</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-opa-policy-objects">3.2 OPA Policy Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PolicyBundle</code></td>
+<td>Rego policy package (OPA format)</td>
+<td>VPS + client (cached)</td>
+<td>Until next push</td>
+<td>Ed25519 signed by TeraChat Root CA</td>
+</tr>
+<tr>
+<td><code>PolicyDecision</code></td>
+<td><code>{allow: bool, reasons: Vec&lt;String&gt;}</code></td>
+<td>RAM only</td>
+<td>Per request</td>
+<td>ZeroizeOnDrop after enforcement</td>
+</tr>
+<tr>
+<td><code>GeoHashIndex</code></td>
+<td>GeoHash prefix strings</td>
+<td>OPA memory</td>
+<td>Per policy reload</td>
+<td>String comparison only (O(1) lookup)</td>
+</tr>
+<tr>
+<td><code>VoprfToken</code></td>
+<td>Blind Rate-Limit Token</td>
+<td>Client + Gateway</td>
+<td>Per rate window</td>
+<td>Unlinkable to user identity</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-tapp-capability-permission-objects">3.3 .tapp Capability Permission Objects</h3>
+<pre><code class="language-yaml"># Full Capability Matrix — defined in .tapp Manifest
+capabilities:
+  # Chat access
+  read_message_context: false       # Cannot read chat history without user @bot command
+  send_message_to_channel: false    # Cannot spam channels
+
+  # Storage
+  app_local_storage_mb: 50         # SQLite Virtual Tables quota
+  read_shared_vault: false         # Cannot read other users' vault
+
+  # Finance/HR (routes to Stateful Enclave, not CRDT)
+  write_finance_ledger: false
+  read_finance_ledger: false
+  write_hrm_records: false
+  read_hrm_records: false
+
+  # Network (Egress_Outbox only)
+  write_egress_outbox: true        # Can push data out (OPA DLP filtered)
+  egress_domain_whitelist: [&quot;api.partner.com&quot;]
+
+  # Inter-app
+  event_bus_publish: [&quot;task.created&quot;]
+  event_bus_subscribe: [&quot;approval.granted&quot;]
+
+  # Background
+  background_tick_interval_s: 300
+
+  # AI
+  request_ai_inference: true       # Can trigger AI (Consent-Driven Context only)
+</code></pre>
+<h3 id="34-audit-log-objects">3.4 Audit Log Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Audit_Log_Entry</code></td>
+<td><code>{device_id, timestamp, action, payload_hash, ed25519_sig}</code></td>
+<td>Append-only CRDT chain</td>
+<td><strong>Permanent</strong></td>
+<td>Ed25519 signed; cannot delete or modify</td>
+</tr>
+<tr>
+<td><code>LegalHoldFlag</code></td>
+<td><code>{entity_id, hold_type, legal_basis, court_order_ref, placed_by}</code></td>
+<td><code>cold_state.db</code></td>
+<td>Until legal order released</td>
+<td>Blocks vacuum of related tombstones</td>
+</tr>
+<tr>
+<td><code>ApprovalSignature</code></td>
+<td><code>{approval_id, approver_device_id, payload_hash, ed25519_sig, hlc}</code></td>
+<td>Append-only Audit Log</td>
+<td>Permanent</td>
+<td>Non-repudiation via hardware-bound key</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-protocol-execution-contract">§4 — PROTOCOL &amp; EXECUTION CONTRACT</h2>
+<h3 id="41-opa-abac-policy-evaluation">4.1 OPA ABAC Policy Evaluation</h3>
+<p><strong>At API Gateway:</strong></p>
+<pre><code class="language-rego"># Example OPA policy (Rego)
+package terachat.api
+
+default allow = false
+
+allow {
+    input.method == &quot;POST&quot;
+    input.path == &quot;/api/v1/messages&quot;
+    has_valid_token(input.token)
+    not is_rate_limited(input.client_id)
+    geo_policy_allows(input.geo_hash, data.org_policy.allowed_geos)
+}
+
+geo_policy_allows(geo, allowed) {
+    some prefix in allowed
+    startswith(geo, prefix)
+}
+</code></pre>
+<p><strong>Formal Verification:</strong>
+- Every policy bundle → SMT Model → <strong>Z3 Solver</strong> → block deploy if logical gap found.
+- Deploy requires: policy_bundle.ed25519_sig valid AND Z3 verification passed.</p>
+<h3 id="42-scim-20-offboarding-protocol">4.2 SCIM 2.0 Offboarding Protocol</h3>
+<pre><code class="language-text">[HR fires SCIM PATCH: user status = inactive]
+     │
+[SCIM Listener receives event]
+     │
+[Rust Core actions (&lt; 30s total):]
+     ├── Mark user_id as revoked in OPA policy cache
+     ├── Trigger MLS Epoch Rotation for all affected groups
+     ├── Revoke DelegationTokens with source_id = user_id
+     ├── Push Shun_Record signed by Enterprise CA to mesh
+     └── Append Audit_Log_Entry (action: &quot;user_revoked&quot;)
+</code></pre>
+<h3 id="43-approval-cryptographic-action-model">4.3 Approval Cryptographic Action Model</h3>
+<p><strong>"Nút Duyệt" phải là một hành động pháp lý, không chỉ là database flag:</strong></p>
+<pre><code class="language-text">[User clicks &quot;Approve&quot;]
+     │
+[Rust Core builds ApprovalPayload:]
+     ├── approval_id: UUID
+     ├── target_request_hash: BLAKE3(request_content)
+     ├── approver: device_id
+     ├── timestamp: HLC
+     └── context: {org_id, role, legal_basis_if_required}
+     │
+[Sign: Ed25519(DeviceIdentityKey, ApprovalPayload)]
+     │
+[Append to Audit_Log_Entry]
+     │
+[Return ApprovalSignature to requester]
+</code></pre>
+<p><strong>Non-repudiation guarantee:</strong> <code>ApprovalSignature</code> uses hardware-bound <code>DeviceIdentityKey</code> — cannot be forged or denied.</p>
+<h3 id="44-tenant-isolation-protocol">4.4 Tenant Isolation Protocol</h3>
+<ul>
+<li>All data in <code>cold_state.db</code> tagged with <code>tenant_id</code>.</li>
+<li>OPA enforces cross-tenant data access = DENY.</li>
+<li>AI Enclave: each inference session isolated per <code>session_id</code> (no cross-tenant prompt bleed).</li>
+<li>Audit Log: tenant_id embedded in every entry; cross-tenant log access = DENY.</li>
+</ul>
+<h3 id="45-tapp-permission-check-protocol">4.5 .tapp Permission Check Protocol</h3>
+<pre><code class="language-text">[.tapp calls host_app_state_write(patch)]
+     │
+[Rust Core: OPA check]
+     ├── Does tapp_id have &quot;app_local_storage_mb&quot; &gt; 0?
+     ├── Does tapp_id have right to write this table?
+     └── Is quota exceeded?
+     │
+     ├── DENY → return error code + append Audit_Log_Entry
+     └── ALLOW → execute write
+</code></pre>
+<hr />
+<h2 id="5-state-machine">§5 — STATE MACHINE</h2>
+<h3 id="51-user-lifecycle-state">5.1 User Lifecycle State</h3>
+<pre><code class="language-text">[PROVISIONED] → SCIM PATCH status=inactive → [REVOKED]
+     │                                             │
+     │ Active user                                 │ all access denied
+     ▼                                             ▼
+[ACTIVE]           [SUSPENDED]              [TOMBSTONED]
+     │ Admin suspends      │ Reactivate          (after X days)
+     └──&gt; [SUSPENDED] ─────┘
+</code></pre>
+<h3 id="52-tapp-permission-state">5.2 .tapp Permission State</h3>
+<pre><code class="language-text">[PENDING_REVIEW] → IT Admin approves → [PERMITTED]
+     │                                      │ capability revoked
+     │ Admin rejects                         ▼
+     ▼                               [CAPABILITY_REVOKED]
+[REJECTED]
+</code></pre>
+<h3 id="53-legal-hold-state">5.3 Legal Hold State</h3>
+<pre><code class="language-text">[NORMAL] → Legal Hold requested → [HOLD_PENDING]
+                                         │ court_order_ref provided
+                                         ▼
+                                   [LEGAL_HOLD_ACTIVE]
+                                         │ order released
+                                         ▼
+                                   [NORMAL] (vacuum eligible again)
+</code></pre>
+<hr />
+<h2 id="6-api-ipc-event-bus">§6 — API / IPC / EVENT BUS</h2>
+<h3 id="61-opa-host-abi-for-wasm-boundary">6.1 OPA Host ABI (for WASM Boundary)</h3>
+<pre><code class="language-rust">extern &quot;C&quot; {
+    // Check OPA policy before executing host function
+    fn host_opa_check(
+        policy_input_ptr: *const u8,
+        policy_input_len: usize,
+        decision_out: *mut u8
+    ) -&gt; i32;  // Returns: 1 = allow, 0 = deny
+
+    // Append to audit log
+    fn host_audit_log(
+        action_ptr: *const u8,
+        action_len: usize,
+        payload_hash: *const u8
+    ) -&gt; i32;
+}
+</code></pre>
+<h3 id="62-signals-governance-domain">6.2 Signals (Governance Domain)</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Trigger</th>
+<th>Consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UserRevoked(user_id)</code></td>
+<td>SCIM PATCH status=inactive</td>
+<td>TERA-CORE (MLS epoch + Shun_Record)</td>
+</tr>
+<tr>
+<td><code>PolicyBundleUpdated(policy_id, version)</code></td>
+<td>New OPA bundle pushed</td>
+<td>All clients + API Gateway</td>
+</tr>
+<tr>
+<td><code>TappCapabilityDenied(tapp_id, capability)</code></td>
+<td>OPA deny at Host ABI</td>
+<td>TERA-CLIENT (show permission error)</td>
+</tr>
+<tr>
+<td><code>LegalHoldPlaced(entity_id, hold_id)</code></td>
+<td>Legal Hold flag set</td>
+<td>TERA-SYNC (block vacuum)</td>
+</tr>
+<tr>
+<td><code>ApprovalSigned(approval_id)</code></td>
+<td>Ed25519 approval action</td>
+<td>TERA-CLIENT (show confirmation) + Audit Log</td>
+</tr>
+<tr>
+<td><code>AuditLogExported(export_id, requester)</code></td>
+<td>Admin requests audit export</td>
+<td>TERA-CLIENT (notify Admin)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-platform-matrix-constraints">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>📱 iOS</th>
+<th>📱 Android</th>
+<th>💻🖥️ Desktop</th>
+<th>☁️ Gateway</th>
+<th>🗄️ Mac mini</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPA enforcement</td>
+<td>Via Host ABI in Rust Core</td>
+<td>Via Host ABI in Rust Core</td>
+<td>Via Host ABI in Rust Core</td>
+<td>Full OPA engine</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>SCIM listener</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>✅</td>
+<td>✅ (optional)</td>
+</tr>
+<tr>
+<td>Audit Log write</td>
+<td>✅ (Ed25519 signed)</td>
+<td>✅ (Ed25519 signed)</td>
+<td>✅ (Ed25519 signed)</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>OIDC/SAML bridge</td>
+<td>N/A (client only)</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Keycloak/Dex</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Certificate Pinning</td>
+<td>✅ (SHA-256 SPKI)</td>
+<td>✅</td>
+<td>✅</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Legal Hold enforcement</td>
+<td>TERA-SYNC blocks vacuum</td>
+<td>TERA-SYNC blocks vacuum</td>
+<td>TERA-SYNC blocks vacuum</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>ZKP Attribute Routing</td>
+<td>✅ (zk-SNARKs in OPA)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-non-functional-requirements-nfr">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Target</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SCIM offboarding latency</td>
+<td>&lt; 30s end-to-end</td>
+<td>From SCIM event to key revoke</td>
+</tr>
+<tr>
+<td>OPA policy evaluation</td>
+<td>&lt; 10ms P99</td>
+<td>Per API request</td>
+</tr>
+<tr>
+<td>Audit log write</td>
+<td>&lt; 10ms</td>
+<td>Ed25519 sign + append</td>
+</tr>
+<tr>
+<td>Policy formal verification (Z3)</td>
+<td>&lt; 60s</td>
+<td>Before deploy</td>
+</tr>
+<tr>
+<td>MLS Epoch rotation on revoke</td>
+<td>&lt; 5s for group ≤ 1000</td>
+<td>Per revoke event</td>
+</tr>
+<tr>
+<td>ApprovalSignature generation</td>
+<td>&lt; 500ms</td>
+<td>Including biometric confirmation</td>
+</tr>
+<tr>
+<td>Cross-tenant isolation failure rate</td>
+<td>0%</td>
+<td>Hard requirement</td>
+</tr>
+<tr>
+<td>Audit log replay integrity</td>
+<td>100% replayable</td>
+<td>No gaps in append-only chain</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-security-threat-model">§9 — SECURITY &amp; THREAT MODEL</h2>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Vector</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Privilege escalation</td>
+<td>.tapp claims additional capability at runtime</td>
+<td>Capabilities locked in Manifest; OPA verifies vs manifest on every Host ABI call</td>
+</tr>
+<tr>
+<td>Audit log tampering</td>
+<td>Delete or modify Audit_Log_Entry</td>
+<td>Append-only CRDT; Ed25519 signed; structural replay audit</td>
+</tr>
+<tr>
+<td>Cross-tenant data leak</td>
+<td>OPA policy misconfiguration</td>
+<td>Formal Z3 verification before deploy; tenant_id enforced at DB row level</td>
+</tr>
+<tr>
+<td>Slow offboarding</td>
+<td>SCIM events delayed</td>
+<td>SCIM listener priority queue; &lt; 30s SLA enforced</td>
+</tr>
+<tr>
+<td>Approval forgery</td>
+<td>Impersonate approver</td>
+<td>ApprovalSignature uses hardware-bound DeviceIdentityKey; biometric required</td>
+</tr>
+<tr>
+<td>Legal Hold bypass</td>
+<td>Delete data under hold</td>
+<td>LegalHoldFlag blocks vacuum at TERA-SYNC level; cross-checked before any delete</td>
+</tr>
+<tr>
+<td>Policy injection</td>
+<td>Attacker pushes malicious OPA bundle</td>
+<td>Bundle must be Ed25519 signed by TeraChat Root CA; Z3 verified</td>
+</tr>
+<tr>
+<td>Rate limit evasion</td>
+<td>Flood API with anonymous requests</td>
+<td>VOPRF blind tokens: rate limit enforced without linking requests to identity</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-failure-model-recovery">§10 — FAILURE MODEL &amp; RECOVERY</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPA engine crash</td>
+<td>API gateway health check</td>
+<td>Failover to cached policy (last known good); alert Admin</td>
+</tr>
+<tr>
+<td>SCIM listener timeout</td>
+<td>Event not processed in 30s</td>
+<td>Retry queue; Admin notified; manual revoke via Admin Console</td>
+</tr>
+<tr>
+<td>Audit Log chain broken</td>
+<td>BLAKE3 integrity check on replay</td>
+<td>Alert Admin; Isolate broken segment; Legal team investigation</td>
+</tr>
+<tr>
+<td>Z3 verification timeout</td>
+<td>&gt; 60s on policy build</td>
+<td>Block deploy; manual review required</td>
+</tr>
+<tr>
+<td>ApprovalSignature hardware fail</td>
+<td>Biometric API unavailable</td>
+<td>Fallback to PIN + audit log <code>AttestationFallback</code></td>
+</tr>
+<tr>
+<td>Legal Hold placed but vacuum runs</td>
+<td>Race condition</td>
+<td>TERA-SYNC checks LegalHoldFlag atomically before vacuum; hold wins</td>
+</tr>
+<tr>
+<td>OPA policy divergence (client vs gateway)</td>
+<td>Policy version mismatch</td>
+<td>Client re-fetches latest bundle; grace period 60s</td>
+</tr>
+</tbody>
+</table>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

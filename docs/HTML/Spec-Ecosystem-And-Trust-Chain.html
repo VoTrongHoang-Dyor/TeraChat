@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#spec_ecosystem_and_trust_chainmd-terachat-enterprise-platform" class="nav-link" style="">Spec-Ecosystem-And-Trust-Chain.md — TeraChat Enterprise Platform</a>
+<a href="#1-executive-summary-trust-boundaries" class="nav-link" style="padding-left:0.8rem;">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</a>
+<a href="#11-muc-tieu-trach-nhiem" class="nav-link" style="padding-left:1.6rem;">1.1 Mục tiêu &amp; Trách nhiệm</a>
+<a href="#12-ay-khong-phai-app-store-cong-khai" class="nav-link" style="padding-left:1.6rem;">1.2 Đây KHÔNG phải App Store công khai</a>
+<a href="#13-trust-boundaries" class="nav-link" style="padding-left:1.6rem;">1.3 Trust Boundaries</a>
+<a href="#14-the-three-third-spaces-integration-boundaries" class="nav-link" style="padding-left:1.6rem;">1.4 The "Three Third-Spaces" Integration Boundaries</a>
+<a href="#2-system-architecture" class="nav-link" style="padding-left:0.8rem;">§2 — SYSTEM ARCHITECTURE</a>
+<a href="#21-app-signing-trust-hierarchy" class="nav-link" style="padding-left:1.6rem;">2.1 App Signing Trust Hierarchy</a>
+<a href="#22-distribution-flows" class="nav-link" style="padding-left:1.6rem;">2.2 Distribution Flows</a>
+<a href="#23-emergency-kill-switch-architecture" class="nav-link" style="padding-left:1.6rem;">2.3 Emergency Kill-Switch Architecture</a>
+<a href="#24-sovereign-work-os-orchestration-pillars" class="nav-link" style="padding-left:1.6rem;">2.4 Sovereign Work OS Orchestration Pillars</a>
+<a href="#25-datagrant-cache-invalidation-pre-fetch-orchestrator" class="nav-link" style="padding-left:1.6rem;">2.5 DataGrant Cache Invalidation &amp; Pre-fetch Orchestrator</a>
+<a href="#1-datagrant-active-revocation-security-event-track" class="nav-link" style="padding-left:2.4000000000000004rem;">1. DataGrant Active Revocation (Security Event Track)</a>
+<a href="#2-background-pre-fetch-orchestration" class="nav-link" style="padding-left:2.4000000000000004rem;">2. Background Pre-fetch Orchestration</a>
+<a href="#3-context-aware-widget-loading-states-client-sync" class="nav-link" style="padding-left:2.4000000000000004rem;">3. Context-Aware Widget Loading States (Client Sync)</a>
+<a href="#3-data-model-encryption-state" class="nav-link" style="padding-left:0.8rem;">§3 — DATA MODEL &amp; ENCRYPTION STATE</a>
+<a href="#31-tapp-bundle-objects" class="nav-link" style="padding-left:1.6rem;">3.1 .tapp Bundle Objects</a>
+<a href="#32-registry-objects" class="nav-link" style="padding-left:1.6rem;">3.2 Registry Objects</a>
+<a href="#33-manifest-schema-full" class="nav-link" style="padding-left:1.6rem;">3.3 Manifest Schema (Full)</a>
+<a href="#34-publisher-trust-tiers" class="nav-link" style="padding-left:1.6rem;">3.4 Publisher Trust Tiers</a>
+<a href="#4-protocol-execution-contract" class="nav-link" style="padding-left:0.8rem;">§4 — PROTOCOL &amp; EXECUTION CONTRACT</a>
+<a href="#41-tapp-submit-review-protocol" class="nav-link" style="padding-left:1.6rem;">4.1 .tapp Submit &amp; Review Protocol</a>
+<a href="#42-it-admin-approval-deployment-protocol" class="nav-link" style="padding-left:1.6rem;">4.2 IT Admin Approval &amp; Deployment Protocol</a>
+<a href="#43-revocation-protocol" class="nav-link" style="padding-left:1.6rem;">4.3 Revocation Protocol</a>
+<a href="#44-enterprise-private-distribution-mdmemm-protocol" class="nav-link" style="padding-left:1.6rem;">4.4 Enterprise Private Distribution (MDM/EMM) Protocol</a>
+<a href="#45-binary-transparency-protocol" class="nav-link" style="padding-left:1.6rem;">4.5 Binary Transparency Protocol</a>
+<a href="#5-state-machine" class="nav-link" style="padding-left:0.8rem;">§5 — STATE MACHINE</a>
+<a href="#51-tapp-listing-state-registry" class="nav-link" style="padding-left:1.6rem;">5.1 .tapp Listing State (Registry)</a>
+<a href="#52-tapp-device-lifecycle-state" class="nav-link" style="padding-left:1.6rem;">5.2 .tapp Device Lifecycle State</a>
+<a href="#53-emergency-kill-switch-state" class="nav-link" style="padding-left:1.6rem;">5.3 Emergency Kill-Switch State</a>
+<a href="#6-api-ipc-event-bus" class="nav-link" style="padding-left:0.8rem;">§6 — API / IPC / EVENT BUS</a>
+<a href="#61-host-function-abi-for-tapp-developers" class="nav-link" style="padding-left:1.6rem;">6.1 Host Function ABI (for .tapp Developers)</a>
+<a href="#62-abi-versioning-deprecation" class="nav-link" style="padding-left:1.6rem;">6.2 ABI Versioning &amp; Deprecation</a>
+<a href="#63-signals-ecosystem-domain" class="nav-link" style="padding-left:1.6rem;">6.3 Signals (Ecosystem Domain)</a>
+<a href="#7-platform-matrix-constraints" class="nav-link" style="padding-left:0.8rem;">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</a>
+<a href="#8-non-functional-requirements-nfr" class="nav-link" style="padding-left:0.8rem;">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</a>
+<a href="#9-security-threat-model" class="nav-link" style="padding-left:0.8rem;">§9 — SECURITY &amp; THREAT MODEL</a>
+<a href="#10-failure-model-recovery" class="nav-link" style="padding-left:0.8rem;">§10 — FAILURE MODEL &amp; RECOVERY</a>
+<a href="#8-architectural-invariants-audit-resolutions-ecosystem-trust" class="nav-link" style="padding-left:0.8rem;">§8 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (ECOSYSTEM &amp; TRUST)</a>
+<a href="#81-datagrant-latency-vs-workspace-aggregation" class="nav-link" style="padding-left:1.6rem;">8.1 DataGrant Latency vs. Workspace Aggregation</a>
+<a href="#82-datagrant-row-filter-expression-language" class="nav-link" style="padding-left:1.6rem;">8.2 DataGrant Row Filter Expression Language</a>
+<a href="#83-datagrant-revocation-cache-invalidation" class="nav-link" style="padding-left:1.6rem;">8.3 DataGrant Revocation &amp; Cache Invalidation</a>
+<a href="#84-datagrant-activation-background-pre-fetch" class="nav-link" style="padding-left:1.6rem;">8.4 DataGrant Activation &amp; Background Pre-fetch</a>
+<a href="#85-strict-engineering-guardrails-ecosystem-boundaries" class="nav-link" style="padding-left:1.6rem;">8.5 Strict Engineering Guardrails (Ecosystem Boundaries)</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="spec_ecosystem_and_trust_chainmd-terachat-enterprise-platform">Spec-Ecosystem-And-Trust-Chain.md — TeraChat Enterprise Platform</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-ECO&quot;
+title: &quot;TeraChat — Ecosystem Governance &amp; Trust Chain Specification&quot;
+version: &quot;1.0.0&quot;
+status: &quot;ACTIVE&quot;
+audience: &quot;Platform Engineer, Plugin Developer, IT Admin, Security Auditor&quot;
+purpose: &quot;Đặc tả vòng đời phát hành ứng dụng .tapp: App Signing Trust Hierarchy, Enterprise Private Distribution (MDM/EMM), Publisher Trust Tiers, Security Review pipeline, Emergency Kill-switch, và Registry Transparency. Định nghĩa niềm tin mã hóa (Cryptographic Trust) của toàn bộ ecosystem.&quot;
+depends_on: [&quot;TERA-CORE&quot;, &quot;TERA-RUNTIME&quot;, &quot;TERA-GOV&quot;]
+constraints_global:
+  - &quot;Không có chữ ký TeraChat CA → Rust Core từ chối load — không có ngoại lệ&quot;
+  - &quot;Mọi .tapp capability khai báo trong Manifest — không xin permission runtime&quot;
+  - &quot;Revocation phải effective ≤ 60s trên mọi device online&quot;
+  - &quot;Emergency Kill-switch không cần app update hay store review&quot;
+  - &quot;Private Enterprise Distribution: .tapp không cần qua TeraChat public Registry&quot;
+  - &quot;WasmParity CI gate bắt buộc: wasm3 vs wasmtime semantically identical&quot;
+
+</code></pre>
+<blockquote>
+<p><strong>Status:</strong> <code>ACTIVE — Implementation Reference</code>
+<strong>Audience:</strong> Platform Engineer · Plugin Developer · IT Admin · Security Auditor
+<strong>Last Updated:</strong> 2026-03-29
+<strong>Depends On:</strong> → TERA-CORE · → TERA-RUNTIME · → TERA-GOV
+<strong>Consumed By:</strong> <em>(enterprise governance boundary)</em></p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary-trust-boundaries">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</h2>
+<h3 id="11-muc-tieu-trach-nhiem">1.1 Mục tiêu &amp; Trách nhiệm</h3>
+<p>File này <strong>chịu trách nhiệm</strong> cho:
+- App Signing Trust Hierarchy (Root CA → Enterprise CA → Developer Key → Bundle Sig)
+- Enterprise Plugin Registry (controlled, not public App Store)
+- Private Enterprise Distribution (MDM/EMM sideload không qua Registry)
+- Publisher Trust Tiers
+- Security Review Pipeline (automated + manual)
+- Emergency Kill-switch
+- Registry Transparency Log
+- Developer guidelines &amp; Host Function ABI versioning</p>
+<p>File này <strong>KHÔNG chịu trách nhiệm</strong> cho:
+- WASM execution runtime → <code>TERA-RUNTIME</code>
+- Crypto primitives → <code>TERA-CORE</code>
+- RBAC &amp; OPA policy enforcement → <code>TERA-GOV</code></p>
+<h3 id="12-ay-khong-phai-app-store-cong-khai">1.2 Đây KHÔNG phải App Store công khai</h3>
+<blockquote>
+<p>Enterprise Plugin Registry là hệ thống <strong>khép kín, do IT Admin kiểm soát</strong>.</p>
+</blockquote>
+<p>End user <strong>không thể:</strong>
+- Tự duyệt cài plugin
+- Truy cập Registry trực tiếp
+- Bypass IT Admin policy</p>
+<h3 id="13-trust-boundaries">1.3 Trust Boundaries</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Bên trong tin tưởng</th>
+<th>Bên ngoài không tin tưởng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TeraChat Root CA</td>
+<td>First-party .tapp, verified publisher bundles</td>
+<td>Self-signed publisher keys</td>
+</tr>
+<tr>
+<td>Enterprise CA</td>
+<td>Internally distributed .tapp</td>
+<td>External publishers</td>
+</tr>
+<tr>
+<td>IT Admin approval</td>
+<td>Workspace-level deployment</td>
+<td>End user install requests</td>
+</tr>
+<tr>
+<td>Registry Transparency Log</td>
+<td>Append-only Merkle-proofed events</td>
+<td>Unsigned events</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-the-three-third-spaces-integration-boundaries">1.4 The "Three Third-Spaces" Integration Boundaries</h3>
+<p>When TeraChat integrates with external corporate tools (e.g., Gmail, Jira), it strictly governs the data flow to maintain complete sovereignty. Instead of allowing direct API calls from external platforms, the integration occurs strictly within three demarcated ecosystem tiers:</p>
+<ol>
+<li><strong>Native UI (External App context):</strong> TeraChat injects native SDK hooks (e.g., Gmail Extension) presenting a familiar UI directly within the third-party application, capturing data at its origin.</li>
+<li><strong>Interop Hub (The Gateway):</strong> Triggers and payloads captured by the Native UI are sent to the Zero-Knowledge Interop Hub. The Hub reformats the request and securely routes the task intent to the Enterprise's secure perimeter, ensuring no third-party server can read the data.</li>
+<li><strong>AI Worker (The Execution Core):</strong> Residing securely inside the internal enclave, the <code>.tapp</code> and AI Workers execute the business logic, pulling any required historical data from the encrypted NAS. The finalized, encrypted response is then piped back through the Interop Hub.</li>
+</ol>
+<hr />
+<h2 id="2-system-architecture">§2 — SYSTEM ARCHITECTURE</h2>
+<h3 id="21-app-signing-trust-hierarchy">2.1 App Signing Trust Hierarchy</h3>
+<pre><code class="language-text">[TeraChat Root CA Key]  ← Offline cold storage
+         │
+         ├──&gt; [TeraChat Marketplace CA Key]
+         │           │
+         │    Signs: Publisher Key Bundle
+         │           │
+         │    [Publisher Ed25519 Key Pair]
+         │           │
+         │    Signs: SHA3-256(manifest.json || logic.wasm) → bundle.sig
+         │           │
+         │    Client Verifies: BOTH Publisher sig AND TeraChat CA sig
+         │
+         └──&gt; [Enterprise CA Key] ← For private enterprise distribution
+                     │
+              Signs: Internal .tapp bundles for MDM/EMM push
+                     │
+              Client Verifies: Enterprise CA chain (no TeraChat public store)
+</code></pre>
+<h3 id="22-distribution-flows">2.2 Distribution Flows</h3>
+<p><strong>Public Registry Flow:</strong></p>
+<pre><code class="language-text">Publisher submits .tapp
+     │
+TeraChat Security Review (automated + manual)
+     │
+.tapp signed by TeraChat Marketplace CA
+     │
+Appears in Registry (scoped: private or public)
+     │
+IT Admin of org approves
+     │
+OPA Policy push → devices deploy .tapp
+     │
+End user sees plugin (no install control)
+</code></pre>
+<p><strong>Enterprise Private Distribution Flow (MDM/EMM):</strong></p>
+<pre><code class="language-text">Internal dev builds internal .tapp
+     │
+Signs with Enterprise CA Key (no TeraChat public CA needed)
+     │
+Upload to MDM/EMM server (Jamf / Intune / Kandji)
+     │
+MDM pushes .tapp bundle to enrolled devices
+     │
+Rust Core: verify Enterprise CA chain → load .tapp
+     │
+End user sees internal app
+</code></pre>
+<h3 id="23-emergency-kill-switch-architecture">2.3 Emergency Kill-Switch Architecture</h3>
+<pre><code class="language-text">TeraChat Security Team detects compromise
+     │
+Issues KILL_DIRECTIVE:
+  {tapp_id, reason, evidence_hash, ed25519_sig (TeraChat Root CA)}
+     │
+Push via OPA update channel
+     │
+Devices receive in &lt; 60s (online)
+OR at next online sync (offline)
+     │
+Rust Core: KILL_DIRECTIVE matches tapp_id
+     ├── Terminate running instance
+     ├── Purge transient state (sled KV)
+     ├── Revoke all DelegationTokens of .tapp
+     └── Append to Audit_Log_Entry (PLUGIN_KILLED)
+     │
+IT Admin receives notification + technical report
+</code></pre>
+<h3 id="24-sovereign-work-os-orchestration-pillars">2.4 Sovereign Work OS Orchestration Pillars</h3>
+<p>TeraChat is not merely a chat application; it is built as a Sovereign Work OS. To manage diverse <code>.tapps</code> interacting with a massive unified storage layer, it employs two foundational abstraction pillars under the Trust Chain:</p>
+<ol>
+<li><strong>DataGrant (Zero-Knowledge Capability Framework):</strong> External integrations and <code>.tapps</code> do not receive static API Keys or persistent DB credentials. Instead, they operate on Cryptographic DataGrants. A DataGrant is tightly-scoped, short-lived, and bound strictly to a User ID or specific Chat Thread. When an HR <code>.tapp</code> requests approval logs, the Rust Core requires a signed DataGrant before fulfilling the SQLite Virtual Table query.</li>
+<li><strong>Tapp Ownership Invariant (Rule 2):</strong> "App Suite Tapps Own Their Data, Nobody Else Does". DataGrant là READ-ONLY. Tapp này KHÔNG BAO GIỜ ghi đè trực tiếp vào bảng namespace của tapp khác. Nếu cần cập nhật dữ liệu, phải thông qua Local Event Bus.</li>
+<li><strong>Row Filter Expression Language:</strong> Khác với RBAC Policy dùng Rego, bộ đệm filter cho Row Level DataGrant được giới hạn ở <strong>Predicate DSL</strong>. Tránh execution overhead lãng phí.<ul>
+<li>DSL JSON Format: <code>{"field": "department", "op": "eq", "value": "HR"}</code></li>
+<li>Các phép toán hỗ trợ: <code>eq</code>, <code>neq</code>, <code>in</code>, <code>gte</code>, <code>lte</code>.</li>
+<li>Evaluation: Rust Core đánh giá predicate tại <code>cold_state.db</code> <em>TRƯỚC</em> khi dữ liệu vào WASM boundary. Nesting logic <code>and/or</code> độ sâu &lt;= 3.</li>
+</ul>
+</li>
+<li><strong>Distributed Namespaces:</strong> To seamlessly bridge the Client-local state, VPS Transit nodes, and the Mac mini clusters, TeraChat leverages segmented Namespaces. <code>.tapps</code> address data via Universal Resource Identifiers (e.g., <code>terachat://namespace/hr-approvals</code>), entirely abstracting whether the physical bytes reside in the mobile RAM, the NAS CAS blob, or are currently locked by a MapReduce consolidation job on a specific Mac mini worker.</li>
+</ol>
+<h3 id="25-datagrant-cache-invalidation-pre-fetch-orchestrator">2.5 DataGrant Cache Invalidation &amp; Pre-fetch Orchestrator</h3>
+<p>Đảm bảo Authorization Consistency &amp; Storage Efficiency. Tách riêng 3 Phase xử lý DataGrant Workflow để tránh partial data corruption hoặc rendering jitter.</p>
+<h4 id="1-datagrant-active-revocation-security-event-track">1. DataGrant Active Revocation (Security Event Track)</h4>
+<ul>
+<li><strong>Problem:</strong> Staleness của Sled Cache gây leak dữ liệu nếu Revoked mà chưa hết TTL.</li>
+<li><strong>Contract:</strong> Mọi DataGrant cấp phát đều mang <code>generation</code> number do Rust Core cấp số tăng dần.</li>
+<li>DataGrant Revocation là <strong>SECURITY SIGNAL PUSH</strong>, không phải passive TTL check!</li>
+<li>Khi OPA Policy push lệnh revoke, Rust Core <code>host_db_cursor_close</code> các connection đang chạy, bắn ra <code>CoreSignal::DataGrantRevoked</code> <em>đồng bộ qua Secure Channel (không queue)</em> và quét Prefix Sled Cache (<code>dg:{grant_id}:*</code>) để xoá ngay lập tức.</li>
+<li><strong>Mesh Mode Offline Guard:</strong> Cache có field <code>max_offline_serve_duration</code> (Default Enterprise: 3600s, Gov-tier: 0s). Nếu quá thời gian này mà không liên lạc được Host OPA Policy, Widget hiển thị Unavailable, chặn data stale.</li>
+</ul>
+<h4 id="2-background-pre-fetch-orchestration">2. Background Pre-fetch Orchestration</h4>
+<p>Không tự nạp thẳng vào bộ nhớ nếu User bị cấp cho lúc 10 loại quyền, chặn RAM Spike OOM.
+- <code>CoreSignal::DataGrantActivated</code> trigger <strong>Intent Registration</strong> (Foreground / Background / Lazy priority).
+- <strong>Orchestrator</strong> chạy Async Tokio task độc lập với Main Core Thread. Enqueue fetches.
+- <strong>Memory Arbiter</strong> xin phép RAM Limit (Max 4MB/8MB/32MB tùy platform). <code>host_db_query</code> bắt đầu cursor fetch theo Page.
+- Dữ liệu fetch về được Insert ngay vào <code>sled_cache</code>. Nếu Revocation Signal đến ở giữa pipeline -&gt; Gửi <code>AbortHandle</code> xả toàn bộ pipeline ngay, Drop connection, KHÔNG commit partial data.</p>
+<h4 id="3-context-aware-widget-loading-states-client-sync">3. Context-Aware Widget Loading States (Client Sync)</h4>
+<p>Các Widget DataGrant có 3 State riêng biệt tuỳ chỉnh để tránh Flicker xấu UX (Trạng thái được tính bởi Rust Core <code>WidgetDataState</code>, đẩy xuống UI layer để Render theo dạng Passive Client):
+- <code>Scenario A (NeverLoaded)</code>: Lần đầu được cấp. Hiển thị Shimmer Skeleton tĩnh. Fetch xong Fade In Content 200ms.
+- <code>Scenario B (Restoring)</code>: Sau khi bị Admin Revoke. Nếu cấp lại, hiển thị Restoring Label. Xong thì Slide Up Content từ dưới.
+- <code>Scenario C (StaleServing - Scope Rotation):</code> Kế thừa Data cũ đang chạy, Fetch mới ngầm chạy. RENDER DATA CŨ KÈM XUẤT HIỆN 1 <em>Amber Dot</em> opacity 0.6 góc thẻ. Khi hoàn tất, silent replace những Row khác.</p>
+<hr />
+<h2 id="3-data-model-encryption-state">§3 — DATA MODEL &amp; ENCRYPTION STATE</h2>
+<h3 id="31-tapp-bundle-objects">3.1 .tapp Bundle Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TappBundle</code></td>
+<td><code>{manifest.json + logic.wasm + bundle.sig}</code></td>
+<td>Registry CDN / MDM server</td>
+<td>Until revoked</td>
+<td>Content-addressed: CAS_UUID = BLAKE3(bundle_bytes)</td>
+</tr>
+<tr>
+<td><code>PublisherKeyRegistration</code></td>
+<td>Ed25519 public key + KYC metadata</td>
+<td>Registry DB</td>
+<td>Until revoked</td>
+<td>Registered with TeraChat CA</td>
+</tr>
+<tr>
+<td><code>BundleSignature</code></td>
+<td><code>Ed25519_sign(Publisher_Key, SHA3-256(manifest || wasm))</code></td>
+<td>Embedded in TappBundle</td>
+<td>Per version</td>
+<td>Both publisher + CA sig required</td>
+</tr>
+<tr>
+<td><code>TeraChatCARootSig</code></td>
+<td>Ed25519 (Root CA, offline)</td>
+<td>Registry CDN + Embedded</td>
+<td>Per marketplace CA rotation</td>
+<td>Cold storage; cannot be online</td>
+</tr>
+<tr>
+<td><code>EnterpriseBundleSig</code></td>
+<td>Ed25519 (Enterprise CA)</td>
+<td>MDM server + device</td>
+<td>Per internal version</td>
+<td>Does not require TeraChat public CA</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-registry-objects">3.2 Registry Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RegistryListing</code></td>
+<td><code>{tapp_id, publisher_tier, cas_uuid, security_scan_result, last_updated}</code></td>
+<td>Registry DB</td>
+<td>Until delisted</td>
+<td>Read-only for external; writable by TeraChat ops</td>
+</tr>
+<tr>
+<td><code>TransparencyLogEntry</code></td>
+<td><code>{event_type, tapp_id, timestamp, evidence_hash, merkle_proof}</code></td>
+<td>Append-only, Merkle-proofed</td>
+<td>Permanent</td>
+<td>Cannot delete; IT Admin can verify independently</td>
+</tr>
+<tr>
+<td><code>KillDirective</code></td>
+<td><code>{tapp_id, reason, evidence_hash, ed25519_sig}</code></td>
+<td>Broadcast via OPA channel</td>
+<td>Permanent record</td>
+<td>Signed by TeraChat Root CA</td>
+</tr>
+<tr>
+<td><code>ITAdminApprovalEvent</code></td>
+<td><code>{tapp_id, admin_id, org_id, approved_scope, timestamp, sig}</code></td>
+<td>Audit Log</td>
+<td>Permanent</td>
+<td>Ed25519 signed by Admin's DeviceIdentityKey</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-manifest-schema-full">3.3 Manifest Schema (Full)</h3>
+<pre><code class="language-json">{
+  &quot;tapp_id&quot;: &quot;acme-crm-integration-v2&quot;,
+  &quot;publisher&quot;: &quot;Acme Corp&quot;,
+  &quot;publisher_public_key&quot;: &quot;ed25519:...&quot;,
+  &quot;host_api_version&quot;: &quot;1.3.0&quot;,
+  &quot;min_host_api_version&quot;: &quot;1.0.0&quot;,
+  &quot;max_host_api_version&quot;: &quot;2.0.0&quot;,
+
+  &quot;permissions&quot;: [&quot;network.egress&quot;, &quot;storage.persist&quot;],
+
+  &quot;egress_schemas&quot;: [
+    {
+      &quot;endpoint&quot;: &quot;api.acme.com/crm&quot;,
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;tls_pin&quot;: &quot;sha256/XXXXXXX&quot;,
+      &quot;max_payload_bytes&quot;: 4096,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;contact_ref&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;maxLength&quot;: 64 },
+          &quot;action&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;lookup&quot;, &quot;update&quot;] }
+        },
+        &quot;required&quot;: [&quot;contact_ref&quot;, &quot;action&quot;],
+        &quot;additionalProperties&quot;: false
+      }
+    }
+  ],
+
+  &quot;version_hash&quot;: &quot;blake3:a3f2e1d4...&quot;,
+
+  &quot;background_tick_interval_s&quot;: 300,
+  &quot;app_local_storage_mb&quot;: 50,
+
+  &quot;event_bus_publish&quot;: [&quot;crm.contact_updated&quot;],
+  &quot;event_bus_subscribe&quot;: [&quot;user.profile_changed&quot;],
+
+  &quot;enterprise_only&quot;: false,
+  &quot;private_distribution&quot;: false
+}
+</code></pre>
+<h3 id="34-publisher-trust-tiers">3.4 Publisher Trust Tiers</h3>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Yêu cầu</th>
+<th>Egress Privilege</th>
+<th>Badge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Unverified</strong></td>
+<td>Ed25519 key đã đăng ký</td>
+<td>HTTP GET only, &lt; 1KB payload</td>
+<td>🔵 Community</td>
+</tr>
+<tr>
+<td><strong>Verified</strong></td>
+<td>KYC + Key + Security Review</td>
+<td>File &lt; 10MB, standard consent</td>
+<td>✅ Verified</td>
+</tr>
+<tr>
+<td><strong>Enterprise</strong></td>
+<td>SOC2/ISO27001 cert</td>
+<td>Full file egress, custom consent</td>
+<td>🏢 Enterprise</td>
+</tr>
+<tr>
+<td><strong>TeraChat Native</strong></td>
+<td>First-party .tapp</td>
+<td>Unrestricted (subject to OPA)</td>
+<td>⭐ Native</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-protocol-execution-contract">§4 — PROTOCOL &amp; EXECUTION CONTRACT</h2>
+<h3 id="41-tapp-submit-review-protocol">4.1 .tapp Submit &amp; Review Protocol</h3>
+<pre><code class="language-text">[Publisher submits .tapp]
+     │
+Step 1: Automated Static Analysis
+     ├── WASM bytecode: Abstract Interpretation
+     │     ├── buffer overflow detection
+     │     ├── forbidden syscall check (allowlist only)
+     │     └── data accumulation pattern detection
+     ├── Manifest: egress domain validation, schema completeness
+     ├── LLVM IR: obfuscated string detection, unusual CFG
+     ├── Dependency audit: third-party WASM imports
+     └── WasmParity: run against wasm3 + wasmtime test vectors
+     │
+Step 2: Result evaluation
+     ├── Any critical finding → Manual Security Review Queue
+     ├── All clear → Marketplace CA sign bundle
+     └── Rejected → Publisher notified with specific findings
+     │
+Step 3: Registry Listing
+     ├── Bundle stored at CAS path (BLAKE3 UUID)
+     ├── TransparencyLogEntry (publish event) appended
+     └── Available for IT Admin discovery
+</code></pre>
+<h3 id="42-it-admin-approval-deployment-protocol">4.2 IT Admin Approval &amp; Deployment Protocol</h3>
+<pre><code class="language-text">[IT Admin finds .tapp in Registry]
+     │
+View Security Report:
+     ├── Egress domains declared
+     ├── Permission scope
+     ├── Publisher tier
+     └── Automated scan results
+     │
+IT Admin: Approve for workspace (select target groups)
+     │
+[Rust Core Action:]
+     ├── Compile Manifest → OPA Rego policy
+     ├── Sign policy bundle with Enterprise CA (2-of-3: CISO + CTO + Legal)
+     ├── Push OPA bundle to target devices
+     └── Append ITAdminApprovalEvent to Audit Log
+     │
+Devices (≤ 60s for online):
+     ├── Receive OPA policy update
+     ├── Download .tapp bundle (verify CAS + Ed25519 sigs)
+     └── .tapp available in user launcher
+</code></pre>
+<h3 id="43-revocation-protocol">4.3 Revocation Protocol</h3>
+<pre><code class="language-text">[IT Admin revokes .tapp]
+     │
+[Rust Core:]
+     ├── OPA Policy push: {tapp_id: &quot;REVOKED&quot;}
+     ├── Effective ≤ 60s (online devices)
+     ├── At next online sync (offline devices)
+     │
+[On each device receiving policy:]
+     ├── Rust Core: disable .tapp execution
+     ├── Purge transient state (sled KV)
+     ├── Revoke DelegationTokens of .tapp
+     └── Audit_Log_Entry: PLUGIN_REVOKED {plugin_id, admin_id, timestamp, reason}
+</code></pre>
+<h3 id="44-enterprise-private-distribution-mdmemm-protocol">4.4 Enterprise Private Distribution (MDM/EMM) Protocol</h3>
+<ol>
+<li>Internal developer builds .tapp with <code>"private_distribution": true</code> in manifest.</li>
+<li>Signs with Enterprise CA Key (separate chain from TeraChat Marketplace CA).</li>
+<li>Uploads to corporate MDM server (Jamf Pro / Microsoft Intune / Kandji).</li>
+<li>MDM policy pushes .tapp bundle to enrolled device group.</li>
+<li>Rust Core: verify <code>Enterprise CA chain</code> → load allowed.</li>
+<li>No visibility in TeraChat public Registry.</li>
+<li>IT Admin controls deployment same as Registry .tapp.</li>
+</ol>
+<h3 id="45-binary-transparency-protocol">4.5 Binary Transparency Protocol</h3>
+<pre><code class="language-text">[TeraChat Root CA signs new binary / model / .tapp version]
+     │
+Append to Global_Update_Log (Append-Only CRDT Log)
+     │
+Gossip BLAKE3 hash to all peers via Mesh
+     │
+Client: before loading any module
+     ├── Check hash against Global_Update_Log
+     ├── Match → LOAD
+     └── Mismatch → BLOCK + alert + admin notification
+</code></pre>
+<hr />
+<h2 id="5-state-machine">§5 — STATE MACHINE</h2>
+<h3 id="51-tapp-listing-state-registry">5.1 .tapp Listing State (Registry)</h3>
+<pre><code class="language-text">[PENDING_REVIEW]
+     │ automated + manual review pass
+     ▼
+[REGISTRY_LISTED]
+     │ IT Admin approves for workspace
+     ▼
+[DEPLOYED (in org workspace)]
+     │ policy violation detected        │ IT Admin revokes
+     ▼                                  ▼
+[SUSPENDED]                       [REVOKED]
+     │ fix + re-review                  │ (permanent)
+     ▼
+[REGISTRY_LISTED]
+</code></pre>
+<h3 id="52-tapp-device-lifecycle-state">5.2 .tapp Device Lifecycle State</h3>
+<pre><code class="language-text">[PENDING_DOWNLOAD]
+     │ BLAKE3 verify pass + sig verify pass
+     ▼
+[INSTALLED]
+     │ User opens .tapp
+     ▼
+[RUNNING] ← full lifecycle as per TERA-RUNTIME §5.1
+     │
+     │ Revoke policy received
+     ▼
+[TERMINATED]
+     │ state purge complete
+     ▼
+[REMOVED]
+</code></pre>
+<h3 id="53-emergency-kill-switch-state">5.3 Emergency Kill-Switch State</h3>
+<pre><code class="language-text">[KILL_DIRECTIVE received]
+     │ (all devices, targeted tapp_id)
+     ▼
+[TERMINATING] → ZeroizeOnDrop state
+     │
+     ▼
+[KILLED] → Audit_Log written
+     │
+[IT_ADMIN_NOTIFIED] → full technical report
+</code></pre>
+<hr />
+<h2 id="6-api-ipc-event-bus">§6 — API / IPC / EVENT BUS</h2>
+<h3 id="61-host-function-abi-for-tapp-developers">6.1 Host Function ABI (for .tapp Developers)</h3>
+<pre><code class="language-rust">// Crypto (offloaded to Rust Core — WASM không tự chạy crypto)
+fn host_blake3_hash(data: *const u8, len: usize, out: *mut u8) -&gt; i32;
+fn host_ed25519_sign(key_id: u64, msg: *const u8, msg_len: usize, sig_out: *mut u8) -&gt; i32;
+fn host_aes256gcm_encrypt(
+    key_id: u64, nonce: *const u8,
+    pt: *const u8, pt_len: usize,
+    ct_out: *mut u8
+) -&gt; i32;
+
+// Network (via Egress_Outbox — không direct socket)
+fn host_egress_write(endpoint_id: u64, payload: *const u8, len: usize) -&gt; i32;
+// Returns: 0=OK, 1=QuotaExceeded, 2=SchemaViolation, 3=OPADeny, 4=MeshRestricted
+
+// Storage (scoped per .tapp namespace — see TERA-RUNTIME)
+fn host_storage_get(key: *const u8, key_len: usize, out: *mut u8, out_max: usize) -&gt; i32;
+fn host_storage_set(key: *const u8, key_len: usize, val: *const u8, val_len: usize) -&gt; i32;
+
+// App State (structured data — see TERA-RUNTIME)
+fn host_app_state_query(sql_ptr: *const u8, sql_len: usize, out_ptr: *mut u8) -&gt; i32;
+fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -&gt; i32;
+</code></pre>
+<h3 id="62-abi-versioning-deprecation">6.2 ABI Versioning &amp; Deprecation</h3>
+<ul>
+<li>Breaking changes: <strong>major version bump only</strong></li>
+<li>Minor version: additive-only (backward compatible)</li>
+<li>TeraChat supports <strong>2 major versions simultaneously</strong></li>
+<li>Deprecation window: <strong>12 months</strong> from announce date</li>
+<li><code>.tapp</code> with <code>host_api_version</code> outside supported range → <strong>rejected at install</strong></li>
+</ul>
+<h3 id="63-signals-ecosystem-domain">6.3 Signals (Ecosystem Domain)</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Trigger</th>
+<th>Consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TappInstalled(tapp_id, org_id)</code></td>
+<td>Successful install on device</td>
+<td>TERA-GOV (audit log)</td>
+</tr>
+<tr>
+<td><code>TappRevoked(tapp_id, reason)</code></td>
+<td>Revocation policy received</td>
+<td>TERA-RUNTIME (terminate) + TERA-GOV</td>
+</tr>
+<tr>
+<td><code>KillDirectiveReceived(tapp_id)</code></td>
+<td>Emergency kill</td>
+<td>TERA-RUNTIME (force terminate)</td>
+</tr>
+<tr>
+<td><code>RegistryListingUpdated(tapp_id, version)</code></td>
+<td>New version available</td>
+<td>IT Admin Console notification</td>
+</tr>
+<tr>
+<td><code>SecurityScanFailed(tapp_id, finding)</code></td>
+<td>Automated scan finding</td>
+<td>Developer notified; TERA-GOV audit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-platform-matrix-constraints">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>📱 iOS</th>
+<th>📱 Android</th>
+<th>📱 HarmonyOS</th>
+<th>💻🖥️ Desktop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM format</td>
+<td><code>.wasm</code> (wasm3)</td>
+<td><code>.wasm</code> (wasmtime)</td>
+<td><code>.waot</code> bundle</td>
+<td><code>.wasm</code> (wasmtime)</td>
+</tr>
+<tr>
+<td>Registry source</td>
+<td>Enterprise Registry / MDM</td>
+<td>Enterprise Registry / MDM</td>
+<td>Enterprise Registry / AppGallery</td>
+<td>Enterprise Registry / MDM</td>
+</tr>
+<tr>
+<td>Enterprise MDM</td>
+<td>Jamf / Kandji</td>
+<td>Intune / MDM</td>
+<td>Huawei MDM</td>
+<td>Jamf / Intune</td>
+</tr>
+<tr>
+<td>Kill-switch response</td>
+<td>&lt; 60s (online)</td>
+<td>&lt; 60s (online)</td>
+<td>&lt; 60s (online)</td>
+<td>&lt; 60s (online)</td>
+</tr>
+<tr>
+<td>Private distribution</td>
+<td>✅ Enterprise CA</td>
+<td>✅ Enterprise CA</td>
+<td>✅ HarmonyOS signed</td>
+<td>✅ Enterprise CA</td>
+</tr>
+<tr>
+<td>Static analysis gate</td>
+<td>Must pass wasm3 CI</td>
+<td>Must pass wasmtime CI</td>
+<td>Must pass .waot CI</td>
+<td>Must pass wasmtime CI</td>
+</tr>
+</tbody>
+</table>
+<p><strong>HarmonyOS Special Case:</strong>
+- AppGallery requires <code>.waot</code> bundle (WebAssembly Optimized Translation).
+- Runtime: JIT-with-AOT-fallback.
+- WasmParity CI must validate both JIT and AOT execution paths.</p>
+<hr />
+<h2 id="8-non-functional-requirements-nfr">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Target</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPA policy push (revoke/kill)</td>
+<td>&lt; 60s for online devices</td>
+<td>Hard SLA</td>
+</tr>
+<tr>
+<td>Registry search response</td>
+<td>&lt; 500ms</td>
+<td>CDN-backed</td>
+</tr>
+<tr>
+<td>.tapp bundle integrity verify</td>
+<td>&lt; 2s on install</td>
+<td>BLAKE3 + Ed25519 verify</td>
+</tr>
+<tr>
+<td>Static analysis scan</td>
+<td>&lt; 5 min per submission</td>
+<td>Automated pipeline</td>
+</tr>
+<tr>
+<td>Transparency Log query</td>
+<td>&lt; 200ms</td>
+<td>IT Admin audit interface</td>
+</tr>
+<tr>
+<td>Emergency Kill-switch propagation</td>
+<td>&lt; 60s p90</td>
+<td>Online fleet</td>
+</tr>
+<tr>
+<td>WasmParity CI gate</td>
+<td>100% identical output</td>
+<td>Both engines</td>
+</tr>
+<tr>
+<td>MDM push delivery</td>
+<td>MDM SLA (vendor-dependent)</td>
+<td>Jamf ~2min, Intune ~5min</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-security-threat-model">§9 — SECURITY &amp; THREAT MODEL</h2>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Vector</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Malicious .tapp in Registry</td>
+<td>Submit compromised plugin</td>
+<td>Static analysis + manual review + Emergency Kill-switch</td>
+</tr>
+<tr>
+<td>Publisher key compromise</td>
+<td>Attacker steals Ed25519 private key</td>
+<td>Key revocation; all bundles with that key become invalid; Transparency Log records revocation</td>
+</tr>
+<tr>
+<td>Registry CDN tampering</td>
+<td>Serve modified .tapp bundle</td>
+<td>BLAKE3 CAS + Ed25519 sig verify on device before load</td>
+</tr>
+<tr>
+<td>Bypass IT Admin policy</td>
+<td>End user installs directly</td>
+<td>No end-user install pathway; OPA enforced in Rust Core</td>
+</tr>
+<tr>
+<td>Silent update (same CAS UUID)</td>
+<td>Replace bundle at same hash</td>
+<td>CAS = content-addressed; same hash = same bytes; different content = different hash</td>
+</tr>
+<tr>
+<td>Dependency supply chain attack</td>
+<td>Third-party WASM import malicious</td>
+<td>Dependency audit in static analysis; all imports must be in allowlist</td>
+</tr>
+<tr>
+<td>ObfuscatedString egress</td>
+<td>.tapp builds domain at runtime to bypass manifest</td>
+<td>LLVM IR analysis for string construction patterns; failed → manual review</td>
+</tr>
+<tr>
+<td>Kill-switch bypass (offline)</td>
+<td>Device disconnected; continues running blocked .tapp</td>
+<td>Kill directive cached; enforced on reconnect; OPA local cache also checked</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-failure-model-recovery">§10 — FAILURE MODEL &amp; RECOVERY</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TeraChat Marketplace CA key compromised</td>
+<td>CA key theft detected</td>
+<td>Root CA issues new Marketplace CA; all existing bundles re-signed; old CA CRL published</td>
+</tr>
+<tr>
+<td>Registry CDN unavailable</td>
+<td>BLAKE3 verify cannot fetch bundle</td>
+<td>Devices use locally cached version; no new installs until CDN recovers</td>
+</tr>
+<tr>
+<td>Static analysis pipeline crash</td>
+<td>Submission stuck in PENDING_REVIEW</td>
+<td>Manual review queue fallback; alert platform team</td>
+</tr>
+<tr>
+<td>OPA policy push failed (device offline)</td>
+<td>Device misses push</td>
+<td>Policy applied on next online sync; kill/revoke directives cached</td>
+</tr>
+<tr>
+<td>Emergency Kill-switch blocked by firewall</td>
+<td>Kill OPA bundle cannot reach device</td>
+<td>Admin manually wipes .tapp via MDM remove command</td>
+</tr>
+<tr>
+<td>MDM server unreachable</td>
+<td>Private distribution stalled</td>
+<td>Devices retain last installed .tapp; no new MDM push until restored</td>
+</tr>
+<tr>
+<td>Publisher submits broken ABI version</td>
+<td><code>host_api_version</code> out of range</td>
+<td>Rejected at install; TransparencyLogEntry records rejection</td>
+</tr>
+<tr>
+<td>WasmParity divergence in new release</td>
+<td>CI gate fails</td>
+<td>Block marketplace listing; fix before release</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-architectural-invariants-audit-resolutions-ecosystem-trust">§8 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (ECOSYSTEM &amp; TRUST)</h2>
+<h3 id="81-datagrant-latency-vs-workspace-aggregation">8.1 DataGrant Latency vs. Workspace Aggregation</h3>
+<p><strong>Constraint:</strong> Serial DataGrant query resolution (50ms × 8 = 400ms) during cold launches violates UI responsiveness SLAs.
+<strong>Resolution:</strong> DataGrant queries must be pre-fetched and cached continuously into a dedicated <code>sled</code> namespace via a background orchestrator. The <code>WorkspaceSubscription</code> host function registers data intent, while Rust Core handles the lifecycle and pushes delta signals asynchronously.</p>
+<h3 id="82-datagrant-row-filter-expression-language">8.2 DataGrant Row Filter Expression Language</h3>
+<p><strong>Constraint:</strong> Executing full OPA Rego evaluation iteratively on individual rows causes unacceptable runtime overhead.
+<strong>Resolution:</strong> Row filter capabilities are constrained to a specialized <strong>Predicate DSL</strong> (e.g., <code>{"field": "dept", "op": "eq", "value": "HR"}</code>). Rust Core evaluates these natively against <code>cold_state.db</code> prior to WASM crossing.</p>
+<h3 id="83-datagrant-revocation-cache-invalidation">8.3 DataGrant Revocation &amp; Cache Invalidation</h3>
+<p><strong>Constraint:</strong> Authorization staleness is unacceptable post-revocation, requiring zero-tolerance immediate enforcement.
+<strong>Resolution:</strong> DataGrant tokens embed a sequentially-increasing <code>generation</code> counter controlled by Rust Core. Revocation triggers an immediate <code>CoreSignal::DataGrantRevoked</code> over the synchronous Security priority channel, invalidating all prefixed <code>sled</code> entries instantly and halting active fetching. Staleness ends definitively once the OPA policy arrives at the device.</p>
+<h3 id="84-datagrant-activation-background-pre-fetch">8.4 DataGrant Activation &amp; Background Pre-fetch</h3>
+<p><strong>Constraint:</strong> Naive activation parallelization triggers extreme resource contention and race conditions with immediate revocations.
+<strong>Resolution:</strong> <code>CoreSignal::DataGrantActivated</code> registers a pre-fetch intent dynamically prioritized (<code>Foreground</code>, <code>Background</code>, <code>Lazy</code>). A Tokio-based <code>PrefetchOrchestrator</code> queues requests sequentially per a constrained memory budget (e.g., 4MB iOS, 32MB Desktop). Revocation explicitly checks generation markers and cleanly aborts in-progress fetches, ensuring no partially-tainted data hits the cache.</p>
+<h3 id="85-strict-engineering-guardrails-ecosystem-boundaries">8.5 Strict Engineering Guardrails (Ecosystem Boundaries)</h3>
+<ul>
+<li><strong>Rule 2 (Tapp Ownership Invariant):</strong> <code>.tapp</code> containers exclusively own their internal databases. Tapps are forbidden from direct cross-namespace reads. To collaborate, tapps must message each other explicitly via <code>host_event_publish</code>, enforcing total isolation and accountability.</li>
+</ul>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

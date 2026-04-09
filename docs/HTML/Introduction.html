@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#introductionmd-terachat-system-gateway" class="nav-link" style="">Introduction.md — TeraChat System Gateway</a>
+<a href="#1-san-pham-terachat-la-gi" class="nav-link" style="padding-left:0.8rem;">1. Sản phẩm TeraChat là gì?</a>
+<a href="#2-mo-hinh-truy-cap-doanh-nghiep" class="nav-link" style="padding-left:0.8rem;">2. Mô hình Truy cập Doanh nghiệp</a>
+<a href="#21-license-gated-architecture" class="nav-link" style="padding-left:1.6rem;">2.1 License-Gated Architecture</a>
+<a href="#22-phan-tang-to-chuc" class="nav-link" style="padding-left:1.6rem;">2.2 Phân tầng Tổ chức</a>
+<a href="#3-nguyen-ly-kien-truc-bat-bien" class="nav-link" style="padding-left:0.8rem;">3. Nguyên lý Kiến trúc Bất biến</a>
+<a href="#4-kien-truc-ky-thuat-tong-quan" class="nav-link" style="padding-left:0.8rem;">4. Kiến trúc Kỹ thuật Tổng quan</a>
+<a href="#stack-ky-thuat" class="nav-link" style="padding-left:1.6rem;">Stack Kỹ thuật</a>
+<a href="#5-thanh-phan-san-pham" class="nav-link" style="padding-left:0.8rem;">5. Thành phần Sản phẩm</a>
+<a href="#6-pham-vi-va-ngoai-pham-vi" class="nav-link" style="padding-left:0.8rem;">6. Phạm vi và Ngoài phạm vi</a>
+<a href="#7-mo-hinh-trien-khai" class="nav-link" style="padding-left:0.8rem;">7. Mô hình Triển khai</a>
+<a href="#8-ban-o-ieu-huong-tai-lieu" class="nav-link" style="padding-left:0.8rem;">8. Bản đồ Điều hướng Tài liệu</a>
+<a href="#81-ban-o-moi-7-spec-file-domain-driven-architecture" class="nav-link" style="padding-left:1.6rem;">8.1 Bản đồ mới — 7 Spec File (Domain-Driven Architecture)</a>
+<a href="#82-quick-navigation-by-role" class="nav-link" style="padding-left:1.6rem;">8.2 Quick Navigation by Role</a>
+<a href="#83-legacy-files-deprecated-noi-dung-a-migrate" class="nav-link" style="padding-left:1.6rem;">8.3 Legacy Files (Deprecated — Nội dung đã migrate)</a>
+<a href="#84-files-giu-nguyen" class="nav-link" style="padding-left:1.6rem;">8.4 Files Giữ Nguyên</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="introductionmd-terachat-system-gateway">Introduction.md — TeraChat System Gateway</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-INTRO&quot;
+title: &quot;TeraChat — System Gateway &amp; Architecture Overview&quot;
+version: &quot;0.4.0&quot;
+status: &quot;ACTIVE&quot;
+date: &quot;2026-03-25&quot;
+audience: &quot;New Team Member, System Architect, Product Manager, Enterprise Sales, Investor&quot;
+purpose: &quot;Định nghĩa sản phẩm, kiến trúc tổng thể, mô hình truy cập doanh nghiệp, và bản đồ điều hướng tài liệu.&quot;
+
+ai_routing_hint: |
+  &quot;Đọc file này đầu tiên để hiểu sản phẩm TeraChat là gì, ai được phép sử dụng,
+   kiến trúc hoạt động ra sao, và điều hướng đến tài liệu phù hợp.&quot;
+</code></pre>
+<hr />
+<h2 id="1-san-pham-terachat-la-gi">1. Sản phẩm TeraChat là gì?</h2>
+<p>TeraChat là <strong>nền tảng messaging doanh nghiệp Zero-Knowledge, End-to-End Encrypted</strong> — được thiết kế cho các tổ chức yêu cầu kiểm soát tuyệt đối dữ liệu giao tiếp nội bộ mà không phụ thuộc vào bất kỳ nhà cung cấp dịch vụ đám mây nào.</p>
+<p><strong>TeraChat không phải ứng dụng công khai.</strong></p>
+<p>Mỗi phiên bản triển khai thuộc về một tổ chức duy nhất. Người dùng không thể đăng ký tài khoản cá nhân — mọi truy cập đều yêu cầu license JWT hợp lệ được cấp bởi tổ chức, được ký bởi HSM FIPS 140-3, và được neo vào domain doanh nghiệp.</p>
+<blockquote>
+<p><strong>Cam kết cốt lõi:</strong> Bảo mật được bảo đảm bằng toán học, không phải bằng điều khoản dịch vụ.</p>
+</blockquote>
+<hr />
+<h2 id="2-mo-hinh-truy-cap-doanh-nghiep">2. Mô hình Truy cập Doanh nghiệp</h2>
+<h3 id="21-license-gated-architecture">2.1 License-Gated Architecture</h3>
+<pre><code class="language-text">Tổ chức ký hợp đồng với TeraChat
+         ↓
+TeraChat cấp License JWT (HSM FIPS 140-3, signed)
+  {tenant_id, domain, max_seats, tier, valid_until, features}
+         ↓
+IT Admin triển khai TeraRelay (1 binary, 1 command)
+         ↓
+IT Admin phân phát app đến nhân viên qua MDM hoặc App Store internal
+         ↓
+Nhân viên cài đặt app — app BẮT BUỘC xác thực License JWT trước khi hoạt động
+         ↓
+Không có license hợp lệ → app hiển thị màn hình &quot;Liên hệ IT Admin&quot;
+</code></pre>
+<h3 id="22-phan-tang-to-chuc">2.2 Phân tầng Tổ chức</h3>
+<table>
+<thead>
+<tr>
+<th>Thành phần</th>
+<th>Vai trò</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TeraChat Inc.</strong></td>
+<td>Cấp license, duy trì binary, hỗ trợ kỹ thuật</td>
+</tr>
+<tr>
+<td><strong>IT Admin</strong></td>
+<td>Triển khai relay, quản lý thiết bị, phê duyệt plugins</td>
+</tr>
+<tr>
+<td><strong>Nhân viên</strong></td>
+<td>Sử dụng trong phạm vi chính sách tổ chức</td>
+</tr>
+<tr>
+<td><strong>TeraRelay</strong></td>
+<td>Binary mù hoàn toàn — chỉ định tuyến ciphertext</td>
+</tr>
+</tbody>
+</table>
+<p>Không có thành phần "người dùng công khai". Mọi identity đều thuộc về một tổ chức có license.</p>
+<hr />
+<h2 id="3-nguyen-ly-kien-truc-bat-bien">3. Nguyên lý Kiến trúc Bất biến</h2>
+<p><strong>1. Zero-Knowledge Server</strong>
+Máy chủ relay hoạt động như Blind Router — chỉ thấy <code>destination_device_id</code>, <code>blob_size</code>, và <code>timestamp</code>. Không bao giờ thấy plaintext, không bao giờ có khóa giải mã. Đây là thuộc tính kiến trúc, không phải cấu hình.</p>
+<p><strong>2. Key Material không rời Chip</strong>
+Mọi private key sinh ra và tồn tại vĩnh viễn trong Secure Enclave (iOS/macOS), StrongBox (Android), hoặc TPM 2.0 (Desktop). Không có đường dẫn nào để export key ra plaintext.</p>
+<p><strong>3. Offline-First Survival</strong>
+Hệ thống không phụ thuộc vào Internet. Khi mất kết nối, BLE 5.0 + Wi-Fi Direct tự động tạo mạng P2P sinh tồn. Nhắn tin, file transfer, và voice hoạt động trong phạm vi mesh.</p>
+<p><strong>4. Zero-Trust theo Thiết kế</strong>
+Không tin tưởng bất kỳ thành phần nào — bao gồm cả TeraChat Inc. Mọi quyền truy cập đều được kiểm tra bởi OPA Policy Engine tại thiết bị, không chỉ tại server.</p>
+<p><strong>5. License Entanglement</strong>
+License JWT được neo vào <code>DeviceIdentityKey</code> qua KDF — sai license = key sai = database thành rác. Không thể bypass bằng cách bẻ gãy license file.</p>
+<hr />
+<h2 id="4-kien-truc-ky-thuat-tong-quan">4. Kiến trúc Kỹ thuật Tổng quan</h2>
+<pre><code class="language-text">┌───────────────────────────────────────────────────────────────┐
+│                     THIẾT BỊ DOANH NGHIỆP                     │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │              RUST CORE (Shared Binary)                  │  │
+│  │  MLS E2EE · CRDT DAG · BLE Mesh · Key Management       │  │
+│  │  OPA Policy · WASM Sandbox · Offline Storage            │  │
+│  └────────────────────────┬────────────────────────────────┘  │
+│           IPC/FFI          │                                   │
+│  ┌─────────────────────┐  │  ┌───────────────────────────┐    │
+│  │  UI Layer           │  │  │  Secure Hardware           │    │
+│  │  Flutter / Tauri    │◄─┘  │  Enclave/StrongBox/TPM    │    │
+│  │  (Pure Renderer)    │     │  (Key Material — Never Out)│    │
+│  └─────────────────────┘     └───────────────────────────┘    │
+└───────────────────────────────────────────────────────────────┘
+          │ TLS 1.3 + mTLS                    │ BLE/Wi-Fi Direct
+          ▼                                   ▼
+┌───────────────────────┐         ┌──────────────────────────┐
+│  TERARELAY (On-Prem)  │         │  PEER DEVICES (Mesh)     │
+│  Blind ciphertext     │         │  Store-and-Forward CRDT  │
+│  routing only         │         │  P2P encrypted           │
+│  License validation   │         └──────────────────────────┘
+└───────────────────────┘
+</code></pre>
+<h3 id="stack-ky-thuat">Stack Kỹ thuật</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Platform</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core Logic</td>
+<td>Rust (shared binary)</td>
+<td>All platforms</td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td>Flutter + Dart FFI</td>
+<td>iOS · Android · Huawei</td>
+</tr>
+<tr>
+<td>Desktop UI</td>
+<td>Tauri (Rust + WebView)</td>
+<td>macOS · Windows · Linux</td>
+</tr>
+<tr>
+<td>Protocol</td>
+<td>MLS RFC 9420 + QUIC/gRPC/WSS</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>AES-256-GCM + ML-KEM-768 (PQ)</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>SQLite WAL + SQLCipher</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Plugin Runtime</td>
+<td>wasm3 (iOS) / wasmtime (others)</td>
+<td>All</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-thanh-phan-san-pham">5. Thành phần Sản phẩm</h2>
+<table>
+<thead>
+<tr>
+<th>Thành phần</th>
+<th>Mô tả</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TeraRelay</strong></td>
+<td>Single Rust binary, blind router, tự deploy 5 phút trên VPS $6-$48/tháng</td>
+</tr>
+<tr>
+<td><strong>TeraChat Client</strong></td>
+<td>App native: iOS, Android, Huawei HarmonyOS, macOS, Windows, Linux</td>
+</tr>
+<tr>
+<td><strong>Admin Console</strong></td>
+<td>Quản lý license, thiết bị, policy, audit — trên Desktop + Mobile (read-only)</td>
+</tr>
+<tr>
+<td><strong>Enterprise Plugin Registry</strong></td>
+<td>Kho plugins (.tapp) do IT Admin phê duyệt và triển khai cho tổ chức</td>
+</tr>
+<tr>
+<td><strong>TeraEdge</strong> (optional)</td>
+<td>Mini-PC hardware để làm Super Node cố định tại văn phòng</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-pham-vi-va-ngoai-pham-vi">6. Phạm vi và Ngoài phạm vi</h2>
+<p><strong>Trong phạm vi:</strong></p>
+<ul>
+<li>Giao tiếp doanh nghiệp nội bộ (text, voice, video, file)</li>
+<li>Lưu trữ Zero-Knowledge (server không đọc được content)</li>
+<li>Survival mesh khi mất Internet</li>
+<li>Enterprise plugin ecosystem (workflow tích hợp)</li>
+<li>Cross-organization federation (mTLS, sealed sender)</li>
+<li>Compliance và audit cho regulated industries</li>
+</ul>
+<p><strong>Ngoài phạm vi:</strong></p>
+<ul>
+<li>Tài khoản cá nhân / consumer accounts</li>
+<li>Nhắn tin ra ngoài tổ chức qua plaintext channel</li>
+<li>Lưu trữ plaintext trên bất kỳ server nào</li>
+<li>Tích hợp với nền tảng không tuân thủ zero-knowledge</li>
+</ul>
+<hr />
+<h2 id="7-mo-hinh-trien-khai">7. Mô hình Triển khai</h2>
+<p>TeraRelay có thể chạy trên nhiều topology khác nhau tùy theo quy mô và yêu cầu bảo mật:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Infrastructure</th>
+<th>Thời gian Setup</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Self-Hosted Cloud</strong></td>
+<td>VPS (512MB–8GB RAM)</td>
+<td>5–20 phút</td>
+<td>SME, startup</td>
+</tr>
+<tr>
+<td><strong>On-Premise</strong></td>
+<td>Server nội bộ</td>
+<td>1–4 giờ</td>
+<td>Enterprise, healthcare</td>
+</tr>
+<tr>
+<td><strong>Air-Gapped</strong></td>
+<td>Hardware offline</td>
+<td>Nửa ngày</td>
+<td>Gov, defense, banking</td>
+</tr>
+<tr>
+<td><strong>Hybrid</strong></td>
+<td>On-prem + cloud relay</td>
+<td>1 ngày</td>
+<td>Tập đoàn đa chi nhánh</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-ban-o-ieu-huong-tai-lieu">8. Bản đồ Điều hướng Tài liệu</h2>
+<h3 id="81-ban-o-moi-7-spec-file-domain-driven-architecture">8.1 Bản đồ mới — 7 Spec File (Domain-Driven Architecture)</h3>
+<blockquote>
+<p><strong>Cập nhật 2026-03-29:</strong> Bộ tài liệu kỹ thuật đã được tái cấu trúc theo domain-driven naming.
+Xem <code>Arrange.md</code> để hiểu lý do và mapping chi tiết từ file cũ sang file mới.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>ID</th>
+<th>Đối tượng đọc</th>
+<th>Nội dung cốt lõi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Spec-Core-Cryptography-And-Mesh.md</code></td>
+<td><strong>TERA-CORE</strong></td>
+<td>Rust Core Dev, Security Eng</td>
+<td>MLS E2EE, PQ-KEM, Hardware Root of Trust, Survival Mesh, ALPN</td>
+</tr>
+<tr>
+<td><code>Spec-Dual-Sync-And-Local-Storage.md</code></td>
+<td><strong>TERA-SYNC</strong></td>
+<td>Backend Dev, Rust Core Dev</td>
+<td>Dual-Sync (CRDT vs Relational), SQLite WAL, Blob CAS, FTS5, Blind RAG</td>
+</tr>
+<tr>
+<td><code>Spec-Wasm-Tapp-Runtime.md</code></td>
+<td><strong>TERA-RUNTIME</strong></td>
+<td>.tapp Dev, Rust Core Dev</td>
+<td>WASM dual-engine, Host ABI, Event Bus, Background Exec, SQLite Virtual Tables</td>
+</tr>
+<tr>
+<td><code>Spec-Enterprise-Secure-Enclave.md</code></td>
+<td><strong>TERA-ENCLAVE</strong></td>
+<td>Backend Dev, Security Eng</td>
+<td>AI Hybrid (BYOM, Blind RAG), Stateful Enclave (Finance/HR), Blind Delay Queue</td>
+</tr>
+<tr>
+<td><code>Spec-Identity-And-Governance.md</code></td>
+<td><strong>TERA-GOV</strong></td>
+<td>CISO, Security Auditor, IT Admin</td>
+<td>OPA ABAC, SCIM/OIDC/SAML, Audit Trail, RBAC, Legal Hold</td>
+</tr>
+<tr>
+<td><code>Spec-Client-IPC-And-UI-Bridge.md</code></td>
+<td><strong>TERA-CLIENT</strong></td>
+<td>Frontend Dev, Flutter/Tauri Dev</td>
+<td>FFI Token Protocol, IPC Data Plane, CoreSignals, Streaming Decryption Proxy</td>
+</tr>
+<tr>
+<td><code>Spec-Ecosystem-And-Trust-Chain.md</code></td>
+<td><strong>TERA-ECO</strong></td>
+<td>Plugin Dev, Platform Eng, IT Admin</td>
+<td>App Signing PKI, Registry, MDM Distribution, Kill-switch, Transparency Log</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-quick-navigation-by-role">8.2 Quick Navigation by Role</h3>
+<table>
+<thead>
+<tr>
+<th>Đối tượng</th>
+<th>Tài liệu cần đọc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rust Core Dev</strong></td>
+<td>TERA-CORE → TERA-SYNC → TERA-RUNTIME</td>
+</tr>
+<tr>
+<td><strong>Flutter/Tauri Frontend Dev</strong></td>
+<td>TERA-CLIENT only</td>
+</tr>
+<tr>
+<td><strong>.tapp Plugin Developer</strong></td>
+<td>TERA-RUNTIME → TERA-ECO</td>
+</tr>
+<tr>
+<td><strong>Security Auditor / CISO</strong></td>
+<td>TERA-CORE + TERA-GOV</td>
+</tr>
+<tr>
+<td><strong>System Architect</strong></td>
+<td>Tất cả 7 file</td>
+</tr>
+<tr>
+<td><strong>IT Admin</strong></td>
+<td>TERA-GOV + TERA-ECO</td>
+</tr>
+<tr>
+<td><strong>AI / ML Engineer</strong></td>
+<td>TERA-ENCLAVE</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-legacy-files-deprecated-noi-dung-a-migrate">8.3 Legacy Files (Deprecated — Nội dung đã migrate)</h3>
+<blockquote>
+<p>Các file dưới đây vẫn tồn tại nhưng <strong>đã được deprecated</strong>. Nội dung đã chuyển sang 7 Spec file mới.
+Xem deprecation notice đầu mỗi file để biết nội dung chuyển đến đâu.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>File cũ</th>
+<th>Status</th>
+<th>Chuyển sang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Core_Spec.md</code></td>
+<td>DEPRECATED</td>
+<td>TERA-CORE + TERA-SYNC + TERA-GOV + TERA-ENCLAVE</td>
+</tr>
+<tr>
+<td><code>Feature_Spec.md</code></td>
+<td>DEPRECATED</td>
+<td>TERA-RUNTIME + TERA-CLIENT + TERA-ENCLAVE</td>
+</tr>
+<tr>
+<td><code>Web_Marketplace.md</code></td>
+<td>DEPRECATED</td>
+<td>TERA-ECO + TERA-GOV</td>
+</tr>
+</tbody>
+</table>
+<h3 id="84-files-giu-nguyen">8.4 Files Giữ Nguyên</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>ID</th>
+<th>Status</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Introduction.md</code></td>
+<td>TERA-INTRO</td>
+<td>ACTIVE</td>
+<td>System gateway, navigation</td>
+</tr>
+<tr>
+<td><code>Function.md</code></td>
+<td>TERA-FUNC</td>
+<td>ACTIVE</td>
+<td>Capabilities, user flows, RBAC</td>
+</tr>
+<tr>
+<td><code>Design.md</code></td>
+<td>TERA-DESIGN</td>
+<td>ACTIVE</td>
+<td>UI/UX system</td>
+</tr>
+<tr>
+<td><code>TestMatrix.md</code></td>
+<td>TERA-TEST</td>
+<td>ACTIVE</td>
+<td>QA, chaos engineering</td>
+</tr>
+<tr>
+<td><code>Arrange.md</code></td>
+<td>TERA-ARRANGE</td>
+<td>ACTIVE</td>
+<td>Architecture analysis, refactor log</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>TeraChat — Chủ quyền dữ liệu doanh nghiệp, được bảo đảm bằng toán học.</em></p>
+<p><em>v0.5.0 · 2026-03-29 · Internal Reference — Doc Architecture Refactor</em></p>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

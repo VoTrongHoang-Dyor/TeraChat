@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#spec_wasm_tapp_runtimemd-terachat-enterprise-platform" class="nav-link" style="">Spec-Wasm-Tapp-Runtime.md — TeraChat Enterprise Platform</a>
+<a href="#1-executive-summary-trust-boundaries" class="nav-link" style="padding-left:0.8rem;">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</a>
+<a href="#11-muc-tieu-trach-nhiem" class="nav-link" style="padding-left:1.6rem;">1.1 Mục tiêu &amp; Trách nhiệm</a>
+<a href="#12-trust-model" class="nav-link" style="padding-left:1.6rem;">1.2 Trust Model</a>
+<a href="#2-system-architecture" class="nav-link" style="padding-left:0.8rem;">§2 — SYSTEM ARCHITECTURE</a>
+<a href="#21-wasm-runtime-dual-engine-strategy" class="nav-link" style="padding-left:1.6rem;">2.1 WASM Runtime Dual-Engine Strategy</a>
+<a href="#22-tapp-sandbox-architecture" class="nav-link" style="padding-left:1.6rem;">2.2 .tapp Sandbox Architecture</a>
+<a href="#23-local-event-bus-architecture" class="nav-link" style="padding-left:1.6rem;">2.3 Local Event Bus Architecture</a>
+<a href="#3-data-model-encryption-state" class="nav-link" style="padding-left:0.8rem;">§3 — DATA MODEL &amp; ENCRYPTION STATE</a>
+<a href="#31-tapp-manifest-schema" class="nav-link" style="padding-left:1.6rem;">3.1 .tapp Manifest Schema</a>
+<a href="#32-sqlite-virtual-tables-encrypted-app-storage" class="nav-link" style="padding-left:1.6rem;">3.2 SQLite Virtual Tables (Encrypted App Storage)</a>
+<a href="#33-egress_outbox-object" class="nav-link" style="padding-left:1.6rem;">3.3 Egress_Outbox Object</a>
+<a href="#34-local-event-bus-objects" class="nav-link" style="padding-left:1.6rem;">3.4 Local Event Bus Objects</a>
+<a href="#4-protocol-execution-contract" class="nav-link" style="padding-left:0.8rem;">§4 — PROTOCOL &amp; EXECUTION CONTRACT</a>
+<a href="#41-host-abi-wasm-rust-core" class="nav-link" style="padding-left:1.6rem;">4.1 Host ABI (WASM → Rust Core)</a>
+<a href="#42-io-delegation-control-plane-vs-data-plane" class="nav-link" style="padding-left:1.6rem;">4.2 I/O Delegation (Control Plane vs. Data Plane)</a>
+<a href="#43-background-execution-delegation" class="nav-link" style="padding-left:1.6rem;">4.3 Background Execution Delegation</a>
+<a href="#44-local-event-bus-protocol" class="nav-link" style="padding-left:1.6rem;">4.4 Local Event Bus Protocol</a>
+<a href="#45-data-diode-egress_outbox-protocol" class="nav-link" style="padding-left:1.6rem;">4.5 Data Diode (Egress_Outbox) Protocol</a>
+<a href="#46-macos-xpc-process-isolation" class="nav-link" style="padding-left:1.6rem;">4.6 macOS XPC Process Isolation</a>
+<a href="#5-state-machine" class="nav-link" style="padding-left:0.8rem;">§5 — STATE MACHINE</a>
+<a href="#51-tapp-lifecycle-state" class="nav-link" style="padding-left:1.6rem;">5.1 .tapp Lifecycle State</a>
+<a href="#52-oom-prevention-memory-lifecycle-tombstoning-vs-hydration" class="nav-link" style="padding-left:1.6rem;">5.2 OOM Prevention &amp; Memory Lifecycle (Tombstoning vs. Hydration)</a>
+<a href="#53-egress_outbox-state" class="nav-link" style="padding-left:1.6rem;">5.3 Egress_Outbox State</a>
+<a href="#6-api-ipc-event-bus" class="nav-link" style="padding-left:0.8rem;">§6 — API / IPC / EVENT BUS</a>
+<a href="#61-signals-runtime-domain" class="nav-link" style="padding-left:1.6rem;">6.1 Signals (Runtime Domain)</a>
+<a href="#62-tapp-sdk-entrypoints" class="nav-link" style="padding-left:1.6rem;">6.2 .tapp SDK Entrypoints</a>
+<a href="#7-platform-matrix-constraints" class="nav-link" style="padding-left:0.8rem;">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</a>
+<a href="#8-non-functional-requirements-nfr" class="nav-link" style="padding-left:0.8rem;">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</a>
+<a href="#9-security-threat-model" class="nav-link" style="padding-left:0.8rem;">§9 — SECURITY &amp; THREAT MODEL</a>
+<a href="#10-failure-model-recovery" class="nav-link" style="padding-left:0.8rem;">§10 — FAILURE MODEL &amp; RECOVERY</a>
+<a href="#11-architectural-invariants-audit-resolutions-wasm-runtime" class="nav-link" style="padding-left:0.8rem;">§11 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (WASM RUNTIME)</a>
+<a href="#111-wasm-heap-vs-app-suite-data-volume" class="nav-link" style="padding-left:1.6rem;">11.1 WASM Heap vs. App Suite Data Volume</a>
+<a href="#112-inbound-webhook-egress-circuit-breaker" class="nav-link" style="padding-left:1.6rem;">11.2 Inbound Webhook + Egress Circuit Breaker</a>
+<a href="#113-wasmparity-gate-vs-app-suite-float-logic" class="nav-link" style="padding-left:1.6rem;">11.3 WasmParity Gate vs. App Suite Float Logic</a>
+<a href="#114-host-abi-gaps-cursor-protocol" class="nav-link" style="padding-left:1.6rem;">11.4 Host ABI Gaps (Cursor Protocol)</a>
+<a href="#115-inbound-webhook-delivery-guarantee" class="nav-link" style="padding-left:1.6rem;">11.5 Inbound Webhook Delivery Guarantee</a>
+<a href="#116-tapp-storage-quota-enforcement-timing" class="nav-link" style="padding-left:1.6rem;">11.6 Tapp Storage Quota Enforcement Timing</a>
+<a href="#117-strict-engineering-guardrails-runtime-contracts" class="nav-link" style="padding-left:1.6rem;">11.7 Strict Engineering Guardrails (Runtime Contracts)</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="spec_wasm_tapp_runtimemd-terachat-enterprise-platform">Spec-Wasm-Tapp-Runtime.md — TeraChat Enterprise Platform</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-RUNTIME&quot;
+title: &quot;TeraChat — WASM .tapp Runtime &amp; SDK Specification&quot;
+version: &quot;1.0.0&quot;
+status: &quot;ACTIVE&quot;
+audience: &quot;Rust Core Dev, .tapp Developer, Frontend Engineer&quot;
+purpose: &quot;Đặc tả môi trường thực thi WASM dual-engine, Host ABI, Local Event Bus, Background Execution, Encrypted App Storage cho các mini-app doanh nghiệp. Đây là ranh giới bộ nhớ và giới hạn RAM mà Developer viết .tapp cần biết.&quot;
+depends_on: [&quot;TERA-CORE&quot;, &quot;TERA-SYNC&quot;]
+constraints_global:
+  - &quot;iOS: wasm3 interpreter only — JIT tuyệt đối bị cấm (W^X)&quot;
+  - &quot;Mọi crypto op trong WASM phải delegate về Rust Core qua Host ABI&quot;
+  - &quot;WASM sandbox strip wasi-sockets — không truy cập TCP/UDP trực tiếp&quot;
+  - &quot;Egress_Outbox giới hạn cứng 2MB — vượt = sealed + terminate&quot;
+  - &quot;Inbound Webhook tách rời biệt lập với Egress_Outbox (quota &amp; pathway)&quot;
+  - &quot;Background task WASM: tối đa 10MB RAM khi OS suspend&quot;
+  - &quot;.tapp quyền phải khai báo đầy đủ trong Manifest — không xin runtime&quot;
+
+</code></pre>
+<blockquote>
+<p><strong>Status:</strong> <code>ACTIVE — Implementation Reference</code>
+<strong>Audience:</strong> .tapp Developer · Rust Core Dev · Frontend Engineer
+<strong>Last Updated:</strong> 2026-03-29
+<strong>Depends On:</strong> → TERA-CORE · → TERA-SYNC
+<strong>Consumed By:</strong> → TERA-CLIENT · → TERA-ECO</p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary-trust-boundaries">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</h2>
+<h3 id="11-muc-tieu-trach-nhiem">1.1 Mục tiêu &amp; Trách nhiệm</h3>
+<p>File này <strong>chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>WASM Dual-Engine constraints (wasm3 iOS / wasmtime Android+Desktop)</li>
+<li>Host ABI — cách WASM gọi ngược Rust Core</li>
+<li>Local Event Bus — cách .tapp A kích hoạt .tapp B</li>
+<li>Background Execution — ủy quyền cronjob cho Rust Core</li>
+<li>Encrypted App-Local Storage (SQLite Virtual Tables)</li>
+<li>Egress_Outbox data-diode architecture</li>
+<li>.tapp Manifest &amp; permission declaration</li>
+</ul>
+<p>File này <strong>KHÔNG chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>Crypto primitives → <code>TERA-CORE</code></li>
+<li>Storage &amp; sync backend → <code>TERA-SYNC</code></li>
+<li>AI inference → <code>TERA-ENCLAVE</code></li>
+<li>App signing &amp; distribution → <code>TERA-ECO</code></li>
+<li>RBAC &amp; OPA policy → <code>TERA-GOV</code></li>
+</ul>
+<h3 id="12-trust-model">1.2 Trust Model</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Bên trong tin tưởng</th>
+<th>Bên ngoài không tin tưởng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM sandbox</td>
+<td>.tapp business logic</td>
+<td>Host network (raw TCP/UDP)</td>
+</tr>
+<tr>
+<td>Host ABI</td>
+<td>Rust Core crypto ops</td>
+<td>WASM linear memory</td>
+</tr>
+<tr>
+<td>Egress_Outbox</td>
+<td>Write-only .tapp output</td>
+<td>Raw Internet (filtered by OPA)</td>
+</tr>
+<tr>
+<td>Local Event Bus</td>
+<td>Typed, signed inter-app events</td>
+<td>Spoofed event sources</td>
+</tr>
+<tr>
+<td>SQLite Virtual Tables</td>
+<td>.tapp data with row-level encryption</td>
+<td>Other .tapp instances</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-system-architecture">§2 — SYSTEM ARCHITECTURE</h2>
+<h3 id="21-wasm-runtime-dual-engine-strategy">2.1 WASM Runtime Dual-Engine Strategy</h3>
+<blockquote>
+<p>⚠️ iOS áp đặt chính sách W^X nghiêm cấm JIT Runtime. Lõi Rust <strong>PHẢI</strong> tự động phát hiện Platform và chọn Engine phù hợp.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>WASM Engine</th>
+<th>JIT</th>
+<th>RAM limit (active)</th>
+<th>RAM limit (background)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS</td>
+<td><code>wasm3</code> pure interpreter</td>
+<td>❌ (W^X)</td>
+<td>50MB</td>
+<td>10MB</td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td><code>wasmtime</code> JIT (Cranelift)</td>
+<td>✅</td>
+<td>50MB</td>
+<td>10MB</td>
+</tr>
+<tr>
+<td>📱 HarmonyOS</td>
+<td><code>wasmtime</code> JIT (Cranelift)</td>
+<td>✅</td>
+<td>50MB</td>
+<td>10MB</td>
+</tr>
+<tr>
+<td>💻🖥️ Desktop/Server</td>
+<td><code>wasmtime</code> JIT (Cranelift)</td>
+<td>✅</td>
+<td>128MB</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<p>Switch condition at compile-time: <code>#[cfg(target_os = "ios")]</code></p>
+<p><strong>Latency penalty (wasm3 interpreter):</strong> +15–20ms/call vs wasmtime JIT. <strong>Chấp nhận được</strong> cho Enterprise UX.</p>
+<p><strong>WasmParity CI Gate:</strong></p>
+<ul>
+<li>Cùng test vector phải chạy identical trên <code>wasm3</code> và <code>wasmtime</code>.</li>
+<li>Fail → block merge. Latency delta ≤ 20ms. Output semantic <strong>phải identical</strong>.</li>
+</ul>
+<h3 id="22-tapp-sandbox-architecture">2.2 .tapp Sandbox Architecture</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    .tapp WASM SANDBOX                        │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐│
+│  │ UI Schema   │  │ Business    │  │ SQLite Virtual       ││
+│  │ (JSON/DSL)  │  │ Logic       │  │ Tables (Encrypted)   ││
+│  └──────┬──────┘  └──────┬──────┘  └──────────────────────┘│
+│         │                │                                   │
+│         └──────┬──────────┘                                  │
+│                │ Host ABI calls only                         │
+│                ▼                                             │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              RUST CORE HOST ABI                         ││
+│  │  crypto / storage / network / event bus                 ││
+│  └──────────────────────┬──────────────────────────────────┘│
+│                         │                                    │
+│          ┌──────────────┴─────────────────┐                 │
+│          ▼                                ▼                  │
+│  [Encrypted App Data]           [Egress_Outbox]              │
+│  cold_state.db (TERA-SYNC)      (write-only, 2MB limit)      │
+└─────────────────────────────────────────────────────────────┘
+                                   │
+                         OPA DLP Check + BLAKE3 verify
+                                   ▼
+                           [Internet / Partner API]
+</code></pre>
+<h3 id="23-local-event-bus-architecture">2.3 Local Event Bus Architecture</h3>
+<pre><code class="language-text">.tapp A (HRM) ──publishes── EventBus ──subscribes── .tapp B (Notification)
+                               │
+                         Rust Core routes
+                         (signed, typed events)
+                               │
+                         .tapp C (Task)
+</code></pre>
+<hr />
+<h2 id="3-data-model-encryption-state">§3 — DATA MODEL &amp; ENCRYPTION STATE</h2>
+<h3 id="31-tapp-manifest-schema">3.1 .tapp Manifest Schema</h3>
+<pre><code class="language-yaml"># Mandatory .tapp Manifest
+id: &quot;com.company.hr-approvals&quot;
+name: &quot;HR Approvals&quot;
+version: &quot;1.2.0&quot;
+wasm_sha256: &quot;sha256:abc123...&quot;  # Verified before load
+signature: &quot;ed25519:xyz...&quot;     # Signed by Developer Key (TERA-ECO)
+
+# Capability Declarations (ALL must be declared upfront — no runtime requests)
+capabilities:
+  read_message_context: false     # Cannot read chat history
+  write_egress_outbox: true       # Can send data out (OPA filtered)
+  app_local_storage_mb: 50        # Quota for SQLite Virtual Tables (Hard ceiling)
+  event_bus_publish: [&quot;approval.submitted&quot;, &quot;approval.rejected&quot;]
+  event_bus_subscribe: [&quot;user.role_changed&quot;]
+  background_tick_interval_s: 300 # 5min background wakeup
+
+# Math Context (Rule 3: Financial/Approval Data Never Uses Float)
+arithmetic_mode: &quot;fixed_point&quot;    # Requires i64, blocks f32/f64 usage in core logic
+
+# UI Declaration
+ui_schema: &quot;react-schema&quot;  # Compiled to TeraChat UI schema, not raw HTML
+</code></pre>
+<h3 id="32-sqlite-virtual-tables-encrypted-app-storage">3.2 SQLite Virtual Tables (Encrypted App Storage)</h3>
+<p><strong>Host-Provided SQLite Virtual Tables — thay thế <code>sled</code> KV-store:</strong></p>
+<pre><code class="language-sql">-- .tapp thấy standard SQL interface:
+CREATE VIRTUAL TABLE IF NOT EXISTS approvals USING tera_encrypted(
+    id TEXT PRIMARY KEY,
+    requester_id TEXT,
+    status TEXT,
+    payload BLOB,
+    created_at INTEGER
+);
+
+-- Rust Core: tự động mã hóa từng row bằng DEK riêng (row-level encryption)
+-- .tapp không thấy encryption key bao giờ
+</code></pre>
+<p><strong>Schema Migration (Rule 7: Yêu cầu Migration Contract cứng):</strong></p>
+<pre><code class="language-sql">-- .tapp bắt buộc khai báo mapping migration rõ ràng:
+schema_version: 3
+migrations:
+  - from: 2
+    to: 3
+    sql: &quot;ALTER TABLE approvals ADD COLUMN priority INTEGER DEFAULT 0&quot;
+</code></pre>
+<p>Rust Core tự apply migration khi .tapp version bump. Nếu schema_version mới hơn nhưng không có chain mapping, Rust Core từ chối khởi động .tapp (bắn <code>CoreSignal::ComponentFault</code>) để tránh data loss âm thầm.</p>
+<h3 id="33-egress_outbox-object">3.3 Egress_Outbox Object</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type</td>
+<td>Write-only queue (từ .tapp), Read-only (từ Egress Daemon)</td>
+</tr>
+<tr>
+<td>Size limit</td>
+<td><strong>2MB cứng</strong> — vượt = sealed + terminate .tapp</td>
+</tr>
+<tr>
+<td>Access pattern</td>
+<td>.tapp writes JSON payload; daemon reads + sends</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>BLAKE3 DLP Hash Chain (Rust Core ký trước push; Daemon tái tính trước send)</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>URLSession (iOS) / Cronet (Android) / HTTP (Desktop)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-local-event-bus-objects">3.4 Local Event Bus Objects</h3>
+<pre><code class="language-rust">// Event published to Local Event Bus
+pub struct TappEvent {
+    pub event_type: String,       // e.g., &quot;approval.submitted&quot;
+    pub source_tapp_id: String,   // Publisher identity
+    pub payload: Vec&lt;u8&gt;,         // Serialized, typed payload
+    pub signature: Ed25519Sig,    // Signed by publisher's app key
+    pub hlc: HLCTimestamp,
+}
+</code></pre>
+<hr />
+<h2 id="4-protocol-execution-contract">§4 — PROTOCOL &amp; EXECUTION CONTRACT</h2>
+<h3 id="41-host-abi-wasm-rust-core">4.1 Host ABI (WASM → Rust Core)</h3>
+<blockquote>
+<p>💡 <strong>Mệnh đề ABI (Rule 1: Typed Contract, Not a Pipe):</strong> Host function input/output phải sử dụng MessagePack-serialized với schema version field. Mọi Host function mới đều phải có test WasmParity và ErrorCode. Không serialize raw JSON hay untyped bytes qua biên này.</p>
+</blockquote>
+<pre><code class="language-rust">// Crypto operations — .tapp KHÔNG tự chạy crypto
+extern &quot;C&quot; {
+    fn host_blake3_hash(data_ptr: *const u8, data_len: usize, out_ptr: *mut u8) -&gt; i32;
+    fn host_ed25519_sign(key_id: u64, msg_ptr: *const u8, msg_len: usize, sig_out: *mut u8) -&gt; i32;
+    fn host_aes256gcm_encrypt(
+        key_id: u64, nonce_ptr: *const u8,
+        plaintext_ptr: *const u8, plaintext_len: usize,
+        ciphertext_out: *mut u8
+    ) -&gt; i32;
+}
+
+// Storage — SQLite Virtual Tables (Cấm materialized queries cho list data)
+// Thay vì host_app_state_query trả về nguyên mảng lớn gây nguy cơ OOM,
+// yêu cầu sử dụng Cursor Protocol (PAGE_SIZE = 500).
+extern &quot;C&quot; {
+    fn host_db_query(
+        tapp_did_ptr: *const u8, did_len: usize,
+        sql_ptr: *const u8, sql_len: usize,
+        params_msgpack: *const u8, params_len: usize,
+    ) -&gt; u64; // Trả về cursor_id (u64) hoặc 0 nếu lỗi
+
+    fn host_db_cursor_next(
+        cursor_id: u64,
+        out_row_msgpack: *mut u8,
+        out_max: usize,
+    ) -&gt; i32; // Returns bytes_written, 0 = exhausted, -1 = error
+
+    fn host_db_cursor_close(cursor_id: u64) -&gt; i32;
+
+    // Enforcement: lỗi Storage Quota Exceeded trả về -5 synchronous lúc write.
+    fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -&gt; i32; 
+}
+
+// Event Bus
+extern &quot;C&quot; {
+    fn host_event_publish(event_ptr: *const u8, event_len: usize) -&gt; i32;
+    fn host_event_subscribe(event_type_ptr: *const u8) -&gt; i32;
+}
+
+// Egress
+extern &quot;C&quot; {
+    // Egress Outbox (4KB - 2MB limit constraint tùy endpoint, tách mạch với Webhook Ingress)
+    fn host_egress_write(payload_ptr: *const u8, payload_len: usize) -&gt; i32;
+}
+</code></pre>
+<h3 id="42-io-delegation-control-plane-vs-data-plane">4.2 I/O Delegation (Control Plane vs. Data Plane)</h3>
+<p>To enforce the 64MB <code>.tapp</code> memory limit while handling gigabytes of enterprise data securely, the architecture strictly segregates the execution into two layers:</p>
+<p><strong>Data Plane (Host Rust Core):</strong>
+Responsible for heavy I/O operations including raw bytes network fetching, hardware-accelerated Ed25519 cryptography, Large Blob transfers, and encrypted SQLite transactions. The data plane resides outside the sandbox and processes data natively.</p>
+<p><strong>Control Plane (.tapp WASM System):</strong>
+The WASM sandbox acts solely as the system's brain. It sequences API operations, coordinates application logic, handles User Interface states, and routes business flows. It never holds large byte arrays directly in its limited RAM.</p>
+<p><em>Workflow Example:</em>
+Instead of the <code>.tapp</code> pulling a 10MB PDF over the network into memory to decrypt and store it, the <code>.tapp</code> sends a declarative command to the Rust Core: <code>Download(URL) -&gt; Decrypt(Key) -&gt; SaveToDB(Table)</code>. The Rust Core performs this natively. The <code>.tapp</code> only receives a fast acknowledgment: <code>Success(FileID)</code>.</p>
+<h3 id="43-background-execution-delegation">4.3 Background Execution Delegation</h3>
+<p><strong>Vấn đề:</strong> iOS Jetsam kill app nếu .tapp chạy ngầm với RAM/CPU cao.</p>
+<p><strong>Giải pháp — Rust Core Delegation:</strong></p>
+<pre><code class="language-text">[.tapp registers background_tick_interval_s = 300 in Manifest]
+     │
+[OS Background Task fires]
+     │
+[Rust Core wakes up (NOT .tapp)]
+     │ Only 10MB RAM budget
+     │
+[Rust Core calls: __tera_on_background_tick(app_id)]
+     │ in WASM module with 10MB limit
+     │
+[.tapp runs minimal sync/check logic]
+     │
+[Results written to cold_state.db]
+     │
+[Rust Core suspends WASM; returns to OS]
+</code></pre>
+<p><strong>Constraints:</strong></p>
+<ul>
+<li>Background WASM: <strong>max 10MB RAM</strong>, <strong>max 30s execution time</strong>.</li>
+<li>No network I/O in background WASM — queue in <code>Egress_Outbox</code>, Egress Daemon sends.</li>
+<li>No UI operations in background WASM.</li>
+</ul>
+<h3 id="44-local-event-bus-protocol">4.4 Local Event Bus Protocol</h3>
+<p><strong>Publish:</strong></p>
+<ol>
+<li>.tapp calls <code>host_event_publish(event)</code>.</li>
+<li>Rust Core: verify event_type is in .tapp's <code>event_bus_publish</code> capability list.</li>
+<li>Rust Core: sign event with app key, add HLC timestamp.</li>
+<li>Rust Core: route to all subscribed .tapp instances.</li>
+</ol>
+<p><strong>Subscribe:</strong></p>
+<ol>
+<li>.tapp calls <code>host_event_subscribe("approval.submitted")</code>.</li>
+<li>Rust Core: verify event_type is in .tapp's <code>event_bus_subscribe</code> capability list.</li>
+<li>On event received: Rust Core calls <code>__tera_on_event(event_ptr)</code> in subscriber WASM.</li>
+</ol>
+<h3 id="45-data-diode-egress_outbox-protocol">4.5 Data Diode (Egress_Outbox) Protocol</h3>
+<pre><code class="language-text">[Lõi Rust - Crypto Core] ──Push Masked Data──▶ [WASM Sandbox .tapp]
+                                                        │
+                                            (không có callback ngược)
+                                                        │
+                                              Write ──▶ [Egress_Outbox]
+                                                        │
+                           [tera_egress_daemon / OS Background Service]
+                              (Separate process, không share memory với Lõi Rust)
+                                                        │
+                                       OPA DLP Check + BLAKE3 Hash Verify
+                                                        │
+                           URLSession (iOS) / Cronet (Android) / HTTP (Desktop)
+                                               ▼
+                                         Internet / Partner API
+</code></pre>
+<h3 id="46-macos-xpc-process-isolation">4.6 macOS XPC Process Isolation</h3>
+<ul>
+<li>macOS Hardened Runtime tách <code>wasmtime</code> JIT ra <code>terachat-wasm-worker</code> (child process).</li>
+<li>Main process không có <code>allow-jit</code>. Giao tiếp qua XPC Service (Mach port).</li>
+<li>XPC crash → <code>XpcTransactionJournal</code> recovery (PENDING → rollback).</li>
+</ul>
+<hr />
+<h2 id="5-state-machine">§5 — STATE MACHINE</h2>
+<h3 id="51-tapp-lifecycle-state">5.1 .tapp Lifecycle State</h3>
+<pre><code class="language-text">[NOT_INSTALLED]
+     │ IT Admin installs via OPA-approved manifest
+     ▼
+[INSTALLED]
+     │ User opens .tapp
+     ▼
+[LOADING] ── WASM module verified (sha256 + Ed25519 sig)
+     │
+     ├── sig invalid → [BLOCKED]
+     │
+     ▼
+[RUNNING]
+     │ RAM &gt; 50MB
+     ├──&gt; [OOM_TERMINATED] ── Jetsam / SIGSEGV
+     │
+     │ Network output needed
+     ├──&gt; [EGRESS_PENDING] ── Egress Daemon picks up
+     │
+     │ OS suspends
+     ▼
+[BACKGROUNDED] ── max 10MB RAM
+     │ background_tick fires
+     ├──&gt; [BACKGROUND_TICK_RUNNING] → [BACKGROUNDED]
+     │
+     │ User returns
+     ▼
+[RUNNING]
+</code></pre>
+<h3 id="52-oom-prevention-memory-lifecycle-tombstoning-vs-hydration">5.2 OOM Prevention &amp; Memory Lifecycle (Tombstoning vs. Hydration)</h3>
+<p>Given the aggregate memory cap (e.g., maximum 64MB combined limit across all running instances), the system implements an aggressive memory lifecycle manager.</p>
+<ul>
+<li><strong>RAM Watchdog:</strong> A background routine continuously polling heap sizes. If aggregate memory footprints threaten to exceed limits, idle or backgrounded <code>.tapps</code> are prioritized for suspension.</li>
+<li><strong>Tombstoning:</strong> The runtime serializes the specific internal state variables of the <code>.tapp</code> out to encrypted local storage (<code>cold_state.db</code>) and deallocates the WASM instance from RAM, leaving behind a stub ("Tombstone").</li>
+<li><strong>Hydration:</strong> Upon User interaction or incoming <code>event_bus</code> triggers, the runtime instantly reloads the WASM binary, decrypts the Tombstone state, and injects it back, achieving sub-100ms resumability. This process is entirely transparent to the user.</li>
+</ul>
+<h3 id="53-egress_outbox-state">5.3 Egress_Outbox State</h3>
+<pre><code class="language-text">[EMPTY]
+     │ .tapp writes payload
+     ▼
+[PENDING (size &lt; 2MB)]
+     │ Egress Daemon reads
+     ├── OPA reject → [BLOCKED_DLP]
+     ├── BLAKE3 mismatch → [INTEGRITY_FAIL]
+     ▼
+[SENT]
+</code></pre>
+<hr />
+<h2 id="6-api-ipc-event-bus">§6 — API / IPC / EVENT BUS</h2>
+<h3 id="61-signals-runtime-domain">6.1 Signals (Runtime Domain)</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Trigger</th>
+<th>Consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WasmSandboxTerminated(reason)</code></td>
+<td>OOM / crash / sig violation</td>
+<td>TERA-CLIENT (show error) + TERA-GOV (audit)</td>
+</tr>
+<tr>
+<td><code>EgressSchemaViolation(plugin_id)</code></td>
+<td>DLP check fail</td>
+<td>TERA-GOV (audit + block)</td>
+</tr>
+<tr>
+<td><code>WasmOomKill</code></td>
+<td>RAM &gt; limit</td>
+<td>TERA-CLIENT (refresh notification)</td>
+</tr>
+<tr>
+<td><code>TappEventPublished(event_type)</code></td>
+<td>Event Bus publish</td>
+<td>Subscribed .tapp instances</td>
+</tr>
+<tr>
+<td><code>BackgroundTickCompleted(app_id, duration_ms)</code></td>
+<td>Background tick done</td>
+<td>Telemetry</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-tapp-sdk-entrypoints">6.2 .tapp SDK Entrypoints</h3>
+<pre><code class="language-rust">// Rust Core calls into .tapp WASM at these entry points:
+// (All exported from .tapp WASM module)
+
+#[no_mangle]
+pub extern &quot;C&quot; fn __tera_on_start() { /* .tapp initialization */ }
+
+#[no_mangle]
+pub extern &quot;C&quot; fn __tera_on_background_tick() { /* max 30s, 10MB */ }
+
+#[no_mangle]
+pub extern &quot;C&quot; fn __tera_on_event(event_ptr: *const u8, event_len: usize) { /* handle event */ }
+
+#[no_mangle]
+pub extern &quot;C&quot; fn __tera_on_ui_action(action_ptr: *const u8, action_len: usize) { /* UI interaction */ }
+
+// Yêu cầu xác nhận (ACK) Webhook Ingress trong 500ms
+#[no_mangle]
+pub extern &quot;C&quot; fn on_webhook_received(
+    endpoint_id: u64, 
+    payload: *const u8, payload_len: usize, 
+    delivery_id: u64
+) -&gt; i32 { 
+    // Returns 0 = ACK, 1 = NACK (retry), 2 = REJECT (no retry)
+    0 
+}
+</code></pre>
+<hr />
+<h2 id="7-platform-matrix-constraints">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>📱 iOS</th>
+<th>📱 Android</th>
+<th>💻🖥️ Desktop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM Engine</td>
+<td>wasm3 (interpreter)</td>
+<td>wasmtime JIT</td>
+<td>wasmtime JIT</td>
+</tr>
+<tr>
+<td>JIT allowed</td>
+<td>❌ W^X</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Active RAM limit</td>
+<td>50MB</td>
+<td>50MB</td>
+<td>128MB</td>
+</tr>
+<tr>
+<td>Background RAM limit</td>
+<td>10MB</td>
+<td>10MB</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Background execution</td>
+<td>BGProcessingTask ≤ 30s</td>
+<td>Background Service</td>
+<td>Always-on</td>
+</tr>
+<tr>
+<td>Network from WASM</td>
+<td>❌ (Egress_Outbox only)</td>
+<td>❌ (Egress_Outbox only)</td>
+<td>❌ (Egress_Outbox only)</td>
+</tr>
+<tr>
+<td>XPC isolation</td>
+<td>✅ (XPC Service)</td>
+<td>✅ (isolated process)</td>
+<td>✅ (terachat-wasm-worker)</td>
+</tr>
+<tr>
+<td>SQLite Virtual Tables</td>
+<td>via Host ABI</td>
+<td>via Host ABI</td>
+<td>via Host ABI</td>
+</tr>
+<tr>
+<td>SIMD in WASM</td>
+<td>❌ disabled</td>
+<td>❌ disabled</td>
+<td>❌ disabled</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-non-functional-requirements-nfr">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Target</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM startup latency (wasm3/iOS)</td>
+<td>&lt; 200ms</td>
+<td>Cold start</td>
+</tr>
+<tr>
+<td>Host ABI crypto call overhead</td>
+<td>&lt; 20ms</td>
+<td>Per call</td>
+</tr>
+<tr>
+<td>Background tick total time</td>
+<td>&lt; 30s</td>
+<td>Hard limit</td>
+</tr>
+<tr>
+<td>Egress_Outbox write throughput</td>
+<td>&gt; 1MB/s</td>
+<td>.tapp write speed</td>
+</tr>
+<tr>
+<td>Event Bus routing latency</td>
+<td>&lt; 5ms per event</td>
+<td>Local only</td>
+</tr>
+<tr>
+<td>SQLite Virtual Table query</td>
+<td>&lt; 50ms</td>
+<td>Simple SELECT</td>
+</tr>
+<tr>
+<td>.tapp RAM limit enforcement</td>
+<td>Hard kill at 50MB</td>
+<td>Instant</td>
+</tr>
+<tr>
+<td>WasmParity CI gate</td>
+<td>100% test pass</td>
+<td>Both engines</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-security-threat-model">§9 — SECURITY &amp; THREAT MODEL</h2>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Vector</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sandbox escape via raw syscall</td>
+<td>WASM calls OS directly</td>
+<td>wasi-sockets stripped; Host ABI only</td>
+</tr>
+<tr>
+<td>Egress data exfiltration</td>
+<td>.tapp writes PII to Egress_Outbox</td>
+<td>OPA DLP check + BLAKE3 hash verify</td>
+</tr>
+<tr>
+<td>Inter-.tapp data leakage</td>
+<td>.tapp A reads .tapp B's Virtual Tables</td>
+<td>SQLite Virtual Tables isolated per app_id</td>
+</tr>
+<tr>
+<td>Privilege escalation via event bus</td>
+<td>Malicious .tapp publishes fake event type</td>
+<td>Rust Core verifies event_type vs Manifest capability list</td>
+</tr>
+<tr>
+<td>Memory spray into Rust Core</td>
+<td>WASM linear memory overflow</td>
+<td>Linear Memory Isolation: each instance isolated, overflow → SIGSEGV</td>
+</tr>
+<tr>
+<td>JIT spraying (iOS)</td>
+<td>Attacker triggers JIT code injection</td>
+<td>wasm3 interpreter only on iOS; no JIT pages</td>
+</tr>
+<tr>
+<td>Manifest tampering</td>
+<td>Attacker modifies sha256/capabilities</td>
+<td>Ed25519 signature from Developer Key verified before load (TERA-ECO)</td>
+</tr>
+<tr>
+<td>Background RAM abuse</td>
+<td>.tapp allocates &gt;10MB in background</td>
+<td>Hard kill by Rust Core memory monitor</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-failure-model-recovery">§10 — FAILURE MODEL &amp; RECOVERY</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM crash during execution</td>
+<td>SIGSEGV / OOM signal</td>
+<td><code>WasmSandboxTerminated</code> signal; journal rollback; .tapp state preserved in cold_state.db</td>
+</tr>
+<tr>
+<td>XPC child crash (macOS)</td>
+<td>XPC connection died</td>
+<td><code>XpcTransactionJournal</code> replay; PENDING → rollback if no COMMITTED</td>
+</tr>
+<tr>
+<td>Egress_Outbox size overflow (&gt;2MB)</td>
+<td>Size check before write</td>
+<td>Outbox sealed; .tapp terminated; admin notified</td>
+</tr>
+<tr>
+<td>Background tick timeout</td>
+<td>Timer expired</td>
+<td>Rust Core force-kills WASM; logs <code>BackgroundTickTimeout</code></td>
+</tr>
+<tr>
+<td>Host ABI crypto failure</td>
+<td>Error code returned</td>
+<td>.tapp receives error code; must handle gracefully (no crash)</td>
+</tr>
+<tr>
+<td>SQLite Virtual Table migration fail</td>
+<td>Version mismatch</td>
+<td>Rust Core: rollback to previous schema; .tapp blocked until migration fixed</td>
+</tr>
+<tr>
+<td>Event Bus subscriber crash</td>
+<td>WASM crash during <code>__tera_on_event</code></td>
+<td>Event dropped; retry policy per event_type (configured in manifest)</td>
+</tr>
+<tr>
+<td>wasm3 vs wasmtime output diverge</td>
+<td>WasmParity CI gate fails</td>
+<td>Block merge; fix before release</td>
+</tr>
+</tbody>
+</table>
+<h2 id="11-architectural-invariants-audit-resolutions-wasm-runtime">§11 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (WASM RUNTIME)</h2>
+<h3 id="111-wasm-heap-vs-app-suite-data-volume">11.1 WASM Heap vs. App Suite Data Volume</h3>
+<p><strong>Constraint:</strong> The WASM linear memory poses a hard <code>&lt;64MB</code> ceiling. A single Finance tapp loading 50,000 encrypted records will exhaust the heap.
+<strong>Resolution:</strong> Tapp Data Namespace I/O must strictly be separated from the WASM heap. All database access must utilize the <code>host_db_query</code> function via a <strong>streaming cursor protocol</strong>, enforcing a <code>PAGE_SIZE = 500</code> contract at the ABI level. Complete result sets must never be materialized entirely into memory.</p>
+<h3 id="112-inbound-webhook-egress-circuit-breaker">11.2 Inbound Webhook + Egress Circuit Breaker</h3>
+<p><strong>Constraint:</strong> A global circuit breaker penalizes a tapp globally, making independent channels vulnerable to single-point lockouts.
+<strong>Resolution:</strong> Circuit breakers must be scoped <strong>per egress endpoint declaration</strong>. Inbound webhook handling (<code>host_webhook_deliver</code>) must execute on an isolated code path with an independent budget, preventing egress violations from crippling inbound delivery.</p>
+<h3 id="113-wasmparity-gate-vs-app-suite-float-logic">11.3 WasmParity Gate vs. App Suite Float Logic</h3>
+<p><strong>Constraint:</strong> Platform floating-point semantics diverge (e.g., <code>wasm3</code> vs. <code>wasmtime</code>), leading to compliance-breaking drift in financial calculations over long life-cycles.
+<strong>Resolution:</strong> All financial math must utilize <strong>fixed-point arithmetic</strong> (<code>i64</code> with up to 4 decimal places). Floating-point math is restricted solely to non-critical logic (e.g., probability scoring). The tapp manifest must explicitly declare <code>"arithmetic_mode": "fixed_point"</code>.</p>
+<h3 id="114-host-abi-gaps-cursor-protocol">11.4 Host ABI Gaps (Cursor Protocol)</h3>
+<p><strong>Constraint:</strong> Existing definitions lack clear signatures for <code>host_db_query</code> cursor flows, risking OOM and boundary leaks.
+<strong>Resolution:</strong> Defined streaming API:
+- <code>host_db_query(...) -&gt; cursor_id: u64</code>
+- <code>host_db_cursor_next(cursor_id, ...) -&gt; i32</code>
+- <code>host_db_cursor_close(cursor_id) -&gt; i32</code>
+Params must be serialized as <code>MessagePack</code>. Error codes must align with <code>host_egress_write</code>.</p>
+<h3 id="115-inbound-webhook-delivery-guarantee">11.5 Inbound Webhook Delivery Guarantee</h3>
+<p><strong>Constraint:</strong> Webhooks arriving while the tapp is suspended lack defined retry and acknowledgement semantics.
+<strong>Resolution:</strong> Introduced <code>on_webhook_received(endpoint_id, payload_ptr, len, delivery_id) -&gt; i32</code>. Webhook payloads (governed by <code>max_payload_bytes</code> up to 64KB) are buffered in <code>hot_dag.db</code> with a 5-minute TTL during tapp suspension. The tapp must ACK within 500ms or trigger an automatic retry sequence (up to 3 attempts).</p>
+<h3 id="116-tapp-storage-quota-enforcement-timing">11.6 Tapp Storage Quota Enforcement Timing</h3>
+<p><strong>Constraint:</strong> Asynchronous quota enforcement enables mid-transaction overflow vulnerabilities.
+<strong>Resolution:</strong> Enforcement must be <strong>synchronous at the write path</strong> (<code>host_db_query</code>). A hard ceiling (<code>max_storage_mb: 256</code>) is enforced prior to SQL transaction commit. Violations immediately return <code>ERR_STORAGE_QUOTA_EXCEEDED</code> (-5). Tapps must handle their own eviction strategies; the host will never auto-evict data.</p>
+<h3 id="117-strict-engineering-guardrails-runtime-contracts">11.7 Strict Engineering Guardrails (Runtime Contracts)</h3>
+<ul>
+<li><strong>Rule 1 (Typed FFI Boundary):</strong> The WASM boundary is a strict typed contract. Do not pass unstructured bytes. Use MessagePack with declared schema versions. New host functions must be defined in the ABI specification accompanied by WasmParity test vectors.</li>
+<li><strong>Rule 3 (No Float in Finance):</strong> <code>f32/f64</code> primitives are categorically forbidden for financial parameters. Fixed-point is mandatory.</li>
+<li><strong>Rule 7 (Migration Contract):</strong> Every schema update necessitates a defined migration path within the manifest (<code>schema_version</code>, <code>migrations</code>). Unmigrated tapps will fail to launch, emitting <code>CoreSignal::ComponentFault</code>.</li>
+</ul>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

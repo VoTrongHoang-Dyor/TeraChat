@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#spec_dual_sync_and_local_storagemd-terachat-enterprise-platform" class="nav-link" style="">Spec-Dual-Sync-And-Local-Storage.md — TeraChat Enterprise Platform</a>
+<a href="#1-executive-summary-trust-boundaries" class="nav-link" style="padding-left:0.8rem;">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</a>
+<a href="#11-muc-tieu-trach-nhiem" class="nav-link" style="padding-left:1.6rem;">1.1 Mục tiêu &amp; Trách nhiệm</a>
+<a href="#12-van-e-cot-loi-su-chuyen-dich-lon-nhat" class="nav-link" style="padding-left:1.6rem;">1.2 Vấn đề cốt lõi: Sự chuyển dịch lớn nhất</a>
+<a href="#13-trust-boundaries" class="nav-link" style="padding-left:1.6rem;">1.3 Trust Boundaries</a>
+<a href="#2-system-architecture" class="nav-link" style="padding-left:0.8rem;">§2 — SYSTEM ARCHITECTURE</a>
+<a href="#21-dual-sync-architecture-overview" class="nav-link" style="padding-left:1.6rem;">2.1 Dual-Sync Architecture Overview</a>
+<a href="#22-sqlite-wal-architecture" class="nav-link" style="padding-left:1.6rem;">2.2 SQLite WAL Architecture</a>
+<a href="#23-blob-file-storage-pipeline" class="nav-link" style="padding-left:1.6rem;">2.3 Blob &amp; File Storage Pipeline</a>
+<a href="#3-data-model-encryption-state" class="nav-link" style="padding-left:0.8rem;">§3 — DATA MODEL &amp; ENCRYPTION STATE</a>
+<a href="#31-domain-dag-state-objects" class="nav-link" style="padding-left:1.6rem;">3.1 Domain: DAG State Objects</a>
+<a href="#32-domain-app-state-objects-relational-encrypted-moi" class="nav-link" style="padding-left:1.6rem;">3.2 Domain: App State Objects (Relational Encrypted — MỚI)</a>
+<a href="#33-domain-blobfile-objects" class="nav-link" style="padding-left:1.6rem;">3.3 Domain: Blob/File Objects</a>
+<a href="#34-domain-search-index-objects" class="nav-link" style="padding-left:1.6rem;">3.4 Domain: Search Index Objects</a>
+<a href="#4-protocol-execution-contract" class="nav-link" style="padding-left:0.8rem;">§4 — PROTOCOL &amp; EXECUTION CONTRACT</a>
+<a href="#41-crdt-message-sync-protocol" class="nav-link" style="padding-left:1.6rem;">4.1 CRDT Message Sync Protocol</a>
+<a href="#42-app-state-sync-protocol-relational-moi" class="nav-link" style="padding-left:1.6rem;">4.2 App State Sync Protocol (Relational — MỚI)</a>
+<a href="#43-file-blob-sync-protocol" class="nav-link" style="padding-left:1.6rem;">4.3 File Blob Sync Protocol</a>
+<a href="#44-smart-inbox-threading-sub-dag-model" class="nav-link" style="padding-left:1.6rem;">4.4 Smart Inbox &amp; Threading (Sub-DAG model)</a>
+<a href="#45-search-strategy" class="nav-link" style="padding-left:1.6rem;">4.5 Search Strategy</a>
+<a href="#46-tombstone-vacuum-policy" class="nav-link" style="padding-left:1.6rem;">4.6 Tombstone Vacuum Policy</a>
+<a href="#5-state-machine" class="nav-link" style="padding-left:0.8rem;">§5 — STATE MACHINE</a>
+<a href="#51-crdt-sync-state" class="nav-link" style="padding-left:1.6rem;">5.1 CRDT Sync State</a>
+<a href="#52-file-sync-state" class="nav-link" style="padding-left:1.6rem;">5.2 File Sync State</a>
+<a href="#6-api-ipc-event-bus" class="nav-link" style="padding-left:0.8rem;">§6 — API / IPC / EVENT BUS</a>
+<a href="#61-storage-signals" class="nav-link" style="padding-left:1.6rem;">6.1 Storage Signals</a>
+<a href="#62-api-surface-for-wasm-tapp-via-host-abi-only" class="nav-link" style="padding-left:1.6rem;">6.2 API Surface for WASM (.tapp) — via Host ABI only</a>
+<a href="#7-platform-matrix-constraints" class="nav-link" style="padding-left:0.8rem;">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</a>
+<a href="#8-non-functional-requirements-nfr" class="nav-link" style="padding-left:0.8rem;">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</a>
+<a href="#9-security-threat-model" class="nav-link" style="padding-left:0.8rem;">§9 — SECURITY &amp; THREAT MODEL</a>
+<a href="#10-failure-model-recovery" class="nav-link" style="padding-left:0.8rem;">§10 — FAILURE MODEL &amp; RECOVERY</a>
+<a href="#8-architectural-invariants-audit-resolutions-sync-storage" class="nav-link" style="padding-left:0.8rem;">§8 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (SYNC &amp; STORAGE)</a>
+<a href="#81-emdp-app-suite-transactional-integrity" class="nav-link" style="padding-left:1.6rem;">8.1 EMDP + App Suite Transactional Integrity</a>
+<a href="#82-crdt_event-content_type-extensibility" class="nav-link" style="padding-left:1.6rem;">8.2 CRDT_Event content_type Extensibility</a>
+<a href="#83-strict-engineering-guardrails-dag-immutability" class="nav-link" style="padding-left:1.6rem;">8.3 Strict Engineering Guardrails (DAG Immutability)</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="spec_dual_sync_and_local_storagemd-terachat-enterprise-platform">Spec-Dual-Sync-And-Local-Storage.md — TeraChat Enterprise Platform</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-SYNC&quot;
+title: &quot;TeraChat — Dual-Sync Architecture &amp; Local Storage Specification&quot;
+version: &quot;1.0.0&quot;
+status: &quot;ACTIVE&quot;
+audience: &quot;System Architect, Backend Engineer, Rust Core Dev&quot;
+purpose: &quot;Đặc tả kiến trúc lưu trữ và đồng bộ hóa hai tầng: Message Sync Plane (CRDT DAG) và App State Sync Plane (Relational Encrypted). Giải quyết điểm nghẽn chí mạng nhất của TeraChat khi scale lên Enterprise Platform.&quot;
+depends_on: [&quot;TERA-CORE&quot;]
+constraints_global:
+  - &quot;CRDT DAG chỉ dùng cho Chat, Collaborative Text, Presence — KHÔNG dùng cho Finance/HR&quot;
+  - &quot;App State Sync Plane dùng Vector-Clock Relational Sync cho structured data&quot;
+  - &quot;ZeroizeOnDrop bắt buộc cho mọi key material trong storage&quot;
+  - &quot;Mọi thay đổi schema DB phải backward-compatible với WAL replay&quot;
+  - &quot;Tombstone Vacuum bắt buộc — không để CRDT DB phình to vĩnh viễn&quot;
+
+</code></pre>
+<blockquote>
+<p><strong>Status:</strong> <code>ACTIVE — Implementation Reference</code>
+<strong>Audience:</strong> Backend Engineer · Rust Core Dev · System Architect
+<strong>Last Updated:</strong> 2026-03-29
+<strong>Depends On:</strong> → TERA-CORE
+<strong>Consumed By:</strong> → TERA-RUNTIME · → TERA-ENCLAVE · → TERA-CLIENT</p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary-trust-boundaries">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</h2>
+<h3 id="11-muc-tieu-trach-nhiem">1.1 Mục tiêu &amp; Trách nhiệm</h3>
+<p>File này <strong>chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>Kiến trúc dual-sync: Message Plane (CRDT) vs App State Plane (Relational)</li>
+<li>SQLite WAL hai tầng (<code>hot_dag.db</code> và <code>cold_state.db</code>)</li>
+<li>Blob/File storage (BLAKE3 CAS + AES-256-GCM chunks)</li>
+<li>Blind RAG local vector indexing</li>
+<li>Tombstone Vacuum &amp; State Pruning</li>
+<li>Smart Inbox threading (sub-DAG model)</li>
+<li>Cross-device app state sync (delta-sync cho structured data)</li>
+</ul>
+<p>File này <strong>KHÔNG chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>Crypto primitives → <code>TERA-CORE</code></li>
+<li>WASM sandbox execution → <code>TERA-RUNTIME</code></li>
+<li>AI inference &amp; Enclave → <code>TERA-ENCLAVE</code></li>
+<li>UI rendering → <code>TERA-CLIENT</code></li>
+</ul>
+<h3 id="12-van-e-cot-loi-su-chuyen-dich-lon-nhat">1.2 Vấn đề cốt lõi: Sự chuyển dịch lớn nhất</h3>
+<blockquote>
+<p><strong>CRDT (Eventual Consistency) tuyệt vời cho chat, nhưng thảm họa cho dữ liệu tài chính/kho bãi (cần Strong Consistency).</strong></p>
+</blockquote>
+<p>TeraChat hiện tại ép mọi thứ vào <code>hot_dag.db</code> (Append-only CRDT). File này định nghĩa kiến trúc tách biệt hoàn toàn hai planes:</p>
+<table>
+<thead>
+<tr>
+<th>Plane</th>
+<th>Engine</th>
+<th>Use case</th>
+<th>Consistency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Message Sync Plane</strong></td>
+<td>CRDT DAG (<code>hot_dag.db</code>)</td>
+<td>Chat, Presence, Threads</td>
+<td>Eventual</td>
+</tr>
+<tr>
+<td><strong>App State Sync Plane</strong></td>
+<td>Vector-Clock Relational</td>
+<td>CRM, Tasks, structured data</td>
+<td>Strong</td>
+</tr>
+<tr>
+<td><strong>File/Blob Sync Plane</strong></td>
+<td>BLAKE3 CAS + chunks</td>
+<td>Media, documents</td>
+<td>Content-addressed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-trust-boundaries">1.3 Trust Boundaries</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Bên trong tin tưởng</th>
+<th>Bên ngoài không tin tưởng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hot_dag.db</code> (SQLCipher)</td>
+<td>CRDT events, message state</td>
+<td>Raw disk, OS</td>
+</tr>
+<tr>
+<td><code>cold_state.db</code> (SQLCipher)</td>
+<td>Structured app data</td>
+<td>WASM sandbox directly</td>
+</tr>
+<tr>
+<td>App State Sync Plane</td>
+<td>Delta-sync transactions</td>
+<td>Other tenants</td>
+</tr>
+<tr>
+<td>Blob CAS Storage</td>
+<td>Content-hashed chunks</td>
+<td>File metadata</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-system-architecture">§2 — SYSTEM ARCHITECTURE</h2>
+<h3 id="21-dual-sync-architecture-overview">2.1 Dual-Sync Architecture Overview</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT DEVICE                             │
+│                                                              │
+│  ┌─────────────────────────┐  ┌────────────────────────────┐│
+│  │  MESSAGE SYNC PLANE     │  │  APP STATE SYNC PLANE      ││
+│  │  (CRDT DAG)             │  │  (Relational Encrypted)    ││
+│  │                         │  │                            ││
+│  │  hot_dag.db (SQLCipher) │  │  cold_state.db (SQLCipher) ││
+│  │  ├─ CRDT_Events         │  │  ├─ .tapp row-level data   ││
+│  │  ├─ HLC_Timestamps      │  │  ├─ CRM records            ││
+│  │  ├─ Tombstone_Stubs     │  │  ├─ Task state             ││
+│  │  └─ Thread sub-DAGs     │  │  └─ Structured metadata    ││
+│  └─────────────────────────┘  └────────────────────────────┘│
+│                                                              │
+│  ┌──────────────────────────────────────────────────────────┐│
+│  │  FILE/BLOB SYNC PLANE                                    ││
+│  │  BLAKE3 CAS + AES-256-GCM 2MB chunks                    ││
+│  │  NAS / MinIO (content-addressed, blind storage)          ││
+│  └──────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+        │ CRDT Gossip          │ Delta-State Push        │ Chunk sync
+        ▼                      ▼                         ▼
+[Mesh Peers]           [Relay VPS (blind)]         [NAS/MinIO]
+</code></pre>
+<h3 id="22-sqlite-wal-architecture">2.2 SQLite WAL Architecture</h3>
+<p><strong>Hai tầng DB chính:</strong></p>
+<pre><code class="language-text">hot_dag.db  — Append-only CRDT DAG
+  WAL mode ON
+  SQLCipher AES-256
+  wal_autocheckpoint = 1000
+  Purpose: Chat events, MLS epoch ratchet, tombstones, mesh sync
+
+cold_state.db — Relational Encrypted App State
+  WAL mode ON
+  SQLCipher AES-256
+  Row-level encryption (DEK per tenant)
+  Purpose: CRM, Tasks, structured .tapp data, pin/tag metadata
+</code></pre>
+<h3 id="23-blob-file-storage-pipeline">2.3 Blob &amp; File Storage Pipeline</h3>
+<pre><code class="language-text">[File Upload]
+     │
+     ├── Chunker (2MB chunks, BLAKE3 CAS hash per chunk)
+     ├── AES-256-GCM encrypt each chunk (ChunkKey per file)
+     ├── Upload to MinIO/NAS via blind CAS path
+     └── Store Zero-Byte Stub in hot_dag.db
+              │
+              │ (file_name, cas_hash, encrypted_thumbnail, storage_ref)
+
+[File Download]
+     │
+     ├── Fetch encrypted chunks from MinIO/NAS
+     ├── Decrypt chunks sequentially (ChunkKey)
+     └── Stream via Local Decryption Proxy (127.0.0.1)
+</code></pre>
+<hr />
+<h2 id="3-data-model-encryption-state">§3 — DATA MODEL &amp; ENCRYPTION STATE</h2>
+<h3 id="31-domain-dag-state-objects">3.1 Domain: DAG State Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CRDT_Event</code></td>
+<td>Typed append-only log entry</td>
+<td><code>hot_dag.db</code> (WAL)</td>
+<td>Permanent (Append-Only)</td>
+<td>Ed25519 signed per event</td>
+</tr>
+<tr>
+<td><code>HLC_Timestamp</code></td>
+<td><code>{wall_clock, logical_counter}</code></td>
+<td>Embedded in every Event</td>
+<td>Attached to event, immutable</td>
+<td>No SystemTime::now() — use HLC</td>
+</tr>
+<tr>
+<td><code>Tombstone_Stub</code></td>
+<td><code>{entity_id, hlc, type=DELETED}</code></td>
+<td><code>cold_state.db</code></td>
+<td>Permanent (never physically deleted)</td>
+<td>Luật 4: Immutable CRDT Rules</td>
+</tr>
+<tr>
+<td><code>Proof_Bundle</code></td>
+<td><code>{Ed25519_Sig, HLC, Evidence}</code></td>
+<td>Encrypted broadcast</td>
+<td>Until dispute resolved</td>
+<td>Hardware-bound non-repudiation</td>
+</tr>
+<tr>
+<td><code>AppendBlock</code></td>
+<td><code>{id, content, timestamp, device_sig}</code></td>
+<td>RAM / <code>hot_dag.db</code></td>
+<td>Pending until Desktop reconcile</td>
+<td>Ed25519 signed; Optimistic mode</td>
+</tr>
+<tr>
+<td><code>Hash_Frontier</code></td>
+<td><code>{Vector_Clock, Root_Hash}</code></td>
+<td><code>hot_dag.db</code></td>
+<td>Updated on every Gossip round</td>
+<td>BLAKE3 integrity</td>
+</tr>
+<tr>
+<td><code>Hydration_Checkpoint</code></td>
+<td><code>{Snapshot_CAS_UUID, last_chunk_index}</code></td>
+<td><code>hot_dag.db</code></td>
+<td>Overwritten on each successful chunk</td>
+<td>Atomic pre-write before batch</td>
+</tr>
+<tr>
+<td><code>Tapp_Extensibility_Payload</code></td>
+<td><code>Option&lt;Vec&lt;u8&gt;&gt;</code></td>
+<td>Inside <code>CRDT_Event</code></td>
+<td>Cùng event life</td>
+<td>Message Event có thể đính kèm dữ liệu từ Tapp (ví dụ: Task Card đính kèm vào tin nhắn)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-domain-app-state-objects-relational-encrypted-moi">3.2 Domain: App State Objects (Relational Encrypted — MỚI)</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AppStateRow</code></td>
+<td>Row-level encrypted record</td>
+<td><code>cold_state.db</code></td>
+<td>Mutable with vector-clock</td>
+<td>DEK per tenant, AES-256-GCM</td>
+</tr>
+<tr>
+<td><code>VectorClock</code></td>
+<td><code>HashMap&lt;DeviceId, u64&gt;</code></td>
+<td>Embedded in AppStateRow</td>
+<td>Monotonically increasing</td>
+<td>Merge on conflict via last-write-wins with clock</td>
+</tr>
+<tr>
+<td><code>DeltaPatch</code></td>
+<td><code>{row_id, field_changes, vector_clock, author}</code></td>
+<td>In-flight (encrypted)</td>
+<td>Ephemeral; applied on receipt</td>
+<td>Ed25519 signed</td>
+</tr>
+<tr>
+<td><code>ConflictMarker</code></td>
+<td><code>{row_id, conflict_clock, candidates}</code></td>
+<td><code>cold_state.db</code></td>
+<td>Until user resolves</td>
+<td>Requires explicit resolution for financial data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-domain-blobfile-objects">3.3 Domain: Blob/File Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FileChunk</code></td>
+<td>AES-256-GCM ciphertext, 2MB</td>
+<td>NAS / MinIO (CAS path)</td>
+<td>Permanent until file deleted</td>
+<td>BLAKE3 content hash</td>
+</tr>
+<tr>
+<td><code>ZeroByteStub</code></td>
+<td><code>{file_name, cas_hash, encrypted_thumbnail, storage_ref}</code></td>
+<td><code>hot_dag.db</code></td>
+<td>Lifetime of file</td>
+<td>Lưu trong DAG, không expose file content</td>
+</tr>
+<tr>
+<td><code>ChunkManifest</code></td>
+<td><code>{chunk_hashes[], total_size, encryption_header}</code></td>
+<td>In-flight + <code>cold_state.db</code></td>
+<td>Per file</td>
+<td>Ed25519 signed by uploader</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-domain-search-index-objects">3.4 Domain: Search Index Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Scope</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FTS5Index</code></td>
+<td>SQLite FTS5</td>
+<td><code>hot_dag.db</code> local</td>
+<td>Last 30 days of chat</td>
+<td>Plain text (under SQLCipher)</td>
+</tr>
+<tr>
+<td><code>BlindVectorIndex</code></td>
+<td>Encrypted vector embeddings</td>
+<td>NAS / VPS Enclave</td>
+<td>Documents &amp; long-term</td>
+<td>Blind RAG — server sees only vectors, not content</td>
+</tr>
+<tr>
+<td><code>SearchableEncryptedField</code></td>
+<td>AES-SIV deterministic encrypted</td>
+<td><code>cold_state.db</code></td>
+<td>CRM/App structured fields</td>
+<td>Allows exact-match lookup without decryption</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-protocol-execution-contract">§4 — PROTOCOL &amp; EXECUTION CONTRACT</h2>
+<h3 id="41-crdt-message-sync-protocol">4.1 CRDT Message Sync Protocol</h3>
+<p><strong>Gossip Round:</strong></p>
+<pre><code class="language-text">[Device A] ──sends Hash_Frontier──&gt; [Device B]
+                                          │
+                              Compare with local frontier
+                                          │
+                         ┌────────────────┴────────────────┐
+                         │ Frontier diverged                │ In sync
+                         ▼                                  ▼
+               Send missing CRDT_Events            No-op (ack)
+                         │
+               Merge + apply to hot_dag.db
+                         │
+               Update Hash_Frontier
+</code></pre>
+<p><strong>Conflict Resolution &amp; Integrity Rules (CRDT):</strong></p>
+<ul>
+<li><strong>LWW (Last Write Wins):</strong> Text/presence data phân giải theo HLC timestamp.</li>
+<li><strong>Sub-DAG Lazy-loading:</strong> Thread merges thông qua việc đính kèm <code>reply_to_id</code>. Chỉ load khi mở Thread.</li>
+<li><strong>Luật 4 (Immutable CRDT Rules):</strong> Tombstone_Stub là bất biến và lưu mãi mãi (cho tới khi Vacuum). Mọi thao tác chỉnh sửa CRDT Event đã kí Hash là bị cấm. Nếu sửa, Hash thay đổi -&gt; Event Mới. Suy ra App State Sync cũng phải chạy theo Immutable Event Sourcing nếu liên kết dữ liệu với <code>Tapp_Extensibility_Payload</code>.</li>
+<li><strong>EMDP Tainted Events (Enterprise Mesh Data Protection):</strong> </li>
+<li>Do Tapp có thể đính kèm payload tuỳ ý vào lưới chat qua <code>Tapp_Extensibility_Payload</code>.</li>
+<li>Nếu Mesh Sync node phát hiện Event chứa Tapp Payload vượt quá DataGrant, vi phạm Schema, hoặc size quá khổ -&gt; Event đó sẽ bị flag là <strong><code>Tainted</code></strong>.</li>
+<li>Node nội hạt (LAN/Mesh) nhận được event <code>Tainted</code> sẽ filter bỏ đi payload độc hại, bảo vệ các node xung quanh khỏi lỗi dây chuyền, nhưng vẫn giữ nguyên vẹn core Message Text để không đứt chuỗi DAG.</li>
+</ul>
+<h3 id="42-app-state-sync-protocol-relational-moi">4.2 App State Sync Protocol (Relational — MỚI)</h3>
+<p><strong>Delta-Sync Flow:</strong></p>
+<pre><code class="language-text">[Device A modifies AppStateRow]
+     │
+     ├── Increment VectorClock[device_A]
+     ├── Create DeltaPatch (field_changes + new vector_clock)
+     ├── Ed25519 sign DeltaPatch
+     └── Push to relay (encrypted)
+
+[Device B receives DeltaPatch]
+     │
+     ├── Verify Ed25519 signature
+     ├── Compare VectorClocks
+     │     ├── No conflict → apply patch
+     │     └── Conflict detected → mark ConflictMarker
+     │                           ── notify user if financial data
+     └── Update local cold_state.db
+</code></pre>
+<p><strong>Conflict Resolution (Relational):</strong></p>
+<ul>
+<li>Non-financial data: LWW by vector clock.</li>
+<li>Financial data: <strong>NEVER auto-merge.</strong> ConflictMarker persistent until explicit resolution.</li>
+<li>HR data: Server Enclave as Single Source of Truth (see TERA-ENCLAVE).</li>
+</ul>
+<h3 id="43-file-blob-sync-protocol">4.3 File Blob Sync Protocol</h3>
+<ol>
+<li>Chunker splits file into 2MB chunks, computes BLAKE3 hash per chunk.</li>
+<li>Each chunk encrypted with <code>ChunkKey</code> (AES-256-GCM, ephemeral per file).</li>
+<li>Chunks uploaded to MinIO/NAS via CAS path (<code>/cas/&lt;BLAKE3_hash&gt;</code>).</li>
+<li><code>ZeroByteStub</code> stored in <code>hot_dag.db</code> as CRDT event.</li>
+<li>Recipients receive Stub in message sync, download chunks on-demand.</li>
+</ol>
+<h3 id="44-smart-inbox-threading-sub-dag-model">4.4 Smart Inbox &amp; Threading (Sub-DAG model)</h3>
+<p><strong>Thread Model:</strong></p>
+<ul>
+<li>Threads modeled as sub-DAG branches off main message DAG.</li>
+<li><code>reply_to_id</code> links child messages to parent.</li>
+<li>Mobile: lazy-load thread contents; only load thread root in Smart Inbox.</li>
+<li>Pin/Tags stored as metadata overlay in <code>cold_state.db</code> — NOT in main DAG.</li>
+</ul>
+<h3 id="45-search-strategy">4.5 Search Strategy</h3>
+<table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Engine</th>
+<th>Scope</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chat text (&lt; 30 days)</td>
+<td>SQLite FTS5 (local)</td>
+<td>On-device only</td>
+<td>Fast, private</td>
+</tr>
+<tr>
+<td>Chat text (&gt; 30 days)</td>
+<td>Blind Vector Search</td>
+<td>VPS/NAS Enclave</td>
+<td>Data stays encrypted</td>
+</tr>
+<tr>
+<td>App/CRM fields</td>
+<td>Searchable Symmetric Encryption (AES-SIV)</td>
+<td>Server-side exact match</td>
+<td>Server sees hash, not data</td>
+</tr>
+<tr>
+<td>Documents/PDFs</td>
+<td>Blind RAG (vector embeddings)</td>
+<td>VPS/NAS Enclave</td>
+<td>Used by AI for context</td>
+</tr>
+</tbody>
+</table>
+<h3 id="46-tombstone-vacuum-policy">4.6 Tombstone Vacuum Policy</h3>
+<ul>
+<li>Vacuum trigger: <code>hot_dag.db</code> WAL size &gt; 500MB OR weekly schedule.</li>
+<li>Eligible for vacuum: Tombstone_Stubs older than 365 days with no legal hold flag.</li>
+<li>Vacuum log: Append to append-only <code>Audit_Log_Entry</code> with Ed25519 signature.</li>
+<li>Mobile: Vacuum during charging + Wi-Fi only window.</li>
+</ul>
+<hr />
+<h2 id="5-state-machine">§5 — STATE MACHINE</h2>
+<h3 id="51-crdt-sync-state">5.1 CRDT Sync State</h3>
+<pre><code class="language-text">[ONLINE] ──sync complete──&gt; [IN_SYNC]
+    │                           │
+    │ network drops             │ CRDT event received
+    ▼                           ▼
+[OFFLINE_QUEUE]          [MERGING]
+    │                           │
+    │ reconnect                 │ merge complete
+    ▼                           ▼
+[REPLAY_DELTA]           [IN_SYNC]
+    │
+    │ replay complete
+    ▼
+[IN_SYNC]
+</code></pre>
+<h3 id="52-file-sync-state">5.2 File Sync State</h3>
+<pre><code class="language-text">[PENDING_UPLOAD]
+     │ chunk 1 of N uploaded
+     ▼
+[UPLOADING (chunk n/N)]
+     │ error
+     ├──&gt; [RETRY_CHUNK (Hydration_Checkpoint stored)]
+     │ all chunks done
+     ▼
+[STUB_PUBLISHED]
+     │ recipient requests download
+     ▼
+[DOWNLOADING]
+     │ streaming via local proxy
+     ▼
+[AVAILABLE_LOCAL]
+</code></pre>
+<hr />
+<h2 id="6-api-ipc-event-bus">§6 — API / IPC / EVENT BUS</h2>
+<h3 id="61-storage-signals">6.1 Storage Signals</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Trigger</th>
+<th>Consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StateChanged(table, version)</code></td>
+<td>Any write to hot_dag.db or cold_state.db</td>
+<td>TERA-CLIENT (pull snapshot)</td>
+</tr>
+<tr>
+<td><code>DagVacuumTriggered(size_before_mb, size_after_mb)</code></td>
+<td>Tombstone vacuum completed</td>
+<td>TERA-GOV (audit log)</td>
+</tr>
+<tr>
+<td><code>ConflictDetected(row_id, table)</code></td>
+<td>Vector clock conflict in App State</td>
+<td>TERA-CLIENT (notify user)</td>
+</tr>
+<tr>
+<td><code>ChunkUploadProgress(file_id, chunk_n, total_n)</code></td>
+<td>Chunk uploaded</td>
+<td>TERA-CLIENT (progress bar)</td>
+</tr>
+<tr>
+<td><code>SearchIndexUpdated(scope)</code></td>
+<td>FTS5 index rebuilt</td>
+<td>TERA-CLIENT</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-api-surface-for-wasm-tapp-via-host-abi-only">6.2 API Surface for WASM (.tapp) — via Host ABI only</h3>
+<pre><code class="language-rust">// .tapp may NOT directly access hot_dag.db or cold_state.db
+// All access goes through Rust Core Host Functions:
+
+extern &quot;C&quot; {
+    // Query structured app data (sanitized SQL, no joins across tenants)
+    fn host_app_state_query(sql_ptr: *const u8, sql_len: usize, out_ptr: *mut u8) -&gt; i32;
+
+    // Write delta patch to App State Sync Plane
+    fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -&gt; i32;
+
+    // Request blob download (returns local proxy URL)
+    fn host_blob_request(cas_hash_ptr: *const u8) -&gt; i32;
+}
+</code></pre>
+<hr />
+<h2 id="7-platform-matrix-constraints">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</h2>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>📱 iOS</th>
+<th>📱 Android</th>
+<th>💻🖥️ Desktop</th>
+<th>☁️ VPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB location</td>
+<td>App sandbox only</td>
+<td>App sandbox</td>
+<td>User data dir</td>
+<td>/data/terachat/</td>
+</tr>
+<tr>
+<td>WAL max size</td>
+<td>200MB (Jetsam risk)</td>
+<td>500MB</td>
+<td>2GB</td>
+<td>10GB</td>
+</tr>
+<tr>
+<td>Background vacuum</td>
+<td>Charging + Wi-Fi window only</td>
+<td>Background service</td>
+<td>Scheduled task</td>
+<td>Cron job</td>
+</tr>
+<tr>
+<td>FTS5 index max</td>
+<td>30 days rolling</td>
+<td>30 days rolling</td>
+<td>Unlimited</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Chunk size</td>
+<td>2MB (memory constraint)</td>
+<td>2MB</td>
+<td>2MB</td>
+<td>2MB</td>
+</tr>
+<tr>
+<td>Blob sync background</td>
+<td>❌ (Jetsam)</td>
+<td>✅ limited</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>App State WASM access</td>
+<td>Via Host ABI only</td>
+<td>Via Host ABI only</td>
+<td>Via Host ABI only</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-non-functional-requirements-nfr">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Target</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRDT merge latency</td>
+<td>&lt; 100ms for 10k events</td>
+<td>P95, mobile</td>
+</tr>
+<tr>
+<td>App State delta-sync</td>
+<td>&lt; 500ms round-trip</td>
+<td>Via relay</td>
+</tr>
+<tr>
+<td>FTS5 search response</td>
+<td>&lt; 50ms</td>
+<td>Last 30 days, local</td>
+</tr>
+<tr>
+<td>Blob chunk upload throughput</td>
+<td>&gt; 10MB/s</td>
+<td>On Wi-Fi</td>
+</tr>
+<tr>
+<td>hot_dag.db max size (mobile)</td>
+<td>&lt; 1GB before vacuum</td>
+<td>Trigger at 500MB</td>
+</tr>
+<tr>
+<td>Tombstone vacuum duration</td>
+<td>&lt; 30s</td>
+<td>Background window</td>
+</tr>
+<tr>
+<td>ConflictMarker resolution</td>
+<td>User-driven, no auto-merge for financial</td>
+<td>Manual only</td>
+</tr>
+<tr>
+<td>Schema migration</td>
+<td>Zero-downtime, backward-compatible</td>
+<td>WAL replay safe</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-security-threat-model">§9 — SECURITY &amp; THREAT MODEL</h2>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Vector</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB extraction from stolen device</td>
+<td>cold_state.db copied</td>
+<td>SQLCipher AES-256; key in Secure Enclave</td>
+</tr>
+<tr>
+<td>Split-brain financial data</td>
+<td>Network partition + CRDT merge</td>
+<td>Financial data NEVER in CRDT; Server Enclave only</td>
+</tr>
+<tr>
+<td>Search leaking data via pattern</td>
+<td>FTS5 index readable if DB decrypted</td>
+<td>FTS5 under SQLCipher; Blind Index for remote</td>
+</tr>
+<tr>
+<td>Blob replay attack</td>
+<td>Old chunk hash re-submitted</td>
+<td>CAS = content-addressed; duplicate chunk = same hash, ignored</td>
+</tr>
+<tr>
+<td>Tombstone evasion</td>
+<td>Attacker re-constructs deleted data</td>
+<td>Tombstones permanent; replayed events with deleted tombstone rejected</td>
+</tr>
+<tr>
+<td>DAG flooding via mesh</td>
+<td>Attacker pushes massive CRDT events</td>
+<td>Rate limit per device_id; malformed events rejected by Ed25519 verify</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-failure-model-recovery">§10 — FAILURE MODEL &amp; RECOVERY</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WAL corruption</td>
+<td><code>PRAGMA integrity_check</code> at startup</td>
+<td>Restore from last <code>Snapshot_CAS</code></td>
+</tr>
+<tr>
+<td>Chunk upload interrupted</td>
+<td><code>Hydration_Checkpoint</code> stores last chunk index</td>
+<td>Resume from checkpoint on next attempt</td>
+</tr>
+<tr>
+<td>App State conflict unresolved</td>
+<td><code>ConflictMarker</code> persists</td>
+<td>User notified; UI shows conflict resolution UI</td>
+</tr>
+<tr>
+<td>FTS5 index corruption</td>
+<td>FTS5 query returns error</td>
+<td>Drop and rebuild FTS5 index (background, non-blocking)</td>
+</tr>
+<tr>
+<td>cold_state.db schema migration fail</td>
+<td>Version mismatch on open</td>
+<td>Rollback to previous schema snapshot; alert admin</td>
+</tr>
+<tr>
+<td>Blob CAS hash mismatch</td>
+<td>BLAKE3 verify fail on download</td>
+<td>Discard chunk; re-download from source</td>
+</tr>
+<tr>
+<td>Jetsam kill during vacuum</td>
+<td>vacuum_in_progress flag not cleared</td>
+<td>On next startup: reset flag; re-trigger vacuum</td>
+</tr>
+<tr>
+<td>NAS unreachable</td>
+<td>Blob sync queued; local stub only</td>
+<td>Queue chunks in <code>Egress_Outbox</code>; retry on reconnect</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-architectural-invariants-audit-resolutions-sync-storage">§8 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (SYNC &amp; STORAGE)</h2>
+<h3 id="81-emdp-app-suite-transactional-integrity">8.1 EMDP + App Suite Transactional Integrity</h3>
+<p><strong>Constraint:</strong> Essential Text-Only operations produced under Enterprise Mesh Data Protection (EMDP) risk state corruption if blindly merged into financial logs following offline epoch rotations.
+<strong>Resolution:</strong> Disconnected transactions constructed mid-EMDP embed an <code>emdp_tainted: true</code> attribute payload within the <code>CRDT_Event</code>. Upon network restabilization, these events bypass automatic <code>cold_state.db</code> merges and populate an explicit Human-in-the-Loop review queue, ensuring financial sequence safety.</p>
+<h3 id="82-crdt_event-content_type-extensibility">8.2 CRDT_Event content_type Extensibility</h3>
+<p><strong>Constraint:</strong> An unversioned <code>content_type</code> paradigm triggers synchronization crashes when an older core encounters an unrecognized payload type.
+<strong>Resolution:</strong> <code>content_type</code> strings adopt strict namespacing (<code>namespace/type@version</code>). The Rust Core merge algorithm enforces <strong>unknown-type tolerance</strong>, persisting opaque versions identically into the DAG structure without evaluating payload semantics or halting the mesh sync protocol.</p>
+<h3 id="83-strict-engineering-guardrails-dag-immutability">8.3 Strict Engineering Guardrails (DAG Immutability)</h3>
+<ul>
+<li><strong>Rule 5 (Immutable Append-Only Events):</strong> Operations against the <code>hot_dag.db</code> are strictly append-only. No <code>UPDATE</code> or <code>DELETE</code> mutation is permitted under any circumstances. Removals or alterations must utilize Compensating Events with explicit causal <code>parent_id</code> bindings. CI verification actively blocks mutable DML against the ledger.</li>
+</ul>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

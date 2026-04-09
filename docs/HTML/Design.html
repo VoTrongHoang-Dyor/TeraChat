@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — Product Requirements Document</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>Product Requirements Document</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#designmd-terachat-design-system" class="nav-link" style="">Design.md — TeraChat Design System</a>
+<a href="#design-contract-non-negotiable-ui-rules" class="nav-link" style="">DESIGN CONTRACT — Non-Negotiable UI Rules</a>
+<a href="#visual-modes" class="nav-link" style="padding-left:1.6rem;">Visual Modes</a>
+<a href="#glassmorphism-spec" class="nav-link" style="padding-left:1.6rem;">Glassmorphism Spec</a>
+<a href="#typography" class="nav-link" style="padding-left:1.6rem;">Typography</a>
+<a href="#accent-colors" class="nav-link" style="padding-left:1.6rem;">Accent Colors</a>
+<a href="#layout-rule" class="nav-link" style="padding-left:1.6rem;">Layout Rule</a>
+<a href="#1-design-philosophy" class="nav-link" style="padding-left:0.8rem;">§1 Design Philosophy</a>
+<a href="#2-enterprise-onboarding-flow" class="nav-link" style="padding-left:0.8rem;">§2 Enterprise Onboarding Flow</a>
+<a href="#21-first-launch-no-license" class="nav-link" style="padding-left:1.6rem;">2.1 First Launch (No License)</a>
+<a href="#22-license-states-trong-ui" class="nav-link" style="padding-left:1.6rem;">2.2 License States trong UI</a>
+<a href="#3-architecture-mapping" class="nav-link" style="padding-left:0.8rem;">§3 Architecture Mapping</a>
+<a href="#4-adaptive-glassmorphism-state-machine" class="nav-link" style="padding-left:0.8rem;">§4 Adaptive Glassmorphism State Machine</a>
+<a href="#5-survival-mesh-hud" class="nav-link" style="padding-left:0.8rem;">§5 Survival Mesh HUD</a>
+<a href="#radar-visualization" class="nav-link" style="padding-left:1.6rem;">Radar Visualization</a>
+<a href="#6-messaging-layout" class="nav-link" style="padding-left:0.8rem;">§6 Messaging Layout</a>
+<a href="#7-security-event-animations" class="nav-link" style="padding-left:0.8rem;">§7 Security Event Animations</a>
+<a href="#self-destruct-remote-wipe" class="nav-link" style="padding-left:1.6rem;">Self-Destruct (Remote Wipe)</a>
+<a href="#crypto-shred" class="nav-link" style="padding-left:1.6rem;">Crypto-Shred</a>
+<a href="#magnetic-collapse-session-revoked" class="nav-link" style="padding-left:1.6rem;">Magnetic Collapse (Session Revoked)</a>
+<a href="#license-lockout-transition" class="nav-link" style="padding-left:1.6rem;">License Lockout Transition</a>
+<a href="#8-memory-zeroization-overlay" class="nav-link" style="padding-left:0.8rem;">§8 Memory Zeroization Overlay</a>
+<a href="#9-byzantine-fault-indicator" class="nav-link" style="padding-left:0.8rem;">§9 Byzantine Fault Indicator</a>
+<a href="#10-failure-containment-protocol-fcp" class="nav-link" style="padding-left:0.8rem;">§10 Failure Containment Protocol (FCP)</a>
+<a href="#11-sealed-session-view" class="nav-link" style="padding-left:0.8rem;">§11 Sealed Session View</a>
+<a href="#12-memory-pressure-feedback" class="nav-link" style="padding-left:0.8rem;">§12 Memory Pressure Feedback</a>
+<a href="#13-e2ee-state-indicator" class="nav-link" style="padding-left:0.8rem;">§13 E2EE State Indicator</a>
+<a href="#14-ai-mode-indicator" class="nav-link" style="padding-left:0.8rem;">§14 AI Mode Indicator</a>
+<a href="#15-enterprise-plugin-view-tapp" class="nav-link" style="padding-left:0.8rem;">§15 Enterprise Plugin View (.tapp)</a>
+<a href="#16-ipc-signal-ui-mapping" class="nav-link" style="padding-left:0.8rem;">§16 IPC Signal → UI Mapping</a>
+<a href="#17-latency-visualization" class="nav-link" style="padding-left:0.8rem;">§17 Latency Visualization</a>
+<a href="#18-desktop-layout" class="nav-link" style="padding-left:0.8rem;">§18 Desktop Layout 🖥️</a>
+<a href="#19-mobile-layout" class="nav-link" style="padding-left:0.8rem;">§19 Mobile Layout 📱</a>
+<a href="#20-animation-timing" class="nav-link" style="padding-left:0.8rem;">§20 Animation Timing</a>
+<a href="#21-gpu-capability-fallback" class="nav-link" style="padding-left:0.8rem;">§21 GPU Capability Fallback</a>
+<a href="#22-wasm-plugin-glass-card-states" class="nav-link" style="padding-left:0.8rem;">§22 WASM Plugin Glass Card States</a>
+<a href="#23-admin-console-ui-patterns" class="nav-link" style="padding-left:0.8rem;">§23 Admin Console UI Patterns</a>
+<a href="#license-status-dashboard" class="nav-link" style="padding-left:1.6rem;">License Status Dashboard</a>
+<a href="#plugin-registry-panel" class="nav-link" style="padding-left:1.6rem;">Plugin Registry Panel</a>
+<a href="#changelog" class="nav-link" style="padding-left:0.8rem;">CHANGELOG</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="designmd-terachat-design-system">Design.md — TeraChat Design System</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-DESIGN&quot;
+title: &quot;TeraChat — Product Requirements Document (Design)&quot;
+version: &quot;0.3.7&quot;
+status: &quot;ACTIVE — Design Reference&quot;
+date: &quot;2026-03-23&quot;
+audience: &quot;Designer, Frontend Developer, Product Manager, Security Architect&quot;
+purpose:
+  &quot;Đặc tả hệ thống thiết kế UI/UX Glassmorphism, component library, UI state
+  machine, animation specs, và security state visualization.&quot;
+
+depends_on:
+  - id: &quot;TERA-CLIENT&quot;
+    note: &quot;IPC signals triggering UI state&quot;
+  - id: &quot;TERA-FUNC&quot;
+    note: &quot;User flows and enterprise access model&quot;
+  - id: &quot;TERA-CORE&quot;
+    note: &quot;Rust Core security events&quot;
+
+consumed_by:
+  - &quot;Tauri / Flutter frontend implementation&quot;
+</code></pre>
+<hr />
+<h1 id="design-contract-non-negotiable-ui-rules">DESIGN CONTRACT — Non-Negotiable UI Rules</h1>
+<blockquote>
+<p>Vi phạm bất kỳ rule nào dưới đây → <strong>design reject, không merge</strong></p>
+</blockquote>
+<h3 id="visual-modes">Visual Modes</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Background</th>
+<th>Indicator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Online Mode</td>
+<td>Glass Light</td>
+<td>Blue #24A1DE</td>
+</tr>
+<tr>
+<td>Mesh Mode</td>
+<td>Dark Navy <code>#0F172A</code></td>
+<td>Radar Pulse</td>
+</tr>
+<tr>
+<td>License Invalid</td>
+<td>Charcoal <code>#1A1A2E</code></td>
+<td>Amber warning banner</td>
+</tr>
+</tbody>
+</table>
+<p>Mesh Mode và License Invalid <strong>bắt buộc khác biệt hoàn toàn</strong> với Online Mode.</p>
+<h3 id="glassmorphism-spec">Glassmorphism Spec</h3>
+<pre><code class="language-css">backdrop-filter: blur(20px);
+background: rgba(255, 255, 255, 0.08);
+border: 1px solid rgba(255, 255, 255, 0.12);
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+</code></pre>
+<h3 id="typography">Typography</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Font</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Body</td>
+<td>Inter</td>
+</tr>
+<tr>
+<td>Mono</td>
+<td>JetBrains Mono</td>
+</tr>
+<tr>
+<td>Display (headings)</td>
+<td>System (platform-native)</td>
+</tr>
+</tbody>
+</table>
+<p>Không dùng system font cho body text.</p>
+<h3 id="accent-colors">Accent Colors</h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Color</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Online</td>
+<td>#24A1DE</td>
+</tr>
+<tr>
+<td>Warning</td>
+<td>#F59E0B</td>
+</tr>
+<tr>
+<td>Danger</td>
+<td>#EF4444</td>
+</tr>
+<tr>
+<td>Success</td>
+<td>#10B981</td>
+</tr>
+<tr>
+<td>License Degraded</td>
+<td>#F59E0B</td>
+</tr>
+<tr>
+<td>License Locked</td>
+<td>#EF4444</td>
+</tr>
+</tbody>
+</table>
+<h3 id="layout-rule">Layout Rule</h3>
+<p>Không sử dụng WhatsApp-style bubble chat. Layout phải theo:</p>
+<pre><code class="language-text">Data Density Model
+Compact
+Information First
+Security Status Always Visible
+</code></pre>
+<hr />
+<h2 id="1-design-philosophy">§1 Design Philosophy</h2>
+<p>TeraChat UI là giao diện của một công cụ doanh nghiệp bảo mật cao — không phải consumer messaging app. Triết lý thiết kế:</p>
+<pre><code class="language-text">Security Visible (trạng thái bảo mật luôn hiển thị)
+Density Efficient (thông tin dense, không lãng phí)
+Zero Noise (không animation không cần thiết)
+Operational Clarity (admin không cần manual)
+</code></pre>
+<hr />
+<h2 id="2-enterprise-onboarding-flow">§2 Enterprise Onboarding Flow</h2>
+<p>Vì TeraChat là enterprise-only, onboarding flow khác với consumer apps:</p>
+<h3 id="21-first-launch-no-license">2.1 First Launch (No License)</h3>
+<pre><code class="language-text">App Opens
+     ↓
+[Screen: &quot;TeraChat — Enterprise Messenger&quot;]
+[Illustration: secure vault, minimal]
+[Primary CTA: &quot;Activate Enterprise License&quot;]
+[Secondary: &quot;Contact Your IT Administrator&quot;]
+     ↓
+License Activation Screen:
+  - QR Code scan (từ IT Admin / MDM)
+  - Manual domain + token entry
+     ↓
+License JWT validation (&lt; 3s)
+     ↓
+Biometric enrollment for DeviceIdentityKey
+     ↓
+Welcome to {Organization Name}
+</code></pre>
+<h3 id="22-license-states-trong-ui">2.2 License States trong UI</h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Visual</th>
+<th>User Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Valid</td>
+<td>Green badge top-right</td>
+<td>"Workspace: {org_name}"</td>
+</tr>
+<tr>
+<td>T-30 days</td>
+<td>Amber banner (Admin view only)</td>
+<td>Admin Console warning only</td>
+</tr>
+<tr>
+<td>T-0 (expired)</td>
+<td>Amber lock icon</td>
+<td>"Liên hệ IT Admin để gia hạn"</td>
+</tr>
+<tr>
+<td>T+90</td>
+<td>Red lock icon</td>
+<td>"License hết hạn — không thể kết nối"</td>
+</tr>
+<tr>
+<td>Invalid</td>
+<td>Full screen lockout</td>
+<td>"Thiết bị chưa được cấp phép"</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-architecture-mapping">§3 Architecture Mapping</h2>
+<p>UI không xử lý logic bảo mật:</p>
+<pre><code class="language-text">UI Renderer (Flutter / Tauri)
+     ↓ IPC (CoreSignal / UICommand)
+Rust Core (crypto, DAG, mesh, license)
+     ↓
+Hardware Chip (Secure Enclave / TPM)
+</code></pre>
+<p>Frontend chỉ render state do Rust Core gửi lên.</p>
+<hr />
+<h2 id="4-adaptive-glassmorphism-state-machine">§4 Adaptive Glassmorphism State Machine</h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Visual</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ONLINE</code></td>
+<td>Glass white, blue accent</td>
+<td>Internet connected</td>
+</tr>
+<tr>
+<td><code>ENCRYPTED_SESSION</code></td>
+<td>Glass blue, lock badge</td>
+<td>MLS session active</td>
+</tr>
+<tr>
+<td><code>MESH_FALLBACK</code></td>
+<td>Dark navy, radar pulse</td>
+<td>No internet</td>
+</tr>
+<tr>
+<td><code>EMERGENCY_MESH</code></td>
+<td>Dark + amber warning</td>
+<td>EMDP active</td>
+</tr>
+<tr>
+<td><code>LICENSE_WARNING</code></td>
+<td>Glass + amber banner</td>
+<td>T-30 days</td>
+</tr>
+<tr>
+<td><code>LICENSE_DEGRADED</code></td>
+<td>Amber tint</td>
+<td>T-0 expired</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-survival-mesh-hud">§5 Survival Mesh HUD</h2>
+<p>Mesh Mode UI phải hiển thị (top status bar):</p>
+<pre><code class="language-text">📡 Mesh Active · Nodes: 6 · BLE + Wi-Fi Direct · Latency: 220ms
+</code></pre>
+<h3 id="radar-visualization">Radar Visualization</h3>
+<pre><code class="language-text">Thiết bị của user ở trung tâm
+Các node pulse outward theo khoảng cách thực
+Border Node hiển thị màu xanh lá (có Internet)
+</code></pre>
+<hr />
+<h2 id="6-messaging-layout">§6 Messaging Layout</h2>
+<pre><code class="language-text">| Sidebar | Conversation | Tools |
+</code></pre>
+<p>Message block:</p>
+<pre><code class="language-text">[timestamp]  [sender name]  [security badge: E2EE ✓]
+[message content — compact, information-dense]
+[status: Delivered / Read / Pending]
+</code></pre>
+<hr />
+<h2 id="7-security-event-animations">§7 Security Event Animations</h2>
+<p>Mọi security event <strong>bắt buộc animation spec</strong>.</p>
+<h3 id="self-destruct-remote-wipe">Self-Destruct (Remote Wipe)</h3>
+<pre><code class="language-text">Timer ring collapse (400ms)
+Message fragments dissolve from edges
+Duration: 400ms total
+</code></pre>
+<h3 id="crypto-shred">Crypto-Shred</h3>
+<pre><code class="language-text">Data fragments → pixel noise → wipe to black
+Duration: 350ms
+</code></pre>
+<h3 id="magnetic-collapse-session-revoked">Magnetic Collapse (Session Revoked)</h3>
+<pre><code class="language-text">UI elements collapse to center point
+Fade to dark overlay
+Duration: 300ms
+</code></pre>
+<h3 id="license-lockout-transition">License Lockout Transition</h3>
+<pre><code class="language-text">Soft amber overlay fades in (200ms)
+Content blurs to 8px
+Lock icon materializes center (100ms)
+&quot;Liên hệ IT Admin&quot; button appears
+</code></pre>
+<hr />
+<h2 id="8-memory-zeroization-overlay">§8 Memory Zeroization Overlay</h2>
+<p>Khi Rust Core phát <code>CoreSignal::MemoryPressureWarning</code>:</p>
+<pre><code class="language-text">Overlay: dark glass (opacity 0.7)
+Text: &quot;SECURE MEMORY PURGE&quot;
+Progress bar: thin, teal, animated left-to-right
+Duration: until purge complete
+</code></pre>
+<hr />
+<h2 id="9-byzantine-fault-indicator">§9 Byzantine Fault Indicator</h2>
+<p>Khi cluster phát hiện fault:</p>
+<pre><code class="language-text">⚠ Byzantine Fault Detected
+Node isolation triggered — mesh topology reconfiguring
+</code></pre>
+<p>Hiển thị trong Survival Mesh HUD, không interrupt messaging.</p>
+<hr />
+<h2 id="10-failure-containment-protocol-fcp">§10 Failure Containment Protocol (FCP)</h2>
+<p>Khi IPC signal <code>fcp_triggered</code>:</p>
+<pre><code class="language-text">Border: 4px solid #EF4444
+Pulse animation: 1s interval
+Badge: &quot;SESSION CONTAINED&quot;
+</code></pre>
+<hr />
+<h2 id="11-sealed-session-view">§11 Sealed Session View</h2>
+<p>Khi session bị sealed (SSA taint):</p>
+<pre><code class="language-text">Hazard stripe overlay (diagonal yellow-black)
+Badge: &quot;SESSION SEALED — Pending Review&quot;
+Subtext: &quot;AI detected potential policy violation&quot;
+</code></pre>
+<hr />
+<h2 id="12-memory-pressure-feedback">§12 Memory Pressure Feedback</h2>
+<p>Khi IPC <code>memory_pressure_high</code>:</p>
+<pre><code class="language-text">Glassmorphism blur giảm: 20px → 8px
+Banner (subtle): &quot;System Resource Pressure — Reducing effects&quot;
+</code></pre>
+<hr />
+<h2 id="13-e2ee-state-indicator">§13 E2EE State Indicator</h2>
+<p>Header bar hiển thị luôn:</p>
+<pre><code class="language-text">🔒 E2EE Active · Key Epoch {N} · {org_name}
+</code></pre>
+<p>Khi re-keying:</p>
+<pre><code class="language-text">🔄 Rekeying session...
+</code></pre>
+<hr />
+<h2 id="14-ai-mode-indicator">§14 AI Mode Indicator</h2>
+<pre><code class="language-text">🤖 AI: Local Secure    (SLM on-device, no cloud)
+🤖 AI: VPS Enclave     (cloud, PII redacted)
+⚠️ AI: Disabled        (Mesh Mode)
+</code></pre>
+<hr />
+<h2 id="15-enterprise-plugin-view-tapp">§15 Enterprise Plugin View (.tapp)</h2>
+<p>IT Admin phê duyệt plugin → plugin xuất hiện trong launcher:</p>
+<pre><code class="language-text">[Plugin Icon]  [Plugin Name]
+[Vendor badge] [Permission scope summary]
+[Status: Active / Suspended / Pending Update]
+</code></pre>
+<p>End user không thể install, chỉ use or request to IT Admin.</p>
+<hr />
+<h2 id="16-ipc-signal-ui-mapping">§16 IPC Signal → UI Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>UI Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>session_established</code></td>
+<td>Enable chat; show E2EE badge</td>
+</tr>
+<tr>
+<td><code>mesh_mode_active</code></td>
+<td>Switch Dark Navy UI; show Radar HUD</td>
+</tr>
+<tr>
+<td><code>memory_zeroize</code></td>
+<td>Show SECURE MEMORY PURGE overlay</td>
+</tr>
+<tr>
+<td><code>crypto_shred</code></td>
+<td>Run Crypto-Shred animation</td>
+</tr>
+<tr>
+<td><code>fcp_triggered</code></td>
+<td>Show red border + FCP badge</td>
+</tr>
+<tr>
+<td><code>consensus_fault</code></td>
+<td>Show Byzantine Fault indicator in Mesh HUD</td>
+</tr>
+<tr>
+<td><code>license_warning</code></td>
+<td>Show amber banner (Admin Console only)</td>
+</tr>
+<tr>
+<td><code>license_degraded</code></td>
+<td>Show amber tint + lock icon + contact IT prompt</td>
+</tr>
+<tr>
+<td><code>dead_man_deferral</code></td>
+<td>Amber badge "Bảo mật tạm hoãn" (non-blocking)</td>
+</tr>
+<tr>
+<td><code>emdp_shun_event</code></td>
+<td>Toast: node removed from Mesh topology</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="17-latency-visualization">§17 Latency Visualization</h2>
+<pre><code class="language-text">Latency: 45ms ●  (green: &lt; 100ms)
+Latency: 180ms ●  (amber: 100-300ms)
+Latency: 450ms ●  (red: &gt; 300ms)
+</code></pre>
+<hr />
+<h2 id="18-desktop-layout">§18 Desktop Layout 🖥️</h2>
+<pre><code class="language-text">| Sidebar (256px) | Conversation (flex) | Context Panel (320px, collapsible) |
+</code></pre>
+<hr />
+<h2 id="19-mobile-layout">§19 Mobile Layout 📱</h2>
+<pre><code class="language-text">Conversation Fullscreen
+Sidebar: slide-in gesture (swipe right)
+Context Panel: slide-in (swipe left)
+</code></pre>
+<hr />
+<h2 id="20-animation-timing">§20 Animation Timing</h2>
+<table>
+<thead>
+<tr>
+<th>Animation</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message send</td>
+<td>120ms</td>
+</tr>
+<tr>
+<td>State change</td>
+<td>200ms</td>
+</tr>
+<tr>
+<td>Security event</td>
+<td>350-500ms</td>
+</tr>
+<tr>
+<td>License transition</td>
+<td>300ms</td>
+</tr>
+<tr>
+<td>Mesh mode switch</td>
+<td>500ms</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="21-gpu-capability-fallback">§21 GPU Capability Fallback</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Condition</th>
+<th>Rendering</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Hardware compositing</td>
+<td><code>backdrop-filter: blur(16-24px)</code></td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Software compositing</td>
+<td><code>blur(8px)</code>, opacity 0.85</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>No compositing</td>
+<td>Flat solid + border accent</td>
+</tr>
+</tbody>
+</table>
+<p>Rust Core emit <code>GpuCapability { compositing_tier: u8 }</code> lúc init → UI chọn variant.</p>
+<hr />
+<h2 id="22-wasm-plugin-glass-card-states">§22 WASM Plugin Glass Card States</h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Glass Effect</th>
+<th>Border</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Active + Valid</td>
+<td>Frosted, high opacity</td>
+<td>Xanh lá</td>
+<td>Plugin trusted, network ready</td>
+</tr>
+<tr>
+<td>Network I/O</td>
+<td>Moving gradient</td>
+<td>Blue</td>
+<td>Proxy processing request</td>
+</tr>
+<tr>
+<td>Rate Limit Warning</td>
+<td>Warning Glow</td>
+<td>Amber</td>
+<td>Approaching quota limit</td>
+</tr>
+<tr>
+<td>Mesh Mode</td>
+<td>Heavy blur, low opacity</td>
+<td>Grey</td>
+<td>Isolated from Internet</td>
+</tr>
+<tr>
+<td>Revoked</td>
+<td>Shatter → Blood-Red</td>
+<td>Deep red</td>
+<td>IT Admin revoked</td>
+</tr>
+<tr>
+<td>Updating</td>
+<td>Shimmer Water Effect</td>
+<td>Teal</td>
+<td>New version installing</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="23-admin-console-ui-patterns">§23 Admin Console UI Patterns</h2>
+<h3 id="license-status-dashboard">License Status Dashboard</h3>
+<pre><code class="language-text">[License Status Card]
+  Tier: Enterprise | Seats: 234/500
+  Status: Active ✓ | Expires: 2027-03-15
+  [Renew] [Export Report]
+</code></pre>
+<h3 id="plugin-registry-panel">Plugin Registry Panel</h3>
+<pre><code class="language-text">[Available] [Installed] [Pending Review]
+
+Plugin Card:
+  [Icon] [Name] [Publisher] [Tier Badge]
+  [Permissions: network.egress, storage.persist]
+  [Security Score: 95/100]
+  [Deploy to Workspace] [View Security Report]
+</code></pre>
+<hr />
+<h2 id="changelog">CHANGELOG</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2026-03-23</td>
+<td>Enterprise repositioning: license states, onboarding flow, plugin admin controls, align với enterprise-only access model</td>
+</tr>
+<tr>
+<td>0.2.6</td>
+<td>2026-03-13</td>
+<td>Thêm Adaptive Glassmorphism HUD &amp; Survival HUD, WASM states, GPU tiers</td>
+</tr>
+</tbody>
+</table>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeraChat — Enterprise Pricing Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#050c17;--ink2:#0b1829;--ink3:#122135;
+  --steel:#1e3a5f;--steel2:#264e80;
+  --teal:#00b4d8;--teal2:#48cae4;
+  --gold:#e9c46a;--gold2:#f4a261;
+  --green:#52b788;--red:#e63946;--amber:#f77f00;
+  --light:#caf0f8;--mid:#7db9cc;--muted:#4a7a8c;
+  --white:#ffffff;
+  --glass:rgba(255,255,255,0.045);
+  --gb:rgba(255,255,255,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--ink);color:var(--white);overflow-x:hidden;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 20% 20%,rgba(0,180,216,.06),transparent),radial-gradient(ellipse 60% 60% at 80% 80%,rgba(233,196,106,.04),transparent);pointer-events:none;z-index:0;}
+
+/* SIDEBAR */
+.sidenav{position:fixed;left:0;top:0;bottom:0;width:56px;background:rgba(5,12,23,.95);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:4px;z-index:100;backdrop-filter:blur(20px);}
+.sidenav-logo{font-family:'Syne',sans-serif;font-size:10px;font-weight:800;color:var(--teal);writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:20px;letter-spacing:2px;}
+.dot{width:6px;height:6px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;transition:all .2s;position:relative;}
+.dot:hover,.dot.active{background:var(--teal);border-color:var(--teal);transform:scale(1.6);}
+.dot::after{content:attr(data-label);position:absolute;left:16px;top:50%;transform:translateY(-50%);background:var(--ink2);border:1px solid var(--gb);color:var(--white);font-size:10px;white-space:nowrap;padding:2px 8px;border-radius:3px;opacity:0;pointer-events:none;transition:opacity .15s;}
+.dot:hover::after{opacity:1;}
+.sidenav-line{width:1px;flex:1;background:linear-gradient(to bottom,transparent,rgba(0,180,216,.2),transparent);margin:5px 0;}
+.main{margin-left:56px;}
+
+/* LAYOUT */
+.sec{padding:72px 56px;position:relative;}
+.sec:nth-child(even){background:rgba(255,255,255,.012);}
+.divider{height:1px;background:rgba(255,255,255,.06);}
+
+/* COVER */
+.cover{min-height:80vh;display:flex;flex-direction:column;justify-content:center;padding:80px 56px;position:relative;overflow:hidden;}
+.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,180,216,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,216,.03) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent);}
+.cover-inner{position:relative;z-index:1;max-width:950px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:16px;}
+.cover-title{font-family:'Syne',sans-serif;font-size:clamp(46px,7vw,86px);font-weight:800;line-height:1;margin-bottom:20px;letter-spacing:-2px;}
+.cover-title em{background:linear-gradient(135deg,var(--teal) 0%,var(--teal2) 50%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal;}
+.cover-sub{font-size:16px;font-weight:300;color:var(--mid);max-width:720px;margin-bottom:48px;line-height:1.7;}
+.cover-notice{display:inline-flex;align-items:center;gap:10px;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.3);border-radius:8px;padding:12px 20px;font-size:13px;margin-bottom:40px;}
+.cover-notice-icon{font-size:18px;}
+.cover-notice strong{color:var(--teal);}
+.kpi-row{display:flex;gap:2px;}
+.kpi{background:var(--glass);border:1px solid var(--gb);backdrop-filter:blur(12px);padding:20px 24px;flex:1;max-width:200px;}
+.kpi:first-child{border-radius:10px 0 0 10px;}
+.kpi:last-child{border-radius:0 10px 10px 0;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1;}
+.kpi-val em{color:var(--teal);font-style:normal;}
+.kpi-lbl{font-size:11px;color:var(--mid);margin-top:5px;letter-spacing:.3px;line-height:1.4;}
+
+/* SECTION */
+.label{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:8px;}
+.sec-title{font-family:'Syne',sans-serif;font-size:clamp(20px,2.8vw,34px);font-weight:700;line-height:1.2;margin-bottom:8px;}
+.rule{width:44px;height:3px;background:linear-gradient(to right,var(--teal),var(--gold));border-radius:2px;margin-bottom:28px;}
+.lead{font-size:14px;color:rgba(255,255,255,.65);max-width:720px;margin-bottom:28px;line-height:1.75;}
+
+/* PRICING TIERS */
+.tier-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0;}
+.tier-card{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:28px 24px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s;}
+.tier-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.05);transition:opacity .25s;}
+.tier-card:hover{transform:translateY(-4px);border-color:rgba(0,180,216,.3);}
+.tier-card.featured{background:linear-gradient(135deg,rgba(18,33,53,.8),rgba(0,60,100,.2));border-color:rgba(0,180,216,.45);}
+.tier-card.featured::before{background:linear-gradient(to right,var(--teal),var(--teal2));opacity:1;}
+.tier-card.premium-card{background:linear-gradient(135deg,rgba(40,25,10,.7),rgba(100,60,0,.15));border-color:rgba(233,196,106,.45);}
+.tier-card.premium-card::before{background:linear-gradient(to right,var(--gold),var(--gold2));opacity:1;}
+.tier-card.gov-card{background:linear-gradient(135deg,rgba(30,30,50,.8),rgba(60,30,80,.15));border-color:rgba(255,255,255,.25);}
+.tc-badge{position:absolute;top:16px;right:16px;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;letter-spacing:1.5px;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
+.tc-badge.blue{background:rgba(0,180,216,.15);color:var(--teal);border:1px solid rgba(0,180,216,.3);}
+.tc-badge.gold{background:rgba(233,196,106,.12);color:var(--gold);border:1px solid rgba(233,196,106,.3);}
+.tc-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin-bottom:10px;}
+.featured .tc-label{color:var(--teal2);}
+.premium-card .tc-label{color:var(--gold);}
+.gov-card .tc-label{color:rgba(255,255,255,.6);}
+.tc-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.tc-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.55;margin-bottom:20px;min-height:36px;}
+.tc-price{margin-bottom:4px;}
+.tc-price .amt{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1;}
+.tc-price .amt em{color:var(--teal);font-style:normal;}
+.featured .tc-price .amt em{color:var(--teal2);}
+.premium-card .tc-price .amt em{color:var(--gold);}
+.tc-period{font-size:11px;color:var(--mid);margin-left:3px;}
+.tc-annual{font-size:11px;color:var(--green);margin-bottom:20px;font-weight:500;}
+.tc-cta{display:block;width:100%;padding:11px;border-radius:8px;text-align:center;font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .2s;margin-bottom:24px;text-decoration:none;}
+.tc-cta-outline{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--white);}
+.tc-cta-outline:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.35);}
+.tc-cta-teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--ink);}
+.tc-cta-teal:hover{filter:brightness(1.12);}
+.tc-cta-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);}
+.tc-cta-gold:hover{filter:brightness(1.08);}
+.tc-cta-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.75);}
+.tc-div{height:1px;background:rgba(255,255,255,.07);margin-bottom:18px;}
+.tc-feats{list-style:none;}
+.tc-feats li{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:rgba(255,255,255,.7);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.45;}
+.tc-feats li::before{content:'→';color:var(--teal);font-size:10px;margin-top:2px;flex-shrink:0;}
+.premium-card .tc-feats li::before{color:var(--gold);}
+
+/* TABLES */
+.feat-wrap{overflow-x:auto;margin:20px 0;}
+.feat-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.feat-table thead tr{background:linear-gradient(135deg,var(--ink3),var(--ink2));}
+.feat-table thead th{padding:12px 14px;text-align:left;font-size:9.5px;font-weight:600;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;border:1px solid rgba(255,255,255,.06);}
+.feat-table thead th:not(:first-child){text-align:center;min-width:100px;}
+.feat-table tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;}
+.feat-table tbody tr:hover{background:rgba(0,180,216,.05);}
+.feat-table tbody td{padding:11px 14px;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.04);}
+.feat-table tbody td:not(:first-child){text-align:center;}
+.feat-table .cat-row td{background:rgba(255,255,255,.025);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--teal);text-transform:uppercase;padding:7px 14px;}
+.tok{color:var(--green)!important;font-size:14px;}
+.tno{color:rgba(255,255,255,.2)!important;font-size:14px;}
+.tlim{color:var(--amber)!important;font-size:11px;font-weight:600;}
+.thigh td{background:rgba(0,180,216,.05)!important;}
+.thigh td:first-child{color:var(--teal)!important;font-weight:600!important;}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}
+.card{background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:22px;}
+.card-icon{font-size:22px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card-body{font-size:12px;color:rgba(255,255,255,.58);line-height:1.6;}
+.card-price{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--teal);margin-top:8px;}
+
+/* CALLOUT */
+.callout{border-left:3px solid var(--teal);background:rgba(0,180,216,.06);border-radius:0 10px 10px 0;padding:16px 20px;margin:18px 0;}
+.callout p{font-size:13px;font-style:italic;color:rgba(255,255,255,.8);line-height:1.65;}
+.callout-gold{border-left-color:var(--gold);background:rgba(233,196,106,.06);}
+.callout-green{border-left-color:var(--green);background:rgba(82,183,136,.06);}
+
+/* MROW */
+.mrow{display:flex;gap:12px;margin:22px 0;}
+.mc{flex:1;background:linear-gradient(135deg,var(--ink2),var(--ink3));border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:22px 18px;text-align:center;position:relative;overflow:hidden;}
+.mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--teal),var(--gold));}
+.mc-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}
+.mc-val em{color:var(--teal);font-style:normal;}
+.mc-lbl{font-size:10.5px;color:var(--mid);margin-top:5px;}
+.mc-sub{font-size:9.5px;color:rgba(255,255,255,.25);margin-top:2px;font-style:italic;}
+
+/* CHART */
+.cw{background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:22px 20px 16px;position:relative;overflow:hidden;}
+.cw::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--teal),var(--gold));opacity:.4;}
+.cl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--teal);opacity:.65;text-transform:uppercase;margin-bottom:3px;}
+.ct{font-size:12.5px;font-weight:600;color:var(--white);margin-bottom:1px;}
+.cd{font-size:11px;color:rgba(168,196,232,.55);margin-bottom:14px;}
+.charts2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0;}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s ease;}
+.reveal.vis{opacity:1;transform:translateY(0);}
+
+/* FOOTER */
+.footer{padding:36px 56px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;}
+.footer-brand{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--teal),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.footer-txt{font-size:11px;color:var(--muted);line-height:1.55;text-align:right;}
+
+.sh{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.3px;margin:28px 0 12px;display:flex;align-items:center;gap:8px;}
+.sh::before{content:'';width:14px;height:2px;background:var(--gold);border-radius:1px;}
+.blist{list-style:none;margin:10px 0;}
+.blist li{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.5;}
+.blist li::before{content:'▸';color:var(--teal);font-size:10px;margin-top:2px;flex-shrink:0;}
+
+@media(max-width:1100px){.tier-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.tier-grid,.g2,.g3,.g4,.charts2,.mrow{grid-template-columns:1fr; flex-direction:column;}.sec,.cover{padding:52px 28px;}}
+</style>
+</head>
+<body>
+
+<nav class="sidenav">
+  <div class="sidenav-logo">TERACHAT</div>
+  <div class="dot" data-label="Tổng quan" onclick="scrollToId('cover')"></div>
+  <div class="dot" data-label="Gói Giá" onclick="scrollToId('s1')"></div>
+  <div class="dot" data-label="Tính Năng" onclick="scrollToId('s2')"></div>
+  <div class="dot" data-label="Dịch vụ" onclick="scrollToId('s3')"></div>
+  <div class="dot" data-label="Add-ons" onclick="scrollToId('s4')"></div>
+  <div class="dot" data-label="Hợp đồng" onclick="scrollToId('s5')"></div>
+  <div class="dot" data-label="Thanh Toán" onclick="scrollToId('s6')"></div>
+  <div class="dot" data-label="ROI" onclick="scrollToId('s7')"></div>
+  <div class="sidenav-line"></div>
+</nav>
+
+<div class="main">
+
+<section class="cover" id="cover">
+  <div class="cover-grid"></div>
+  <div class="cover-inner">
+    <p class="eyebrow">Enterprise Pricing Guide & Platform Architecture · Q2 2026</p>
+    <h1 class="cover-title">Tera<em>Chat</em> Enterprise<br>Pricing Blueprint</h1>
+    <p class="cover-sub">Nền tảng Tích hợp: Năng lực điện toán AI bảo mật, Quản trị định danh tập trung (AD/SCIM) và Chủ quyền dữ liệu tuyệt đối. Kiến trúc phân tán theo chuẩn BYOM, SLA 99.999%. Không giới hạn lưu trữ hạ tầng.</p>
+
+    <div class="cover-notice">
+      <span class="cover-notice-icon">🔒</span>
+      <div><strong>Enterprise-Only Product</strong> — Không có tài khoản cá nhân. Mọi người dùng đều bị ràng buộc bởi License JWT, OPA Policies và công cụ quản trị thiết bị (MDM) của tổ chức.</div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val"><em>$6K</em></div><div class="kpi-lbl">Business / năm<br>≤ 100 nhân sự</div></div>
+      <div class="kpi"><div class="kpi-val"><em>$24K</em></div><div class="kpi-lbl">Enterprise / năm<br>≤ 500 nhân sự</div></div>
+      <div class="kpi"><div class="kpi-val"><em>$48K</em></div><div class="kpi-lbl">Enterprise+ / năm<br>≤ 1,000 nhân sự</div></div>
+      <div class="kpi"><div class="kpi-val"><em>Custom</em></div><div class="kpi-lbl">Gov/Military<br>Min $96K / năm</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section class="sec reveal" id="s1">
+  <div class="label">01 — ENTERPRISE TIERS</div>
+  <h2 class="sec-title">Bảng Giá Linh Hoạt (Hybrid Cloud & Quản Trị Lõi)</h2>
+  <div class="rule"></div>
+  <p class="lead">Tất cả gói giá đều cho phép doanh nghiệp tự kiểm soát hạ tầng, không thu phí lưu trữ (storage) hay định mức truy cập. Giảm ngay <strong>25%</strong> khi cam kết hợp đồng thanh toán theo năm.</p>
+
+  <div class="tier-grid">
+
+    <div class="tier-card">
+      <div class="tc-label">Business</div>
+      <div class="tc-name">Business</div>
+      <div class="tc-desc">Dành cho SME. Đồng bộ danh tính, bảo mật thiết bị và sức mạnh AI đám mây trên Local Edge.</div>
+      <div class="tc-price"><span class="amt"><em>$500</em></span><span class="tc-period">/ tháng</span></div>
+      <div class="tc-annual">$6,000 / năm (Đã giảm 25%)</div>
+      <a class="tc-cta tc-cta-outline" href="#">Liên Hệ Sales</a>
+      <div class="tc-div"></div>
+      <ul class="tc-feats">
+        <li>Đồng bộ Azure AD / Google Workspace</li>
+        <li>Quản lý thiết bị & Remote Wipe</li>
+        <li>Zero-Knowledge Server & E2EE</li>
+        <li>Survival Mesh (Offline BLE / Wi-Fi)</li>
+        <li>AI SLM Local & Blind RAG Cơ bản</li>
+        <li>Không giới hạn lưu trữ dữ liệu</li>
+        <li>Hỗ trợ Email (Giờ hành chính)</li>
+      </ul>
+    </div>
+
+    <div class="tier-card featured">
+      <div class="tc-badge blue">Phổ biến</div>
+      <div class="tc-label">Enterprise</div>
+      <div class="tc-name">Enterprise</div>
+      <div class="tc-desc">Tổ chức 100–500 người. Tự động hóa offboarding, API mở rộng và hệ sinh thái Plugin mạnh mẽ.</div>
+      <div class="tc-price"><span class="amt"><em>$2,000</em></span><span class="tc-period">/ tháng</span></div>
+      <div class="tc-annual">$24,000 / năm (Đã giảm 25%)</div>
+      <a class="tc-cta tc-cta-teal" href="#">Đặt Lịch Demo</a>
+      <div class="tc-div"></div>
+      <ul class="tc-feats">
+        <li><strong>Tất cả tính năng Business</strong></li>
+        <li>SCIM 2.0 Auto-offboarding (< 30s)</li>
+        <li>Enterprise Plugin Registry</li>
+        <li>Phát triển ứng dụng .tapp tùy chỉnh</li>
+        <li>Full API Access (4 loại)</li>
+        <li>Cụm VPS Phân tán (SLA 99.999%)</li>
+        <li>Stateless Enclave (Cụm AI vô hình)</li>
+        <li>Hỗ trợ chuyên trách (Dedicated SLA)</li>
+      </ul>
+    </div>
+
+    <div class="tier-card premium-card">
+      <div class="tc-badge gold">Tập Đoàn</div>
+      <div class="tc-label">Enterprise+</div>
+      <div class="tc-name">Enterprise+</div>
+      <div class="tc-desc">Tổ chức lớn tới 1,000 người. Liên kết đa tổ chức (Federation), vLLM, và kiến trúc độ trễ thấp.</div>
+      <div class="tc-price"><span class="amt"><em>$4,000</em></span><span class="tc-period">/ tháng</span></div>
+      <div class="tc-annual">$48,000 / năm (Đã giảm 25%)</div>
+      <a class="tc-cta tc-cta-gold" href="#">Request Proposal</a>
+      <div class="tc-div"></div>
+      <ul class="tc-feats">
+        <li><strong>Tất cả tính năng Enterprise</strong></li>
+        <li>Liên kết tổ chức (Federation mTLS)</li>
+        <li>Động cơ AI vLLM & Continuous Batching</li>
+        <li>Tách biệt cụm Node RAG và Node AI</li>
+        <li>Semantic Caching (Trễ mili-giây)</li>
+        <li>Hỗ trợ .tapp tùy chỉnh nâng cao</li>
+        <li>Dynamic App Attestation (Xác thực sống)</li>
+        <li>Hỗ trợ TAM Chuyên trách 24/7</li>
+      </ul>
+    </div>
+
+    <div class="tier-card gov-card">
+      <div class="tc-label">Gov/Military</div>
+      <div class="tc-name">Gov / Military</div>
+      <div class="tc-desc">Chính phủ & Quân đội. Chống nội gián, Air-Gapped, bảo mật tài sản trí tuệ và kiểm toán mã nguồn.</div>
+      <div class="tc-price"><span class="amt" style="color:rgba(255,255,255,.9)">Custom</span></div>
+      <div class="tc-annual" style="color:rgba(255,255,255,.5);">Bắt buộc hợp đồng 3 năm · Min $96K/năm</div>
+      <a class="tc-cta tc-cta-ghost" href="#">Liên Hệ Trực Tiếp</a>
+      <div class="tc-div"></div>
+      <ul class="tc-feats">
+        <li><strong>Tất cả tính năng Enterprise+</strong></li>
+        <li>Triển khai Air-Gapped & Local IPC</li>
+        <li>Open-Core Auditability (Ký quỹ AGPLv3)</li>
+        <li>Phục hồi Đa chữ ký (Shamir 3-of-5)</li>
+        <li>Anti-Insider Key Ceremony</li>
+        <li>Ruthless Crypto-Shredding (Hủy RAM)</li>
+        <li>Chặn API Tools bảo vệ System Prompt</li>
+        <li>Message Queue Bất đồng bộ Cao cấp</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<section class="sec reveal" id="s2">
+  <div class="label">02 — FEATURE BREAKDOWN</div>
+  <h2 class="sec-title">Bảng So Sánh Chi Tiết (Quản trị & Kiến trúc AI)</h2>
+  <div class="rule"></div>
+
+  <div class="feat-wrap">
+    <table class="feat-table">
+      <thead>
+        <tr>
+          <th style="min-width:240px;">Tính năng Doanh nghiệp</th>
+          <th>Business</th>
+          <th>Enterprise</th>
+          <th>Enterprise+</th>
+          <th>Gov/Military</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="cat-row"><td colspan="5">IDENTITY & DEVICE MANAGEMENT (MDM)</td></tr>
+        <tr><td>Đồng bộ Azure AD / Google Workspace</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Quản lý thiết bị & Remote Wipe</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>SCIM 2.0 Auto-offboarding (&lt; 30s)</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Smart DLP & Chống quay/chụp màn hình</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>Xác thực Sống (Dynamic App Attestation)</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+
+        <tr class="cat-row"><td colspan="5">INTEGRATION & ECOSYSTEM</td></tr>
+        <tr><td>Enterprise Plugin Registry</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">Kiểm duyệt kín</td></tr>
+        <tr><td>Full API Access (4 loại)</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>Phát triển ứng dụng .tapp tùy chỉnh</td><td class="tno">—</td><td class="tlim">Cơ bản</td><td class="tok">Nâng cao</td><td class="tok">Tối đa</td></tr>
+        <tr class="thigh"><td>Liên kết tổ chức (Federation mTLS)</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">Zone 2 Secure</td></tr>
+
+        <tr class="cat-row"><td colspan="5">CORE INFRASTRUCTURE & AI ENCLAVE</td></tr>
+        <tr><td>Zero-Knowledge Server & Stateless Enclave</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Không giới hạn Storage & Offline TTL</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Blind RAG (Mã hóa Vector Cục bộ)</td><td class="tok">Cơ bản</td><td class="tok">Nâng cao</td><td class="tok">Tách Node</td><td class="tok">Tối đa</td></tr>
+        <tr><td>Bring Your Own Model (BYOM)</td><td class="tlim">1 Mô hình SLM</td><td class="tok">Đa mô hình</td><td class="tok">Đa mô hình</td><td class="tok">Không giới hạn</td></tr>
+        <tr class="thigh"><td>vLLM PagedAttention & Continuous Batching</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Semantic Caching (Bộ nhớ đệm ngữ nghĩa)</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+
+        <tr class="cat-row"><td colspan="5">SECURITY & CRYPTOGRAPHY</td></tr>
+        <tr><td>Mã hóa Hậu lượng tử (ML-KEM-768)</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr><td>Survival Mesh (BLE 5.0 + Wi-Fi Direct)</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>Phục hồi Đa chữ ký (Shamir 3-of-5)</td><td class="tno">—</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>Chống Nội gián (Anti-Insider Key Ceremony)</td><td class="tno">—</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td></tr>
+        <tr class="thigh"><td>Air-Gapped & Local IPC (Cô lập Internet)</td><td class="tno">—</td><td class="tno">—</td><td class="tno">—</td><td class="tok">✓</td></tr>
+        <tr><td>Open-Core Auditability (Ký quỹ AGPLv3)</td><td class="tno">—</td><td class="tno">—</td><td class="tno">—</td><td class="tok">Bắt buộc</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="sec reveal" id="s3">
+  <div class="label">03 — PROFESSIONAL SERVICES</div>
+  <h2 class="sec-title">Dịch Vụ Chuyên Gia & Tích Hợp</h2>
+  <div class="rule"></div>
+  <p class="lead">Hỗ trợ thiết lập hạ tầng Private Cloud, tinh chỉnh hệ thống vLLM, và tư vấn triển khai quản trị danh tính (AD/SCIM) phức tạp. Các dịch vụ này giúp doanh nghiệp chuyển đổi số nhanh chóng với biên lợi nhuận cao cho đối tác.</p>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Cluster Setup & Load Balancing</div>
+      <div class="card-body">Thiết lập Cụm VPS phân tán trên hạ tầng của doanh nghiệp. Cấu hình HAProxy, Nginx, mTLS và hệ thống chịu lỗi để đạt chuẩn SLA 99.999%.</div>
+      <div class="card-price">$15,000 – $30,000 / dự án</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">BYOM Tuning & Custom .tapp</div>
+      <div class="card-body">Dịch vụ tinh chỉnh (Fine-tuning) mô hình ngôn ngữ riêng và tư vấn phát triển ứng dụng .tapp nội bộ, nhúng an toàn vào TeraChat Secure Engine.</div>
+      <div class="card-price">$20,000 – $50,000 / dự án</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛡️</div>
+      <div class="card-title">Air-Gapped Deployment</div>
+      <div class="card-body">Thiết lập toàn bộ hệ thống (Core + Secure Engine) trên siêu máy chủ nội bộ. Setup Local IPC, chặn mọi truy cập Terminal, bàn giao bảo mật YubiKey.</div>
+      <div class="card-price">$100,000 – $200,000 / site</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec reveal" id="s4">
+  <div class="label">04 — ADD-ONS & ECOSYSTEM</div>
+  <h2 class="sec-title">Hệ Sinh Thái Plugin & Mở Rộng</h2>
+  <div class="rule"></div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-icon">🧩</div>
+      <div class="card-title">Kho Lưu Trữ Enterprise Plugin Registry</div>
+      <div class="card-body">Truy cập hệ sinh thái ứng dụng mini-app bảo mật (.tapp). Doanh nghiệp có thể tích hợp ERP, CRM. TeraChat thu <strong>30% chiết khấu</strong> từ các nhà phát hành thứ 3 trên Marketplace.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <div class="card-title">Additional Federation Cluster</div>
+      <div class="card-body">Mở rộng kết nối liên tổ chức (Federation) cho các tập đoàn, tổng công ty có nhiều công ty con độc lập. Phí áp dụng cho mỗi kết nối bổ sung ngoài giới hạn mặc định.</div>
+      <div class="card-price">+$500 / cluster / tháng</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec reveal" id="s5">
+  <div class="label">05 — CONTRACT & LICENSING</div>
+  <h2 class="sec-title">Quy Định Cấp Phép Doanh Nghiệp</h2>
+  <div class="rule"></div>
+
+  <div class="g2">
+    <div>
+      <div class="sh">Bản quyền & SLA</div>
+      <ul class="blist">
+        <li>Cung cấp License JWT (HSM FIPS 140-3 signed) cho tổ chức.</li>
+        <li>Hỗ trợ đa nền tảng (iOS, Android, macOS, Windows, Linux, Huawei).</li>
+        <li>Price lock: Cố định giá trong toàn bộ thời hạn hợp đồng đã ký.</li>
+        <li>Hỗ trợ qua Email trong giờ hành chính (Gói Business) và Dedicated 24/7 (Gói Enterprise+).</li>
+        <li>Bảo vệ chống Jailbreak & System Prompt leak tuyệt đối.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="sh">Đặc quyền Gov/Military</div>
+      <ul class="blist">
+        <li>Bắt buộc ký NDA trước quá trình đánh giá kỹ thuật (Technical evaluation).</li>
+        <li>Ký quỹ mã nguồn (Source Code Escrow) đảm bảo an ninh dài hạn.</li>
+        <li>Sẵn sàng vượt qua bài test Chaos Engineering với 28+ kịch bản ngặt nghèo.</li>
+        <li>Cam kết không có Backdoor dưới mọi hình thức (Bảo chứng bằng Toán học).</li>
+        <li>Đội ngũ kỹ thuật hỗ trợ On-site yêu cầu Clearance an ninh đặc biệt.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec reveal" id="s6">
+  <div class="label">06 — BILLING POLICIES</div>
+  <h2 class="sec-title">Chính Sách Thanh Toán Doanh Thu</h2>
+  <div class="rule"></div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title" style="color:var(--teal);margin-bottom:14px;">ƯU ĐÃI DÒNG TIỀN (CASH FLOW)</div>
+      <ul class="blist">
+        <li><strong>Thanh toán hàng năm:</strong> Giảm giá <strong>25%</strong> so với trả theo tháng (Đã phản ánh ở biểu giá trên).</li>
+        <li>Khách hàng SME/Enterprise: Thanh toán Net 30 sau invoice date.</li>
+        <li>Gov/Military: Yêu cầu hợp đồng thanh toán trước 3 năm tối thiểu.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--teal);margin-bottom:14px;">CHÍNH SÁCH MỞ RỘNG</div>
+      <ul class="blist">
+        <li>Nâng cấp Gói (Upgrade): Hiệu lực tức thì, chênh lệch tính theo Prorated.</li>
+        <li>Không thu khoản phụ phí hạ tầng (lưu trữ file, CPU), doanh nghiệp tự kiểm soát hệ thống VPS.</li>
+        <li>Đại lý phân phối (Resellers) áp dụng mức chiết khấu riêng theo Tier.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec reveal" id="s7">
+  <div class="label">07 — TCO & ROI ANALYSIS</div>
+  <h2 class="sec-title">Lợi Thế Unit Economics</h2>
+  <div class="rule"></div>
+  <p class="lead">Vì doanh nghiệp tự chạy hạ tầng, chi phí server chỉ còn $7–$48/tháng/tenant. Khách hàng sở hữu công cụ Quản trị Thiết bị (MDM), Thu hồi Quyền (SCIM) và Sức mạnh AI mà không tốn chi phí rác về lưu trữ đám mây.</p>
+
+  <div class="charts2">
+    <div class="cw">
+      <div class="cl">CHART — 01</div>
+      <div class="ct">Annual TCO — Doanh nghiệp 100 Nhân sự</div>
+      <div class="cd">So sánh License + Infra Cost</div>
+      <canvas id="cTCO" height="250"></canvas>
+    </div>
+    <div class="cw">
+      <div class="cl">CHART — 02</div>
+      <div class="ct">Biên lợi nhuận gộp (Gross Margin)</div>
+      <div class="cd">Lợi thế của kiến trúc Stateless Enclave</div>
+      <canvas id="cMargin" height="250"></canvas>
+    </div>
+  </div>
+
+  <div class="callout callout-green">
+    <p>Giải pháp của chúng tôi kết hợp hoàn hảo giữa <strong>Công cụ Quản trị chuẩn SaaS (AD Sync, SCIM, Remote Wipe)</strong> và <strong>Sức mạnh tính toán Vô hình (Blind AI)</strong>, biến rủi ro tuân thủ thành lợi thế cạnh tranh số một cho doanh nghiệp.</p>
+  </div>
+</section>
+
+<div class="footer">
+  <div class="footer-brand">TeraChat</div>
+  <div class="footer-txt">
+    Enterprise Pricing Blueprint · Q2 2026 · v3.0<br>
+    Confidential — For Sales & Qualified Prospects Only
+  </div>
+</div>
+
+</div>
+
+<script>
+const observer = new IntersectionObserver(e => e.forEach(x => {if(x.isIntersecting) x.target.classList.add('vis');}), {threshold:.07});
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+const dots = document.querySelectorAll('.dot');
+const sections = ['cover','s1','s2','s3','s4','s5','s6','s7'];
+function scrollToId(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'});}
+const secObs = new IntersectionObserver(e => {e.forEach(x => {if(x.isIntersecting){const i=sections.indexOf(x.target.id);dots.forEach((d,j)=>d.classList.toggle('active',i===j));}});},{threshold:.3});
+sections.forEach(id=>{const el=document.getElementById(id);if(el)secObs.observe(el);});
+
+Chart.defaults.color='rgba(168,196,232,0.7)';
+Chart.defaults.font.family="'IBM Plex Sans',sans-serif";
+Chart.defaults.font.size=11;
+const TEAL='#00b4d8',GOLD='#e9c46a',GREEN='#52b788',RED='#e63946',NAVY='#0b1829';
+
+new Chart(document.getElementById('cTCO'),{
+  type:'bar',
+  data:{
+    labels:['Slack/Teams Cloud','Matrix Self-Hosted','TeraChat Enterprise'],
+    datasets:[
+      {label:'License Fee',data:[30000,0,24000],backgroundColor:['rgba(230,57,70,.65)','rgba(255,255,255,.15)','rgba(0,180,216,.8)'],borderRadius:6,borderWidth:0},
+      {label:'Infrastructure Cost',data:[0,12000,1500],backgroundColor:['rgba(230,57,70,.25)','rgba(247,127,0,.6)','rgba(0,180,216,.3)'],borderRadius:6,borderWidth:0},
+      {label:'IT & Admin Overhead',data:[5000,18000,2000],backgroundColor:['rgba(230,57,70,.15)','rgba(247,127,0,.3)','rgba(0,180,216,.15)'],borderRadius:6,borderWidth:0},
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'top',labels:{padding:12,boxWidth:10}}},
+    scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>'$'+v.toLocaleString()}}}}
+});
+
+new Chart(document.getElementById('cMargin'),{
+  type:'bar',
+  indexAxis: 'y',
+  data:{
+    labels:['TeraChat (Target)','Slack (SaaS)','Teams (Est)','Self-Hosted FOSS'],
+    datasets:[
+      {label:'Biên Lợi Nhuận (%)',data:[88,87,68,60],backgroundColor:[TEAL,'rgba(255,255,255,.2)','rgba(255,255,255,.1)','rgba(255,255,255,.05)'],borderRadius:6,borderWidth:0}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{display:false}},
+    scales:{x:{max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}
+});
+</script>
+</body>
+</html>

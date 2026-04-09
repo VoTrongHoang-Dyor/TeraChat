@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — System Introduction & Onboarding</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>System Introduction & Onboarding</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#spec_core_cryptography_and_meshmd-terachat-enterprise-platform" class="nav-link" style="">Spec-Core-Cryptography-And-Mesh.md — TeraChat Enterprise Platform</a>
+<a href="#1-executive-summary-trust-boundaries" class="nav-link" style="padding-left:0.8rem;">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</a>
+<a href="#11-muc-tieu-trach-nhiem" class="nav-link" style="padding-left:1.6rem;">1.1 Mục tiêu &amp; Trách nhiệm</a>
+<a href="#12-3-am-bao-cot-loi" class="nav-link" style="padding-left:1.6rem;">1.2 3 Đảm bảo Cốt lõi</a>
+<a href="#13-trust-boundaries" class="nav-link" style="padding-left:1.6rem;">1.3 Trust Boundaries</a>
+<a href="#2-system-architecture" class="nav-link" style="padding-left:0.8rem;">§2 — SYSTEM ARCHITECTURE</a>
+<a href="#21-loi-rust-oc-tai-shared-core-philosophy" class="nav-link" style="padding-left:1.6rem;">2.1 Lõi Rust Độc Tài — Shared Core Philosophy</a>
+<a href="#22-blind-routing-zero-knowledge" class="nav-link" style="padding-left:1.6rem;">2.2 Blind Routing &amp; Zero-Knowledge</a>
+<a href="#23-deployment-topologies" class="nav-link" style="padding-left:1.6rem;">2.3 Deployment Topologies</a>
+<a href="#3-data-model-encryption-state" class="nav-link" style="padding-left:0.8rem;">§3 — DATA MODEL &amp; ENCRYPTION STATE</a>
+<a href="#31-domain-cryptographic-identity" class="nav-link" style="padding-left:1.6rem;">3.1 Domain: Cryptographic Identity</a>
+<a href="#32-domain-mls-session-objects" class="nav-link" style="padding-left:1.6rem;">3.2 Domain: MLS Session Objects</a>
+<a href="#33-domain-mesh-network-objects" class="nav-link" style="padding-left:1.6rem;">3.3 Domain: Mesh Network Objects</a>
+<a href="#34-domain-recovery-audit-objects" class="nav-link" style="padding-left:1.6rem;">3.4 Domain: Recovery &amp; Audit Objects</a>
+<a href="#4-protocol-execution-contract" class="nav-link" style="padding-left:0.8rem;">§4 — PROTOCOL &amp; EXECUTION CONTRACT</a>
+<a href="#41-hardware-root-of-trust-anti-extraction-f-01" class="nav-link" style="padding-left:1.6rem;">4.1 Hardware Root of Trust &amp; Anti-Extraction (F-01)</a>
+<a href="#42-key-management-system-hkms-f-04" class="nav-link" style="padding-left:1.6rem;">4.2 Key Management System — HKMS (F-04)</a>
+<a href="#43-message-layer-security-mls-rfc-9420-f-05" class="nav-link" style="padding-left:1.6rem;">4.3 Message Layer Security — MLS RFC 9420 (F-05)</a>
+<a href="#44-hybrid-pq-kem-kyber768-f-06" class="nav-link" style="padding-left:1.6rem;">4.4 Hybrid PQ-KEM Kyber768 (F-06)</a>
+<a href="#45-alpn-protocol-fallback-f-08" class="nav-link" style="padding-left:1.6rem;">4.5 ALPN &amp; Protocol Fallback (F-08)</a>
+<a href="#5-state-machine" class="nav-link" style="padding-left:0.8rem;">§5 — STATE MACHINE</a>
+<a href="#51-mesh-network-state" class="nav-link" style="padding-left:1.6rem;">5.1 Mesh Network State</a>
+<a href="#52-key-lifecycle-state" class="nav-link" style="padding-left:1.6rem;">5.2 Key Lifecycle State</a>
+<a href="#53-device-recovery-state-f-02" class="nav-link" style="padding-left:1.6rem;">5.3 Device Recovery State (F-02)</a>
+<a href="#6-api-ipc-event-bus" class="nav-link" style="padding-left:0.8rem;">§6 — API / IPC / EVENT BUS</a>
+<a href="#61-crypto-host-abi" class="nav-link" style="padding-left:1.6rem;">6.1 Crypto Host ABI</a>
+<a href="#62-ipc-signals-crypto-domain" class="nav-link" style="padding-left:1.6rem;">6.2 IPC Signals (Crypto Domain)</a>
+<a href="#7-platform-matrix-constraints" class="nav-link" style="padding-left:0.8rem;">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</a>
+<a href="#8-non-functional-requirements-nfr" class="nav-link" style="padding-left:0.8rem;">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</a>
+<a href="#9-security-threat-model" class="nav-link" style="padding-left:0.8rem;">§9 — SECURITY &amp; THREAT MODEL</a>
+<a href="#91-attack-vectors-mitigations" class="nav-link" style="padding-left:1.6rem;">9.1 Attack Vectors &amp; Mitigations</a>
+<a href="#92-invariants-never-violate" class="nav-link" style="padding-left:1.6rem;">9.2 Invariants (Never Violate)</a>
+<a href="#10-failure-model-recovery" class="nav-link" style="padding-left:0.8rem;">§10 — FAILURE MODEL &amp; RECOVERY</a>
+<a href="#11-architectural-invariants-audit-resolutions-cryptography-mesh" class="nav-link" style="padding-left:0.8rem;">§11 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (CRYPTOGRAPHY &amp; MESH)</a>
+<a href="#111-mls-epoch-rotation-vs-long-running-wasm-sessions" class="nav-link" style="padding-left:1.6rem;">11.1 MLS Epoch Rotation vs. Long-Running WASM Sessions</a>
+<a href="#112-strict-engineering-guardrails-mesh-degradation-limits" class="nav-link" style="padding-left:1.6rem;">11.2 Strict Engineering Guardrails (Mesh Degradation Limits)</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <h1 id="spec_core_cryptography_and_meshmd-terachat-enterprise-platform">Spec-Core-Cryptography-And-Mesh.md — TeraChat Enterprise Platform</h1>
+<pre><code class="language-yaml"># DOCUMENT IDENTITY
+id: &quot;TERA-CORE&quot;
+title: &quot;TeraChat — Core Cryptography &amp; Mesh Network Specification&quot;
+version: &quot;1.0.0&quot;
+status: &quot;ACTIVE&quot;
+audience: &quot;System Architect, Backend Engineer, Security / Cryptography Engineer, Rust Core Dev&quot;
+purpose: &quot;Đặc tả toàn bộ primitives mật mã học, MLS E2EE, Hybrid PQ-KEM, Hardware Root of Trust, và Survival Mesh Networking. Đây là chân lý mật mã (Cryptographic Truth) của nền tảng.&quot;
+depends_on: []
+constraints_global:
+  - &quot;ZeroizeOnDrop bắt buộc cho mọi struct giữ key material&quot;
+  - &quot;Không mlock() trên iOS — dùng kCFAllocatorMallocZone + ZeroizeOnDrop&quot;
+  - &quot;Mọi FFI endpoint KHÔNG trả raw ptr — dùng Token Protocol&quot;
+  - &quot;Ed25519 signed, append-only Audit Log — không thể delete/modify&quot;
+  - &quot;Mọi crypto đi qua ring crate hoặc RustCrypto — không self-implement&quot;
+  - &quot;Mọi Private Key phải nằm trong Secure Enclave (iOS/macOS) / StrongBox (Android) / TPM 2.0 (Desktop)&quot;
+
+</code></pre>
+<blockquote>
+<p><strong>Status:</strong> <code>ACTIVE — Implementation Reference</code>
+<strong>Audience:</strong> Backend Engineer · Security / Cryptography Engineer · Rust Core Dev
+<strong>Last Updated:</strong> 2026-03-29
+<strong>Consumed By:</strong> → TERA-SYNC · → TERA-RUNTIME · → TERA-GOV · → TERA-CLIENT · → TERA-ENCLAVE</p>
+</blockquote>
+<hr />
+<h2 id="1-executive-summary-trust-boundaries">§1 — EXECUTIVE SUMMARY &amp; TRUST BOUNDARIES</h2>
+<h3 id="11-muc-tieu-trach-nhiem">1.1 Mục tiêu &amp; Trách nhiệm</h3>
+<p>File này <strong>chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>Toàn bộ cryptographic primitives (MLS, PQ-KEM, HKMS)</li>
+<li>Hardware Root of Trust (Secure Enclave, StrongBox, TPM 2.0)</li>
+<li>Survival Mesh Networking (BLE 5.0, Wi-Fi Direct, EMDP)</li>
+<li>Binary transparency &amp; update integrity</li>
+</ul>
+<p>File này <strong>KHÔNG chịu trách nhiệm</strong> cho:</p>
+<ul>
+<li>WASM runtime &amp; .tapp isolation → <code>TERA-RUNTIME</code></li>
+<li>Storage &amp; Sync architecture → <code>TERA-SYNC</code></li>
+<li>UI/FFI bridge → <code>TERA-CLIENT</code></li>
+<li>AI Enclave → <code>TERA-ENCLAVE</code></li>
+<li>Identity governance &amp; OPA → <code>TERA-GOV</code></li>
+</ul>
+<h3 id="12-3-am-bao-cot-loi">1.2 3 Đảm bảo Cốt lõi</h3>
+<ol>
+<li><strong>Server không thể đọc nội dung</strong> — ciphertext-only relay.</li>
+<li><strong>Mesh P2P duy trì liên lạc khi mất Internet hoàn toàn.</strong></li>
+<li><strong>Mọi key material tự hủy ngay khi scope kết thúc</strong> — ZeroizeOnDrop everywhere.</li>
+</ol>
+<h3 id="13-trust-boundaries">1.3 Trust Boundaries</h3>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Bên trong tin tưởng</th>
+<th>Bên ngoài không tin tưởng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Secure Enclave / StrongBox / TPM</td>
+<td>Private key ops</td>
+<td>RAM, OS, Admin</td>
+</tr>
+<tr>
+<td>Rust Core (Crypto domain)</td>
+<td>Crypto logic, Signing</td>
+<td>UI layer, WASM sandbox</td>
+</tr>
+<tr>
+<td>Mesh Peer</td>
+<td>Relaying signed packets</td>
+<td>Unsigned/unverified data</td>
+</tr>
+<tr>
+<td>Blind Relay VPS</td>
+<td>Routing ciphertext</td>
+<td>Plaintext content</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-system-architecture">§2 — SYSTEM ARCHITECTURE</h2>
+<h3 id="21-loi-rust-oc-tai-shared-core-philosophy">2.1 Lõi Rust Độc Tài — Shared Core Philosophy</h3>
+<ul>
+<li><strong>Lõi Rust (TeraChat Core)</strong> nắm giữ 100% sinh mệnh: MLS E2EE, SQLCipher I/O, P2P Mesh, CRDT Sync. Biên dịch ra native binary cho mọi platform.</li>
+<li><strong>Tầng UI (Flutter / Tauri):</strong> Pure Renderer — cấm tuyệt đối port Crypto/Business Logic lên Dart/JS Thread.</li>
+<li><strong>IPC — Tách Control/Data Plane:</strong></li>
+<li><em>Control Plane:</em> Protobuf qua FFI/JSI — lệnh nhỏ &lt;1KB.</li>
+<li><em>Data Plane:</em> Dart FFI TypedData (Mobile) / <code>SharedArrayBuffer</code> (Desktop) — Zero-Copy, throughput ~400–500MB/s.</li>
+<li><strong>Unidirectional State Sync:</strong> Rust bắn signal <code>StateChanged(table, version)</code> qua IPC. UI kéo snapshot tại thời điểm rảnh — không polling, không push JSON cục.</li>
+</ul>
+<h3 id="22-blind-routing-zero-knowledge">2.2 Blind Routing &amp; Zero-Knowledge</h3>
+<ul>
+<li>Server là <strong>Blind Relay</strong> — chỉ thấy: <code>destination_device_id</code>, <code>blob_size</code>, <code>timestamp</code>.</li>
+<li><strong>Sealed Sender:</strong> Header người gửi mã hóa bằng public key người nhận — Server không biết who-to-whom.</li>
+<li><strong>Oblivious CAS Routing:</strong> Batch 4–10 <code>Fake_CAS_Hashes</code> khi gửi hash query (Chaffing). Tra qua Mixnet Proxy Endpoint, không đính <code>User_ID</code>.</li>
+<li><strong>MinIO Blind Storage:</strong> Lưu file theo <code>cas_hash</code> path — không biết tên file thực.</li>
+</ul>
+<h3 id="23-deployment-topologies">2.3 Deployment Topologies</h3>
+<pre><code class="language-text">[Global Edge / GeoDNS Routing]
+         │
+         ├──&gt; [Tier A: Mac mini On-Premise Cluster — Recommended]
+         │      ├─ 1–N Mac mini nodes (Apple Silicon M2 Pro / M4 Pro)
+         │      ├─ NAS Synology / QNAP (SMB3/NFS4.1) — Blob + Memory Store
+         │      ├─ ZK Memory Agent (local LLM consolidation)
+         │      ├─ TeraRelay Rust Daemon (blind router)
+         │      └─ Mesh-consensus HA (1 Mac = 99.9%, 2 Mac = 99.999%)
+         │
+         ├──&gt; [Tier B: VPS Cloud Relay — Legacy / Remote Branch]
+         │      ├─ Single-Binary Rust Daemon (blind relay only)
+         │      ├─ No AI inference, no Memory Agent
+         │      └─ HA TURN Array (WebRTC Relay, Floating IP)
+         │
+         ├──&gt; [Tier C: Federation Bridge]
+         │      ├─ mTLS Mutual Auth (PKI nội bộ)
+         │      └─ Mac mini Cluster A ↔ Cluster B giao tiếp an toàn
+         │
+         └──&gt; [Tier D: Air-Gapped Bare-Metal]
+                ├─ Mac mini + NAS hoàn toàn offline
+                └─ HSM FIPS 140-3 cho key ceremony
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Quy mô</th>
+<th>Topology</th>
+<th>Hardware</th>
+<th>Setup time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solo ≤ 50</td>
+<td>1 Mac mini + 1 NAS 4TB</td>
+<td>Mac mini M2 8GB + Synology DS223</td>
+<td>15 phút</td>
+</tr>
+<tr>
+<td>SME ≤ 500</td>
+<td>1 Mac mini M2 Pro 32GB + 1 NAS 16TB</td>
+<td>Mac mini M2 Pro + Synology DS923+</td>
+<td>30 phút</td>
+</tr>
+<tr>
+<td>Enterprise ≤ 5,000</td>
+<td>2 Mac mini M4 Pro 48GB (cluster) + 1 NAS 32TB</td>
+<td>2× Mac mini M4 Pro + Synology HD6500</td>
+<td>1 giờ</td>
+</tr>
+<tr>
+<td>Gov Air-gapped</td>
+<td>2 Mac mini + NAS + HSM PKCS#11</td>
+<td>Existing hardware</td>
+<td>4 giờ</td>
+</tr>
+<tr>
+<td>Remote Branch</td>
+<td>VPS Rust relay only (no AI)</td>
+<td>$6–48/tháng VPS</td>
+<td>5 phút</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-data-model-encryption-state">§3 — DATA MODEL &amp; ENCRYPTION STATE</h2>
+<h3 id="31-domain-cryptographic-identity">3.1 Domain: Cryptographic Identity</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DeviceIdentityKey</code></td>
+<td>Ed25519 Key Pair</td>
+<td>Secure Enclave / StrongBox</td>
+<td>Permanent (hardware-bound)</td>
+<td>Không export. Ký/derive only.</td>
+</tr>
+<tr>
+<td><code>Company_Key</code></td>
+<td>AES-256-GCM Root Key</td>
+<td>HKMS (wrapped by DeviceKey)</td>
+<td>Per-workspace, rotated on member exit</td>
+<td>Không rời thiết bị thành viên</td>
+</tr>
+<tr>
+<td><code>Epoch_Key</code></td>
+<td>MLS Leaf Key</td>
+<td>RAM (Userspace)</td>
+<td>Per MLS Epoch, zeroized on rotation</td>
+<td>ZeroizeOnDrop mandatory</td>
+</tr>
+<tr>
+<td><code>ChunkKey</code></td>
+<td>AES-256-GCM Ephemeral</td>
+<td>Rust <code>ZeroizeOnDrop</code> struct</td>
+<td>1 chunk (~2MB) lifetime</td>
+<td>Zeroized immediately after use</td>
+</tr>
+<tr>
+<td><code>Session_Key</code></td>
+<td>ECDH Curve25519 Derived</td>
+<td>RAM (Userspace)</td>
+<td>Per session, zeroized after disconnect</td>
+<td>ZeroizeOnDrop mandatory</td>
+</tr>
+<tr>
+<td><code>Push_Key</code></td>
+<td>AES-256-GCM Symmetric</td>
+<td>Shared Keychain (iOS) / StrongBox (Android)</td>
+<td>Per push_epoch, OOB from MLS</td>
+<td>Versioned: push_key_version (u32)</td>
+</tr>
+<tr>
+<td><code>Master_Unlock_Key</code></td>
+<td>KDF output</td>
+<td>RAM only (&lt;100ms)</td>
+<td>Duration of license validation op</td>
+<td>ZeroizeOnDrop; never persisted</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-domain-mls-session-objects">3.2 Domain: MLS Session Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>KeyPackage</code></td>
+<td>MLS RFC 9420 Struct</td>
+<td>Server (public) / Local DB</td>
+<td>Refreshed periodically</td>
+<td>Public info only</td>
+</tr>
+<tr>
+<td><code>Welcome_Packet</code></td>
+<td>ECIES-encrypted payload</td>
+<td>Encrypted in-flight</td>
+<td>Single use, consumed on join</td>
+<td>ECIES Curve25519, receiver-keyed</td>
+</tr>
+<tr>
+<td><code>TreeKEM_Update_Path</code></td>
+<td>MLS tree delta</td>
+<td>In-memory, broadcast</td>
+<td>Per epoch rotation</td>
+<td>Ed25519 signed</td>
+</tr>
+<tr>
+<td><code>Epoch_Ratchet</code></td>
+<td>Sequence counter</td>
+<td><code>hot_dag.db</code></td>
+<td>Monotonically increasing</td>
+<td>Tamper-evident via append-only log</td>
+</tr>
+<tr>
+<td><code>Enterprise_Escrow_Key</code></td>
+<td>Shamir-split AES-256</td>
+<td>M-of-N hardware tokens</td>
+<td>Per KMS bootstrap</td>
+<td>3-of-5 Shamir; no single holder</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-domain-mesh-network-objects">3.3 Domain: Mesh Network Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLE_Stealth_Beacon</code></td>
+<td>31-byte BLE Adv PDU</td>
+<td>Broadcast-only (air)</td>
+<td>Ephemeral per scan cycle</td>
+<td>HMAC-wrapped; no static identifiers</td>
+</tr>
+<tr>
+<td><code>Identity_Commitment</code></td>
+<td><code>HMAC(R, PK_identity)[0:8]</code></td>
+<td>Embedded in Beacon</td>
+<td>Per session nonce</td>
+<td>R rotated every 5min</td>
+</tr>
+<tr>
+<td><code>Shun_Record</code></td>
+<td><code>{Node_ID, Ed25519_Sig, HLC}</code></td>
+<td><code>hot_dag.db</code> broadcast</td>
+<td>Until node is rehabilitated</td>
+<td>Enterprise CA signed</td>
+</tr>
+<tr>
+<td><code>MergeCandidate</code></td>
+<td><code>{Node_ID, BLAKE3_Hash, HLC}</code></td>
+<td>RAM only</td>
+<td>Duration of Split-brain resolution</td>
+<td>Ephemeral; no persist</td>
+</tr>
+<tr>
+<td><code>Hash_Frontier</code></td>
+<td><code>{Vector_Clock, Root_Hash}</code></td>
+<td><code>hot_dag.db</code></td>
+<td>Updated on every Gossip round</td>
+<td>BLAKE3 integrity</td>
+</tr>
+<tr>
+<td><code>EmdpKeyEscrow</code></td>
+<td>AES-256 session key</td>
+<td>BLE Control Plane (in-flight)</td>
+<td>EMDP session (max 60min)</td>
+<td>ECIES-encrypted to relay device pubkey</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-domain-recovery-audit-objects">3.4 Domain: Recovery &amp; Audit Objects</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Type</th>
+<th>Storage</th>
+<th>Lifecycle</th>
+<th>Security Constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Snapshot_CAS</code></td>
+<td>Content-Addressable Hash</td>
+<td><code>TeraVault VFS</code></td>
+<td>Permanent</td>
+<td>SHA-256 integrity</td>
+</tr>
+<tr>
+<td><code>Monotonic_Counter</code></td>
+<td>TPM 2.0 hardware counter</td>
+<td>TPM chip register</td>
+<td>Hardware-bound, tamper-evident</td>
+<td>Rollback-proof; hardware only</td>
+</tr>
+<tr>
+<td><code>Audit_Log_Entry</code></td>
+<td><code>{device_id, timestamp, payload_hash, ed25519_sig}</code></td>
+<td>Append-only CRDT chain</td>
+<td>Permanent</td>
+<td>Ed25519 signed; cannot delete</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-protocol-execution-contract">§4 — PROTOCOL &amp; EXECUTION CONTRACT</h2>
+<h3 id="41-hardware-root-of-trust-anti-extraction-f-01">4.1 Hardware Root of Trust &amp; Anti-Extraction (F-01)</h3>
+<p><strong>Key Mechanisms:</strong></p>
+<ul>
+<li><strong>Biometric-Bound Cryptographic Handshake:</strong> <code>Device_Key</code> sinh với <code>kSecAccessControlBiometryCurrentSet</code>. Biometric required cho mọi signing op.</li>
+<li><strong>Enterprise PIN Độc lập &amp; Dual-Wrapped KEK:</strong> Argon2id (0.5s CPU) sinh <code>Fallback_KEK</code>. Device_Key bọc 2 bản độc lập.</li>
+<li><strong>Ruthless Cryptographic Self-Destruct:</strong> Counter <code>Failed_PIN_Attempts</code> (max 5) → Crypto-Shredding toàn bộ Local DB → Factory Reset.</li>
+</ul>
+<p><strong>Platform Signing APIs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>API</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS</td>
+<td><code>LAContext</code></td>
+<td><code>SecKeyCreateSignature</code> + <code>.biometryCurrentSet</code></td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td><code>BiometricPrompt</code></td>
+<td><code>setUserAuthenticationRequired(true)</code> + Hardware Keystore</td>
+</tr>
+<tr>
+<td>💻 macOS</td>
+<td><code>CryptoTokenKit</code></td>
+<td><code>kSecAttrTokenIDSecureEnclave</code></td>
+</tr>
+<tr>
+<td>💻🖥️ Windows</td>
+<td><code>CNG</code></td>
+<td><code>Microsoft Platform Crypto Provider (TPM 2.0)</code> + <code>NCryptSignHash</code></td>
+</tr>
+<tr>
+<td>🗄️ Gov-Grade</td>
+<td>PKCS#11</td>
+<td>SafeNet/Viettel/VNPT CA — Rust <code>pkcs11</code> crate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remote Attestation:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>API</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS</td>
+<td><code>DCAppAttestService</code></td>
+<td>App gốc, không Jailbreak</td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td><code>Play Integrity API</code></td>
+<td><code>MEETS_STRONG_INTEGRITY</code></td>
+</tr>
+<tr>
+<td>📱 Huawei</td>
+<td>HMS SafetyDetect <code>DeviceIntegrity()</code></td>
+<td>TrustZone (ARM)</td>
+</tr>
+<tr>
+<td>💻🖥️ Windows</td>
+<td><code>TPM 2.0 Health Attestation</code></td>
+<td>PCR check + BitLocker ON</td>
+</tr>
+<tr>
+<td>💻 macOS</td>
+<td>Notarization + Hardened Runtime</td>
+<td>Secure Enclave</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-key-management-system-hkms-f-04">4.2 Key Management System — HKMS (F-04)</h3>
+<p><strong>Key Hierarchy:</strong></p>
+<pre><code class="language-text">[Master Key]  — HSM / TPM / Secure Enclave (không rời chip)
+      └──&gt; [KEK]  — giải mã trong RAM, ZeroizeOnDrop protected
+                └──&gt; [DEK]  — mã hóa nội dung thực tế
+                          └──&gt; [DB / File / Channel / API Key]
+</code></pre>
+<p><strong>KMS Bootstrap Ritual:</strong></p>
+<ol>
+<li>Workspace khởi tạo → App sinh <code>terachat_master_&lt;domain&gt;.terakey</code> (Master Key bọc AES-256 bằng Argon2id từ Admin password).</li>
+<li>Lõi Rust <strong>Block</strong> tạo Database cho đến khi Admin xác nhận lưu Key Backup.</li>
+<li>Shamir 3-of-5 phân phát vào YubiKey/Smartcard của C-Level.</li>
+<li>HSM Decrementing Monotonic Counter: mỗi lần issue cert → counter giảm → chống cloning.</li>
+</ol>
+<p><strong>Dead Man Switch:</strong></p>
+<ul>
+<li>Mỗi unlock DB → Counter++. Server lưu "Last Valid Counter". <code>Counter &lt; Server's Value</code> → từ chối + Self-Destruct.</li>
+<li><strong>Offline Grace:</strong> Tối đa theo <code>OfflineTTLProfile</code> (mặc định 72h consumer, 720h GovMilitary).</li>
+</ul>
+<h3 id="43-message-layer-security-mls-rfc-9420-f-05">4.3 Message Layer Security — MLS RFC 9420 (F-05)</h3>
+<p><strong>Key Properties:</strong></p>
+<ul>
+<li><strong>TreeKEM:</strong> Mã hóa O(log n) cho nhóm 5000+ user.</li>
+<li><strong>Self-Healing (Epoch Rotation):</strong> Xoay Session Key định kỳ theo thời gian hoặc khi số lượng tin nhắn đạt ngưỡng (ví dụ: 10,000 requests) để duy trì Forward Secrecy, và rotate ngay lập tức khi member rời nhóm.</li>
+<li><strong>Sealed Sender:</strong> Server không biết người gửi.</li>
+<li><strong>Multi-Device Queue:</strong> N bản copy (1/device). Device ACK → xóa bản đó. TTL 14 ngày → Crypto-Shred KEK.</li>
+<li><strong>Enterprise Escrow KEM:</strong> Shamir's Secret Sharing — M-of-N Recovery Key cho Supervisors.</li>
+</ul>
+<p><strong>OOB Symmetric Push Ratchet (NSE isolation):</strong></p>
+<ul>
+<li><code>Push_Key = HKDF(Company_Key, "push-ratchet" || chat_id || push_epoch)</code> — hash-chain một chiều, <strong>độc lập với MLS TreeKEM</strong>.</li>
+<li>NSE chỉ đọc <code>Push_Key_current</code> từ Shared Keychain → giải mã payload O(1) RAM (&lt;5MB) → <code>ZeroizeOnDrop</code>.</li>
+<li>NSE <strong>không bao giờ</strong> tái dựng TreeKEM. Main App chịu trách nhiệm ratchet khi Foreground.</li>
+</ul>
+<h3 id="44-hybrid-pq-kem-kyber768-f-06">4.4 Hybrid PQ-KEM Kyber768 (F-06)</h3>
+<p><strong>Key Derivation:</strong></p>
+<pre><code class="language-text">Final_Session_Key = HKDF(X25519_Shared || Kyber768_Shared)
+</code></pre>
+<p>Tuân thủ chuẩn CNSA 2.0 và NSA SNDL/HNDL requirements.</p>
+<p><strong>Bandwidth Optimization:</strong></p>
+<ul>
+<li><strong>Quantum Checkpoints:</strong> ML-KEM payload (~1.18KB) chỉ đính kèm vào <code>KeyPackage</code> MLS Handshake hoặc mỗi 10.000 tin nhắn.</li>
+<li><strong>Survival Mesh Fragmentation:</strong> BLE 5.0 MTU ~512 bytes → băm nhỏ Kyber blob 1.18KB thành mảnh 400 bytes + Sequence ID + FEC (RaptorQ RFC 6330).</li>
+</ul>
+<h3 id="45-alpn-protocol-fallback-f-08">4.5 ALPN &amp; Protocol Fallback (F-08)</h3>
+<pre><code class="language-text">ALPN Protocol State Machine (Auto-negotiation, &lt; 50ms total)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Step 1 │ QUIC/HTTP3 over UDP:443
+       │ ◉ ACK within 50ms → ONLINE_QUIC (0-RTT, ~30ms)
+       │ ✗ No ACK / Firewall DROP → fallback Step 2
+       ▼
+Step 2 │ gRPC over HTTP/2 (TCP:443)
+       │ ◉ TLS handshake OK → ONLINE_GRPC (1-RTT, ~80ms)
+       │ ✗ → fallback Step 3
+       ▼
+Step 3 │ WebSocket Secure (wss:// over TCP:443)
+       │ ◉ WS Upgrade OK → ONLINE_WSS (1-RTT, ~120ms)
+       │ ✗ All transports fail → MESH_MODE (BLE/Wi-Fi Direct)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Luật Mesh Mode Degradation:**
+- Nếu kết nối WebRTC trực tiếp fail, hệ thống sẽ downgrade qua TLS-over-WebSocket đi qua Relay Node.
+- *Nguyên tắc tối thượng:* Performance degradation is acceptable (tăng latency), but Security degradation is strictly PROHIBITED (Toàn bộ MLS E2EE, Zero-Knowledge Routing, ZeroizeOnDrop đều phải được bảo toàn 100%).
+</code></pre>
+<hr />
+<h2 id="5-state-machine">§5 — STATE MACHINE</h2>
+<h3 id="51-mesh-network-state">5.1 Mesh Network State</h3>
+<pre><code class="language-text">[Internet Available] ─────────────────────────────────────┐
+                                                          │ Network Lost
+                                                          ▼
+[BLE Scan] ──peers found──&gt; [BLE Active Mesh]
+     │                              │
+     │ no peers                     │ Internet restored
+     ▼                              ▼
+[Standby - SOS only]         [Hybrid Sync]
+                              (send queued CRDT events)
+</code></pre>
+<h3 id="52-key-lifecycle-state">5.2 Key Lifecycle State</h3>
+<pre><code class="language-text">[Key Generation] ──hardware bound──&gt; [Active Key]
+                                           │
+                              epoch_rotation / member_exit
+                                           ▼
+                                    [Zeroized Key]
+                                    (ZeroizeOnDrop)
+</code></pre>
+<h3 id="53-device-recovery-state-f-02">5.3 Device Recovery State (F-02)</h3>
+<pre><code class="language-text">[Nhân viên mất thiết bị]
+        │
+        ▼
+[Báo HR/Admin] ──BLE Physical Presence──▶ [2/3 Admin xác nhận Biometric]
+        │                                         │
+        ▼                                         ▼
+[QR Code Recovery Ticket]            [Lagrange Interpolation in mlock arena]
+        │                                         │
+        ▼                                         ▼
+[Thiết bị mới quét QR]              [Enterprise_Escrow_Key (RAM &lt;100ms)]
+        │                                         │
+        └─────────────────────────────────────────┘
+                          ▼
+                [Append Audit Log → Epoch Rotation]
+</code></pre>
+<hr />
+<h2 id="6-api-ipc-event-bus">§6 — API / IPC / EVENT BUS</h2>
+<h3 id="61-crypto-host-abi">6.1 Crypto Host ABI</h3>
+<pre><code class="language-rust">// Host function ABI — WASM calls these, Rust implements
+extern &quot;C&quot; {
+    fn host_blake3_hash(data_ptr: *const u8, data_len: usize, out_ptr: *mut u8) -&gt; i32;
+    fn host_ed25519_sign(key_id: u64, msg_ptr: *const u8, msg_len: usize, sig_out: *mut u8) -&gt; i32;
+    fn host_aes256gcm_encrypt(
+        key_id: u64, nonce_ptr: *const u8, plaintext_ptr: *const u8,
+        plaintext_len: usize, ciphertext_out: *mut u8
+    ) -&gt; i32;
+}
+// key_id references a ZeroizeOnDrop key in Rust Core — never crosses boundary as bytes
+</code></pre>
+<h3 id="62-ipc-signals-crypto-domain">6.2 IPC Signals (Crypto Domain)</h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Trigger</th>
+<th>Consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SecurityEvent::HardwareAttestationFailed</code></td>
+<td>Attestation fail</td>
+<td>TERA-CLIENT (show alert)</td>
+</tr>
+<tr>
+<td><code>MlsEpochRotated(epoch_n)</code></td>
+<td>Member join/leave</td>
+<td>TERA-SYNC</td>
+</tr>
+<tr>
+<td><code>MlsKeyDesync(chat_id)</code></td>
+<td>Push key version mismatch</td>
+<td>TERA-SYNC</td>
+</tr>
+<tr>
+<td><code>NetworkProtocolChanged(old, new)</code></td>
+<td>ALPN fallback</td>
+<td>TERA-CLIENT</td>
+</tr>
+<tr>
+<td><code>SecurityEvent::DMA_INTRUSION</code></td>
+<td>PCIe device join</td>
+<td>Self-destruct pipeline</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-platform-matrix-constraints">§7 — PLATFORM MATRIX &amp; CONSTRAINTS</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>📱 iOS</th>
+<th>📱 Android</th>
+<th>💻 macOS</th>
+<th>🖥️ Desktop</th>
+<th>☁️ VPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Secure Key Storage</td>
+<td>Secure Enclave</td>
+<td>StrongBox Keymaster</td>
+<td>Secure Enclave (SEP)</td>
+<td>TPM 2.0</td>
+<td>HSM PKCS#11</td>
+</tr>
+<tr>
+<td>Biometric Binding</td>
+<td>FaceID/TouchID</td>
+<td>BiometricPrompt</td>
+<td>TouchID</td>
+<td>TPM UserPresence</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>mlock()</td>
+<td>❌ (use kCFAllocatorMallocZone)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>BLE Mesh</td>
+<td>✅ (background limited)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Remote Attestation</td>
+<td>DCAppAttestService</td>
+<td>Play Integrity API</td>
+<td>Notarization</td>
+<td>TPM Health</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>PQ-KEM Support</td>
+<td>wasm3 (interpreter)</td>
+<td>wasmtime JIT</td>
+<td>wasmtime JIT</td>
+<td>wasmtime JIT</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-non-functional-requirements-nfr">§8 — NON-FUNCTIONAL REQUIREMENTS (NFR)</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Target</th>
+<th>Measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MLS Epoch rotation (10k users)</td>
+<td>&lt; 1s</td>
+<td>P99 latency</td>
+</tr>
+<tr>
+<td>E2EE message latency (client→client)</td>
+<td>&lt; 50ms</td>
+<td>P95 latency</td>
+</tr>
+<tr>
+<td>PQ-KEM handshake overhead</td>
+<td>&lt; 20ms additional</td>
+<td>vs classical X25519</td>
+</tr>
+<tr>
+<td>Key zeroization time</td>
+<td>&lt; 1ms</td>
+<td>ZeroizeOnDrop benchmark</td>
+</tr>
+<tr>
+<td>BLE discovery time</td>
+<td>&lt; 5s</td>
+<td>Cold start mesh</td>
+</tr>
+<tr>
+<td>ALPN fallback negotiation</td>
+<td>&lt; 50ms total</td>
+<td>All 3 steps combined</td>
+</tr>
+<tr>
+<td>Audit log write</td>
+<td>&lt; 10ms</td>
+<td>Per entry</td>
+</tr>
+<tr>
+<td>Memory: WASM crypto overhead</td>
+<td>&lt; 5MB per call</td>
+<td>Peak RAM in call</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-security-threat-model">§9 — SECURITY &amp; THREAT MODEL</h2>
+<h3 id="91-attack-vectors-mitigations">9.1 Attack Vectors &amp; Mitigations</h3>
+<table>
+<thead>
+<tr>
+<th>Attack</th>
+<th>Vector</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Key extraction from memory</td>
+<td>iOS mlock bypass / cold boot</td>
+<td>kCFAllocatorMallocZone + ZeroizeOnDrop on scope exit</td>
+</tr>
+<tr>
+<td>MITM on relay</td>
+<td>TLS downgrade</td>
+<td>Certificate pinning (SHA-256 SPKI hardcoded) + Anti-Downgrade</td>
+</tr>
+<tr>
+<td>Replay attack</td>
+<td>Old CRDT events re-injected</td>
+<td>HLC Timestamp monotonicity + Tombstone Stubs</td>
+</tr>
+<tr>
+<td>Sybil attack in Mesh</td>
+<td>Attacker floods fake Node_IDs</td>
+<td>Enterprise CA signed Shun_Records only</td>
+</tr>
+<tr>
+<td>Store-Now-Decrypt-Later</td>
+<td>Harvest ciphertext now, decrypt with quantum</td>
+<td>Hybrid PQ-KEM (X25519 + ML-KEM-768)</td>
+</tr>
+<tr>
+<td>DMA attack at PCIe</td>
+<td>Rogue device joins PCIe bus</td>
+<td>IOMMU check at startup → <code>SecurityEvent::DMA_INTRUSION</code> → key shred</td>
+</tr>
+<tr>
+<td>Attestation bypass</td>
+<td>Rooted/jailbroken device</td>
+<td><code>MEETS_BASIC_INTEGRITY</code> only → reject + Remote Wipe</td>
+</tr>
+<tr>
+<td>Admin key theft</td>
+<td>Single admin controls all</td>
+<td>Shamir 3-of-5 — no single holder of <code>Enterprise_Escrow_Key</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="92-invariants-never-violate">9.2 Invariants (Never Violate)</h3>
+<ul>
+<li>❌ Không tự implement crypto. Chỉ dùng <code>ring</code> hoặc <code>RustCrypto</code>.</li>
+<li>❌ Không persist plaintext key lên disk.</li>
+<li>❌ Không truyền raw pointer qua FFI.</li>
+<li>❌ Không cấp file handle OS gốc cho WASM.</li>
+<li>❌ Không trust CA công cộng cho mTLS nội bộ.</li>
+</ul>
+<hr />
+<h2 id="10-failure-model-recovery">§10 — FAILURE MODEL &amp; RECOVERY</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Key zeroization crash mid-write</td>
+<td><code>XpcTransactionJournal</code> PENDING state</td>
+<td>Replay journal on restart; re-zeroize</td>
+</tr>
+<tr>
+<td>MLS epoch rotation timeout</td>
+<td><code>epoch_rotation_latency_ms</code> &gt; 2s</td>
+<td>Split group into logical sub-groups; retry epoch</td>
+</tr>
+<tr>
+<td>BLE beacon collision</td>
+<td>HMAC validation fail</td>
+<td>Rotate session nonce R; rescan</td>
+</tr>
+<tr>
+<td>Attestation API unavailable (offline)</td>
+<td>No DCAppAttestService response</td>
+<td>Fallback to local PIN verification; log <code>AttestationSkipped</code></td>
+</tr>
+<tr>
+<td>Push key desync</td>
+<td>Key version mismatch on NSE wakeup</td>
+<td>Cache raw ciphertext → <code>content-available:1</code> → Main App decrypt</td>
+</tr>
+<tr>
+<td>DMA intrusion detected</td>
+<td><code>SecurityEvent::DMA_INTRUSION</code></td>
+<td>Immediate <code>Session_Key</code> zeroize → lockscreen → alert Admin</td>
+</tr>
+<tr>
+<td>HSM unreachable at KMS bootstrap</td>
+<td>Bootstrap blocks</td>
+<td>Admin must restore from Shamir shard quorum (3-of-5)</td>
+</tr>
+<tr>
+<td>Monotonic counter rollback</td>
+<td><code>Counter &lt; Server's Last Valid Counter</code></td>
+<td>Reject + Self-Destruct + notify Admin</td>
+</tr>
+</tbody>
+</table>
+<h2 id="11-architectural-invariants-audit-resolutions-cryptography-mesh">§11 — ARCHITECTURAL INVARIANTS &amp; AUDIT RESOLUTIONS (CRYPTOGRAPHY &amp; MESH)</h2>
+<h3 id="111-mls-epoch-rotation-vs-long-running-wasm-sessions">11.1 MLS Epoch Rotation vs. Long-Running WASM Sessions</h3>
+<p><strong>Constraint:</strong> Stateful Tapps preserving older epoch parameters will catastrophically fail decryption following a scheduled member rotation or timeout epoch boundary.
+<strong>Resolution:</strong> Rust Core broadcasts a explicit <code>CoreSignal::EpochRotated { session_ids_affected }</code>. Tapps holding active cross-epoch multi-message state must checkpoint, discard keys (<code>ZeroizedOnDrop</code>), and request re-hydration to receive the superseding <code>Epoch_Key</code>.</p>
+<h3 id="112-strict-engineering-guardrails-mesh-degradation-limits">11.2 Strict Engineering Guardrails (Mesh Degradation Limits)</h3>
+<ul>
+<li><strong>Rule 4 (No Silent Security Degradation):</strong> P2P WebRTC fallback (e.g., TLS-via-WebSocket) authorizes routing latency compromises, but strictly rejects any downgrades to the MLS cryptographic protocol. If a secure session verification fails in Mesh Mode, Rust Core generates a <code>CoreSignal::FeatureDegradedInMesh</code> error instead of quietly dropping parameters. Fallback logic is fully managed by the Host and never delegated to the Tapp space.</li>
+</ul>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

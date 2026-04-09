@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraChat — Core Functions & Features</title>
+    <style>
+    
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-pink: #f472b6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --border: #334155;
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            display: block;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent-purple); }
+
+        .nav-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-left: 0.8rem;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            border-left-color: var(--accent-blue);
+        }
+
+        .main {
+            padding: 4rem 4rem;
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 2.5rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; }
+        h2 { font-size: 1.8rem; color: var(--accent-purple); margin-top: 3rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        h3 { font-size: 1.25rem; color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--accent-blue); padding-left: 1rem; }
+
+        p, ul { color: var(--text-secondary); margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .scenario-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .scenario-card::before {
+            content: "USER EXPERIENCE";
+            position: absolute;
+            top: 0; right: 0;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 8px;
+        }
+
+        .scenario-step {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: baseline;
+        }
+
+        @media (max-width: 768px) {
+            .scenario-step { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            text-align: right;
+        }
+
+        .tech-box {
+            background: #0f1219;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--accent-pink);
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1rem 0;
+            display: block;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .comparison-table th { text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding: 0.5rem; }
+        .comparison-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .old-way { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .new-way { color: var(--success); font-weight: 500; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .badge-success { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .badge-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .badge-warning { color: var(--warning); background: rgba(251, 191, 36, 0.1); }
+        .badge-info { color: var(--info); background: rgba(59, 130, 246, 0.1); }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        code { background: rgba(255,255,255,0.08); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            .main {
+                padding: 2rem 1.5rem;
+                width: 100%;
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; margin-top: 2rem; }
+        }
+        
+    
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: var(--font-main, system-ui);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .search-shortcut {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+        .nav-link.search-hidden {
+            display: none !important;
+        }
+        .search-no-results {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            opacity: 0.6;
+            display: none;
+        }
+
+        /* Tech Properties */
+        .tech-prop { font-size: 0.85rem; margin-bottom: 0.3rem; display: flex; align-items: center; }
+        .tech-prop .prop-label { font-weight: 600; color: var(--text-secondary); width: 130px; }
+        
+        .badge-prop {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-prop.core { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-prop.recommended { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-prop.optional { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156,163,175,0.3); }
+        .badge-prop.yes { background: rgba(74, 222, 128, 0.15); color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+        .badge-prop.no { background: rgba(244, 114, 182, 0.15); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.3); }
+
+        /* Platform Chips */
+        .platform-list {
+            margin: 0.8rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .platform-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="#" class="brand">TeraChat <span>Core Functions & Features</span></a>
+
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tocSearch" placeholder="Tra cứu mục lục..." autocomplete="off">
+        <span class="search-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="nav-header">Table of Contents</div><a href="#terachat-function-capability-blueprint" class="nav-link" style="">TeraChat — Function &amp; Capability Blueprint</a>
+<a href="#tom-tat-ieu-hanh" class="nav-link" style="padding-left:0.8rem;">Tóm Tắt Điều Hành</a>
+<a href="#module-1-loi-mat-ma-quan-ly-khoa" class="nav-link" style="padding-left:0.8rem;">Module 1 — Lõi Mật Mã &amp; Quản lý Khóa</a>
+<a href="#11-he-thong-quan-ly-khoa-phan-tang-hkms" class="nav-link" style="padding-left:1.6rem;">1.1 Hệ thống Quản lý Khóa Phân tầng (HKMS)</a>
+<a href="#12-ma-hoa-nhom-mls-rfc-9420" class="nav-link" style="padding-left:1.6rem;">1.2 Mã hóa Nhóm MLS RFC 9420</a>
+<a href="#13-phan-cung-bao-ve-khoa" class="nav-link" style="padding-left:1.6rem;">1.3 Phần cứng Bảo vệ Khóa</a>
+<a href="#14-cryptographic-self-destruct" class="nav-link" style="padding-left:1.6rem;">1.4 Cryptographic Self-Destruct</a>
+<a href="#module-2-nhan-tin-cong-tac-ux" class="nav-link" style="padding-left:0.8rem;">Module 2 — Nhắn tin, Cộng tác &amp; UX</a>
+<a href="#21-engine-nhan-tin-cot-loi" class="nav-link" style="padding-left:1.6rem;">2.1 Engine Nhắn tin Cốt lõi</a>
+<a href="#22-quan-ly-tin-nhan-nang-cao" class="nav-link" style="padding-left:1.6rem;">2.2 Quản lý Tin nhắn Nâng cao</a>
+<a href="#23-thoai-video-webrtc" class="nav-link" style="padding-left:1.6rem;">2.3 Thoại &amp; Video (WebRTC)</a>
+<a href="#24-tuong-tac-cong-ong-thu-thap-y-kien" class="nav-link" style="padding-left:1.6rem;">2.4 Tương tác Cộng đồng &amp; Thu thập Ý kiến</a>
+<a href="#25-tai-lieu-smart-approval" class="nav-link" style="padding-left:1.6rem;">2.5 Tài liệu &amp; Smart Approval</a>
+<a href="#26-he-thong-ux-glassmorphism" class="nav-link" style="padding-left:1.6rem;">2.6 Hệ thống UX Glassmorphism</a>
+<a href="#module-3-survival-mesh-network" class="nav-link" style="padding-left:0.8rem;">Module 3 — Survival Mesh Network</a>
+<a href="#31-mo-hinh-ket-noi-4-tang" class="nav-link" style="padding-left:1.6rem;">3.1 Mô hình Kết nối 4 Tầng</a>
+<a href="#32-vai-tro-mesh-node" class="nav-link" style="padding-left:1.6rem;">3.2 Vai trò Mesh Node</a>
+<a href="#33-emergency-mobile-dictator-protocol-emdp" class="nav-link" style="padding-left:1.6rem;">3.3 Emergency Mobile Dictator Protocol (EMDP)</a>
+<a href="#module-4-ai-privacy-shield" class="nav-link" style="padding-left:0.8rem;">Module 4 — AI Privacy Shield</a>
+<a href="#41-pipeline-ai-co-lap" class="nav-link" style="padding-left:1.6rem;">4.1 Pipeline AI Cô lập</a>
+<a href="#42-tich-hop-ai-voi-terachat-app-suite" class="nav-link" style="padding-left:1.6rem;">4.2 Tích hợp AI với TeraChat App Suite</a>
+<a href="#43-ai-runtime" class="nav-link" style="padding-left:1.6rem;">4.3 AI Runtime</a>
+<a href="#module-5-he-sinh-thai-plugin-tapp" class="nav-link" style="padding-left:0.8rem;">Module 5 — Hệ sinh thái Plugin (.tapp)</a>
+<a href="#51-vong-oi-tapp" class="nav-link" style="padding-left:1.6rem;">5.1 Vòng đời .tapp</a>
+<a href="#52-tapp-data-namespace-marketplace-12" class="nav-link" style="padding-left:1.6rem;">5.2 Tapp Data Namespace (MARKETPLACE-12)</a>
+<a href="#53-structured-datagrant-marketplace-13" class="nav-link" style="padding-left:1.6rem;">5.3 Structured DataGrant (MARKETPLACE-13)</a>
+<a href="#54-inbound-webhook-marketplace-14" class="nav-link" style="padding-left:1.6rem;">5.4 Inbound Webhook (MARKETPLACE-14)</a>
+<a href="#55-host-function-abi-versioning" class="nav-link" style="padding-left:1.6rem;">5.5 Host Function ABI Versioning</a>
+<a href="#module-6-terachat-app-suite" class="nav-link" style="padding-left:0.8rem;">Module 6 — TeraChat App Suite</a>
+<a href="#61-nhom-quan-ly-cong-viec-van-hanh" class="nav-link" style="padding-left:1.6rem;">6.1 Nhóm Quản lý Công việc &amp; Vận hành</a>
+<a href="#terachat-request-quan-ly-e-xuat-phe-duyet" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Request — Quản lý Đề xuất &amp; Phê duyệt</a>
+<a href="#terachat-work-quan-ly-cong-viec-du-an" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Work — Quản lý Công việc &amp; Dự án</a>
+<a href="#terachat-workflow-quy-trinh-lien-phong-ban" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Workflow — Quy trình Liên phòng ban</a>
+<a href="#terachat-service-quan-ly-dich-vu-noi-bo" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Service — Quản lý Dịch vụ Nội bộ</a>
+<a href="#62-nhom-quan-tri-nhan-su-hr" class="nav-link" style="padding-left:1.6rem;">6.2 Nhóm Quản trị Nhân sự (HR)</a>
+<a href="#terachat-e-hiring-tuyen-dung" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat E-Hiring — Tuyển dụng</a>
+<a href="#terachat-hrm-ho-so-nhan-su" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat HRM — Hồ sơ Nhân sự</a>
+<a href="#terachat-checkin-terachat-schedule-cham-cong-xep-ca" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Checkin &amp; TeraChat Schedule — Chấm công &amp; Xếp ca</a>
+<a href="#terachat-goal-okr-kpi" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Goal — OKR / KPI</a>
+<a href="#63-nhom-truyen-thong-noi-bo-giao-tiep" class="nav-link" style="padding-left:1.6rem;">6.3 Nhóm Truyền thông Nội bộ &amp; Giao tiếp</a>
+<a href="#terachat-meeting-quan-ly-cuoc-hop" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Meeting — Quản lý Cuộc họp</a>
+<a href="#terachat-square-at-tai-nguyen-cong-ty" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Square — Đặt Tài nguyên Công ty</a>
+<a href="#terachat-office-cong-van-thong-bao" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Office — Công văn &amp; Thông báo</a>
+<a href="#terachat-inside-mang-truyen-thong-noi-bo" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Inside — Mạng Truyền thông Nội bộ</a>
+<a href="#terachat-message-nhan-tin-cot-loi" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Message — Nhắn tin Cốt lõi</a>
+<a href="#64-nhom-quan-tri-tai-chinh-tai-san" class="nav-link" style="padding-left:1.6rem;">6.4 Nhóm Quản trị Tài chính &amp; Tài sản</a>
+<a href="#terachat-finance-quan-tri-tai-chinh" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Finance — Quản trị Tài chính</a>
+<a href="#terachat-income-expense-doanh-thu-chi-phi" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Income &amp; Expense — Doanh thu &amp; Chi phí</a>
+<a href="#terachat-bankfeeds-oi-soat-ngan-hang" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat BankFeeds — Đối soát Ngân hàng</a>
+<a href="#terachat-asset-quan-ly-tai-san" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Asset — Quản lý Tài sản</a>
+<a href="#65-nhom-khach-hang-khong-gian-so" class="nav-link" style="padding-left:1.6rem;">6.5 Nhóm Khách hàng &amp; Không gian số</a>
+<a href="#terachat-crm-quan-tri-quan-he-khach-hang" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat CRM — Quản trị Quan hệ Khách hàng</a>
+<a href="#terachat-workspace-khong-gian-lam-viec-ca-nhan" class="nav-link" style="padding-left:2.4000000000000004rem;">TeraChat Workspace — Không gian Làm việc Cá nhân</a>
+<a href="#module-7-chia-se-a-phuong-tien-tep-tin" class="nav-link" style="padding-left:0.8rem;">Module 7 — Chia sẻ Đa phương tiện &amp; Tệp tin</a>
+<a href="#71-media-file-transfer" class="nav-link" style="padding-left:1.6rem;">7.1 Media &amp; File Transfer</a>
+<a href="#72-teravault-vfs" class="nav-link" style="padding-left:1.6rem;">7.2 TeraVault VFS</a>
+<a href="#module-8-identity-rbac-quan-tri" class="nav-link" style="padding-left:0.8rem;">Module 8 — Identity, RBAC &amp; Quản trị</a>
+<a href="#81-role-based-access-control" class="nav-link" style="padding-left:1.6rem;">8.1 Role-Based Access Control</a>
+<a href="#82-opa-policy-engine" class="nav-link" style="padding-left:1.6rem;">8.2 OPA Policy Engine</a>
+<a href="#83-ang-nhap-device-recovery" class="nav-link" style="padding-left:1.6rem;">8.3 Đăng nhập &amp; Device Recovery</a>
+<a href="#84-scim-20-identity-sync" class="nav-link" style="padding-left:1.6rem;">8.4 SCIM 2.0 &amp; Identity Sync</a>
+<a href="#module-9-federation-cross-org-communication" class="nav-link" style="padding-left:0.8rem;">Module 9 — Federation &amp; Cross-Org Communication</a>
+<a href="#91-kien-truc" class="nav-link" style="padding-left:1.6rem;">9.1 Kiến trúc</a>
+<a href="#92-quy-trinh-ket-noi" class="nav-link" style="padding-left:1.6rem;">9.2 Quy trình Kết nối</a>
+<a href="#module-10-compliance-dlp-audit" class="nav-link" style="padding-left:0.8rem;">Module 10 — Compliance, DLP &amp; Audit</a>
+<a href="#101-data-loss-prevention" class="nav-link" style="padding-left:1.6rem;">10.1 Data Loss Prevention</a>
+<a href="#102-tamper-proof-audit-log" class="nav-link" style="padding-left:1.6rem;">10.2 Tamper-Proof Audit Log</a>
+<a href="#103-terachat-app-suite-compliance" class="nav-link" style="padding-left:1.6rem;">10.3 TeraChat App Suite Compliance</a>
+<a href="#module-11-infrastructure-deployment" class="nav-link" style="padding-left:0.8rem;">Module 11 — Infrastructure &amp; Deployment</a>
+<a href="#111-server-topology" class="nav-link" style="padding-left:1.6rem;">11.1 Server Topology</a>
+<a href="#112-scale-tiers" class="nav-link" style="padding-left:1.6rem;">11.2 Scale Tiers</a>
+<a href="#113-performance-targets" class="nav-link" style="padding-left:1.6rem;">11.3 Performance Targets</a>
+<a href="#licensing-service-tiers" class="nav-link" style="padding-left:0.8rem;">Licensing &amp; Service Tiers</a>
+<a href="#constraints-open-items" class="nav-link" style="padding-left:0.8rem;">Constraints &amp; Open Items</a>
+<a href="#platform-hard-constraints" class="nav-link" style="padding-left:1.6rem;">Platform Hard Constraints</a>
+<a href="#tapp-app-suite-constraints" class="nav-link" style="padding-left:1.6rem;">.tapp App Suite Constraints</a>
+<a href="#blocker-items-phai-hoan-thanh-truoc-production" class="nav-link" style="padding-left:1.6rem;">Blocker Items (Phải hoàn thành trước production)</a>
+<a href="#document-navigation-map" class="nav-link" style="padding-left:0.8rem;">Document Navigation Map</a>
+<div class="search-no-results" id="searchNoResults">Không tìm thấy kết quả.</div>
+</nav>
+
+<div class="main">
+    <pre><code class="language-yaml"># DOCUMENT IDENTITY
+id:       &quot;TERA-FUNC&quot;
+title:    &quot;TeraChat — Function &amp; Capability Blueprint&quot;
+version:  &quot;0.3.0&quot;
+audience: &quot;Product Manager, CEO, Sales Engineer, Customer Success, Developer, Investor&quot;
+purpose:  &quot;Strategic product reference: full functional architecture, system capabilities,
+           component interactions, and core value propositions of TeraChat.
+           Includes TeraChat App Suite (.tapp ecosystem) covering Work OS, HR, Finance, CRM, and internal communications.&quot;
+
+ai_routing_hint: |
+  &quot;Open this file to understand what TeraChat can do and why — covering role-based
+   permissions, business flows, AI integration, cross-org Federation, the .tapp
+   plugin ecosystem, and the full TeraChat App Suite (Work, HR, Finance, CRM, Comms).
+   This is the Product-level source of truth.&quot;
+</code></pre>
+<hr />
+<blockquote>
+<p><em>"Trong thế giới mà dữ liệu là quyền lực, ai kiểm soát khóa mã hóa — kẻ đó làm chủ cuộc chơi.
+TeraChat trao lại chìa khóa đó về tay doanh nghiệp."</em></p>
+<p>— CEO, TeraChat</p>
+</blockquote>
+<hr />
+<h1 id="terachat-function-capability-blueprint">TeraChat — Function &amp; Capability Blueprint</h1>
+<p><strong>TERA-FUNC v0.3.0 · Q2 2026 · Internal Document</strong></p>
+<hr />
+<h2 id="tom-tat-ieu-hanh">Tóm Tắt Điều Hành</h2>
+<p>TeraChat không phải là ứng dụng nhắn tin. Đây là <strong>Hệ điều hành Công việc Chủ quyền</strong> (Sovereign Work OS) — nền tảng cộng tác doanh nghiệp được bảo vệ bằng toán học, nơi không có bất kỳ máy chủ, nhà cung cấp hay đối thủ nào có thể đọc được dữ liệu mà TeraChat truyền tải.</p>
+<table>
+<thead>
+<tr>
+<th>Giá Trị Cốt Lõi</th>
+<th>Cơ Chế Thực Thi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bảo mật bằng Toán học</td>
+<td>Zero-Knowledge: server chỉ định tuyến ciphertext, không bao giờ plaintext</td>
+</tr>
+<tr>
+<td>Sinh tồn Offline</td>
+<td>BLE 5.0 + Wi-Fi Direct Mesh — hoạt động khi không có Internet</td>
+</tr>
+<tr>
+<td>Kiểm soát Doanh nghiệp</td>
+<td>Admin-owned keys, HSM-backed KMS, OPA Zero-Trust enforcement</td>
+</tr>
+<tr>
+<td>Nền tảng Mở rộng</td>
+<td>.tapp WASM sandbox Marketplace với chữ ký mật mã học</td>
+</tr>
+<tr>
+<td>Kết nối Liên tổ chức</td>
+<td>Federation Bridge mTLS + Sealed Sender Protocol</td>
+</tr>
+<tr>
+<td>AI Ưu tiên Riêng tư</td>
+<td>SLM trên thiết bị + PII redaction trước mọi cuộc gọi LLM bên ngoài</td>
+</tr>
+<tr>
+<td>Work OS Toàn diện</td>
+<td>TeraChat App Suite: 20+ ứng dụng doanh nghiệp tích hợp trong một nền tảng</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Biểu tượng platform:</strong></p>
+<ul>
+<li>📱 iOS / Android / Huawei (Mobile)</li>
+<li>💻 Laptop / macOS</li>
+<li>🖥️ Desktop / Windows / Linux</li>
+<li>🗄️ Bare-metal Server</li>
+<li>☁️ VPS Cluster / Cloud</li>
+</ul>
+<p><strong>Chế độ hoạt động:</strong></p>
+<ul>
+<li>☀️ <strong>Online Mode</strong> — Giao diện Sáng, kết nối Cloud/Server</li>
+<li>🌑 <strong>Mesh Mode</strong> — Giao diện Tối, hoạt động offline P2P</li>
+</ul>
+<hr />
+<h2 id="module-1-loi-mat-ma-quan-ly-khoa">Module 1 — Lõi Mật Mã &amp; Quản lý Khóa</h2>
+<blockquote>
+<p><strong>Nguyên tắc bất biến:</strong> Khóa riêng tư không bao giờ rời khỏi phần cứng. Plaintext không bao giờ tồn tại ngoài phạm vi. Không có ngoại lệ.</p>
+</blockquote>
+<h3 id="11-he-thong-quan-ly-khoa-phan-tang-hkms">1.1 Hệ thống Quản lý Khóa Phân tầng (HKMS)</h3>
+<pre><code>[Master Key] — HSM FIPS 140-3 L3 / Secure Enclave / TPM 2.0 (không bao giờ xuất ra ngoài)
+      │
+      └──► [Company_Key] — mã hóa toàn bộ dữ liệu workspace
+                 │
+                 ├──► [Epoch_Key] — khóa phiên MLS, ZeroizeOnDrop khi rotation
+                 ├──► [Push_Key] — chuỗi HKDF một chiều, cô lập khỏi TreeKEM
+                 └──► [Escrow_Key] — Shamir SSS M-of-N, tồn tại trong RAM &lt; 100ms
+</code></pre>
+<ul>
+<li><strong>Shamir Secret Sharing (mặc định 3-of-5):</strong> <code>Enterprise_Escrow_Key</code> chia thành 5 mảnh cho 5 C-Level. Cần đúng 3 mảnh mới tái tạo được.</li>
+<li><strong>ZeroizeOnDrop:</strong> Mọi struct chứa plaintext tự xóa bộ nhớ (ghi đè 0x00) khi hết phạm vi.</li>
+<li><strong>Dead Man Switch:</strong> Bộ đếm monotonic TPM 2.0 giới hạn offline TTL (Consumer 24h / Enterprise configurable / GovMilitary 30 ngày).</li>
+</ul>
+<h3 id="12-ma-hoa-nhom-mls-rfc-9420">1.2 Mã hóa Nhóm MLS RFC 9420</h3>
+<ul>
+<li>📱💻🖥️ Hỗ trợ tới <strong>10.000 thành viên</strong> trong một nhóm E2EE.</li>
+<li><strong>TreeKEM:</strong> phân phối khóa O(log n) — hiệu quả băng thông ngay cả nhóm lớn.</li>
+<li><strong>Epoch Rotation:</strong> kích hoạt khi thành viên rời nhóm, Admin yêu cầu, hoặc theo lịch 24h.</li>
+<li><strong>Batched Update_Path:</strong> nhóm ≤1.000: cửa sổ 60s; ≤5.000: 300s — ngăn bão mạng.</li>
+<li><strong>Post-Quantum Hybrid (ML-KEM-768 + X25519):</strong> tuân thủ CNSA 2.0 / NIST FIPS 203.</li>
+</ul>
+<h3 id="13-phan-cung-bao-ve-khoa">1.3 Phần cứng Bảo vệ Khóa</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Nơi lưu trữ Khóa</th>
+<th>Cổng Xác thực</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS / macOS</td>
+<td>Secure Enclave Processor (SEP)</td>
+<td>Face ID / Touch ID — bắt buộc</td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td>StrongBox Keymaster HAL</td>
+<td>BiometricPrompt — bắt buộc</td>
+</tr>
+<tr>
+<td>📱 Huawei</td>
+<td>TrustZone TEE via HMS</td>
+<td>HMS Biometric — bắt buộc</td>
+</tr>
+<tr>
+<td>💻🖥️ Windows</td>
+<td>TPM 2.0 — CNG Platform Provider</td>
+<td>Windows Hello</td>
+</tr>
+<tr>
+<td>🖥️ Linux</td>
+<td>TPM 2.0 — tpm2-pkcs11</td>
+<td>PIN — bắt buộc</td>
+</tr>
+<tr>
+<td>🗄️ Bare-metal</td>
+<td>HSM FIPS 140-3 L3 (PKCS#11)</td>
+<td>Physical presence + Shamir quorum</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-cryptographic-self-destruct">1.4 Cryptographic Self-Destruct</h3>
+<ul>
+<li>📱💻 <strong>PIN thất bại 5 lần:</strong> Crypto-Shredding toàn bộ DB nội địa + factory reset. Bộ đếm HMAC-xác thực chống giả mạo.</li>
+<li>📱💻 <strong>Remote Wipe:</strong> Xóa <code>DeviceIdentityKey</code> khỏi phần cứng, drop mọi bảng DB, xóa WASM sandbox storage. Không thể bị người dùng ngắt.</li>
+<li>📱💻 <strong>Cryptographic Erasure (GDPR/PDPA):</strong> Hết TTL → Crypto-Shredding khóa giải mã; ciphertext vĩnh viễn không đọc được.</li>
+</ul>
+<hr />
+<h2 id="module-2-nhan-tin-cong-tac-ux">Module 2 — Nhắn tin, Cộng tác &amp; UX</h2>
+<h3 id="21-engine-nhan-tin-cot-loi">2.1 Engine Nhắn tin Cốt lõi</h3>
+<ul>
+<li>📱💻🖥️ <strong>E2EE đa phương thức:</strong> Văn bản, tệp tin, thoại, video — mã hóa và giải mã tại thiết bị.</li>
+<li>📱💻 <strong>CRDT DAG:</strong> Nhật ký sự kiện append-only đảm bảo nhất quán trên mọi thiết bị không cần điều phối trung tâm.</li>
+<li>📱💻 <strong>Hybrid Logical Clock (HLC):</strong> Sắp xếp toàn phần sự kiện phân tán — không cần timestamp authority phía server.</li>
+<li>📱💻 <strong>Full-text Search Zero-Knowledge:</strong> SQLite FTS5 tại thiết bị — server không bao giờ thấy nội dung tìm kiếm.</li>
+<li>📱💻 <strong>Message TTL:</strong> Hết hạn → Crypto-Shredding tự động.</li>
+<li>📱💻 <strong>TeraLink Multipath:</strong> Gửi song song qua 4G + Wi-Fi LAN + BLE Mesh — 0ms latency khi roaming.</li>
+</ul>
+<h3 id="22-quan-ly-tin-nhan-nang-cao">2.2 Quản lý Tin nhắn Nâng cao</h3>
+<p><strong>Nhắn tin theo Luồng (Threads):</strong>
+Mỗi thread là một nhánh (branch) trong CRDT Causal Graph. Quan hệ cha-con giữa tin nhắn được biểu diễn qua <code>parent_id</code> trong <code>CRDT_Event</code>, đảm bảo tính nhân quả không phá vỡ kể cả khi offline. Desktop merge theo O(N log N); Mobile nhận Materialized Snapshot.</p>
+<p><strong>Gắn thẻ &amp; Đánh nhãn (Tags/Labels):</strong>
+Tagging được lưu dưới dạng metadata CRDT_Event trong SQLite FTS5 nội bộ thiết bị. Query siêu tốc O(1) — không cần round-trip server. Tag được index tự động và hỗ trợ filter nâng cao cho tìm kiếm.</p>
+<p><strong>Ghim tin nhắn (Pin):</strong>
+Bảng <code>pinned_messages</code> trong <code>cold_state.db</code> với cơ chế pre-fetch Tier 1 — nội dung ghim được tải sẵn về local. Admin có thể ghim toàn channel; User ghim trong scope cá nhân. Giới hạn 50 pin/channel để kiểm soát storage.</p>
+<p><strong>Reactions:</strong>
+Triển khai dưới dạng lightweight CRDT_Event với <code>content_type: Reaction</code>. Server không bao giờ biết nội dung reaction — chỉ thấy encrypted blob. Aggregation xảy ra tại client khi render.</p>
+<p><strong>Chỉnh sửa &amp; Thu hồi tin nhắn:</strong>
+Chỉnh sửa → PROPOSE_CHANGE via Shadow Branch; tin nhắn gốc giữ nguyên cho đến khi author approve. Thu hồi → Tombstone_Stub (không xóa vật lý), lưu trong <code>cold_state.db</code> để giữ tính nhân quả DAG. Zero-Byte transformation ngăn Replay Attack.</p>
+<p><strong>Hẹn giờ gửi (Scheduled Send):</strong>
+Tin nhắn được mã hóa và đẩy vào <code>Egress_Outbox</code> (SQLite WAL độc lập) với trường <code>scheduled_at: HLC_Timestamp</code>. iOS BGProcessingTask / Android WorkManager xử lý dispatch khi đến giờ — không cần app foreground.</p>
+<h3 id="23-thoai-video-webrtc">2.3 Thoại &amp; Video (WebRTC)</h3>
+<ul>
+<li>📱💻 <strong>HD Voice &amp; Video</strong> qua WebRTC DTLS-SRTP, E2EE đầu cuối.</li>
+<li>💻 <strong>ICE Pool Pre-warming:</strong> Kết nối thiết lập trước khi người dùng nhấn "Gọi" — không có màn hình chờ.</li>
+<li>💻 <strong>Failover tự động &lt; 3s:</strong> P2P Direct → Internal TURN relay. Badge "P2P (Direct)" hoặc "Relayed (E2EE)".</li>
+<li>📱 <strong>CallKit Integration (iOS):</strong> Dead Man Switch lockout hoãn cho đến khi cuộc gọi kết thúc.</li>
+<li>📱💻 <strong>Chia sẻ màn hình:</strong> Hỗ trợ trong vùng an toàn (Zone 1); DLP policy tự động làm mờ nếu phát hiện nội dung nhạy cảm.</li>
+<li>📱💻 <strong>Gọi nhóm:</strong> Tối đa 100 người đồng thời với SFU (Selective Forwarding Unit) tích hợp trong HA TURN cluster.</li>
+<li>📱💻 <strong>Adaptive Codec:</strong> Online → Opus 128kbps Stereo; Mesh → AMR-NB 4.75kbps; BLE Emergency → Whisper local transcription → text only.</li>
+</ul>
+<h3 id="24-tuong-tac-cong-ong-thu-thap-y-kien">2.4 Tương tác Cộng đồng &amp; Thu thập Ý kiến</h3>
+<p><strong>Bình chọn (Polls):</strong>
+Poll là <code>.tapp</code> siêu nhẹ (≤ 50KB WASM), phân phối an toàn qua E2EE channel. Kết quả tổng hợp tại client — server không biết ai vote gì. Hỗ trợ anonymous poll qua ZKP-based attribute routing.</p>
+<p><strong>Kênh thông báo một chiều (Broadcast Channel):</strong>
+Thực thi qua OPA Policy với <code>allow_reply: false</code> và <code>allowed_roles: [ADMIN, MODERATOR]</code>. Members chỉ có thể react, không reply. Phân phối qua CRDT fanout như tin nhắn thường — fully E2EE.</p>
+<h3 id="25-tai-lieu-smart-approval">2.5 Tài liệu &amp; Smart Approval</h3>
+<ul>
+<li>📱💻 <strong>Smart Document với RBAC:</strong> Viewer → Commenter → Editor (Shadow Branch).</li>
+<li>💻🖥️ <strong>Smart Approval Workflow:</strong> Ký số với sinh trắc học (Ed25519), phân giai đoạn phê duyệt. Non-repudiation: mọi quyết định Accept/Reject được ký bằng <code>DeviceIdentityKey</code> — không thể chối bỏ.</li>
+<li>📱💻 <strong>Conflict Resolution:</strong> Merge/Discard khi sửa song song — không bao giờ silent LWW trên CONTRACT/POLICY/APPROVAL.</li>
+<li>📱💻 <strong>TeraVault (Virtual File System):</strong> Kéo thả file từ chat vào VFS, không nhân bản. Preview qua Zero-Byte Stub (~5KB). Hỗ trợ "Make Available Offline" tải trước dữ liệu.</li>
+<li>📱💻 <strong>Collaborative Editing:</strong> Shadow DAG Protocol — thay đổi lưu thành nhánh PROPOSE_CHANGE chờ duyệt; không ghi đè dữ liệu gốc cho đến khi author confirm.</li>
+</ul>
+<p><strong>FUNC-12: FCP Trust Boundary Declaration</strong></p>
+<table>
+<thead>
+<tr>
+<th>Chế độ</th>
+<th>Server</th>
+<th>AI Agent</th>
+<th>Cam kết</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Default (Zero-Knowledge)</strong></td>
+<td>Blind Relay</td>
+<td>Nhận masked context</td>
+<td>Server không đọc nội dung</td>
+</tr>
+<tr>
+<td><strong>FCP Mode (Admin-Opt-In)</strong></td>
+<td>Vẫn Blind Relay</td>
+<td>Nhận plaintext context</td>
+<td>TLS bảo vệ transit; AI endpoint thấy plaintext</td>
+</tr>
+</tbody>
+</table>
+<p>FCP Mode yêu cầu: YubiKey + typed consent + audit log signed. Phù hợp khi AI endpoint là on-premise model do doanh nghiệp tự host.</p>
+<p><strong>FUNC-13: Burner Agent Cross-Org Collaboration Flow</strong></p>
+<pre><code class="language-text">[Admin Org A]
+    │ Tạo FederationInviteToken (Signed JWT, scope: reconcile_invoices)
+    ▼
+[Admin Org B] nhận Token → xác nhận scope → counter-sign
+    │
+    ▼ [BurnerAgent.spawn() — cả hai Admin ký bằng YubiKey]
+    │
+[Burner Agent — Ephemeral sandbox, TTL=60min]
+    │ Đọc dữ liệu trong org_a_scope ∩ org_b_scope
+    │ Xử lý task
+    │ Emit kết quả vào MLS Group E2EE
+    ▼
+[Task hoàn thành / TTL hết]
+    │ ZeroizeOnDrop soul.db
+    │ Generate BurnerTerminationProof (cả hai CA ký)
+    ▼
+[Admin Org A + B nhận TerminationProof] → &quot;Tác tử đã tự hủy. Xem bằng chứng mật mã.&quot;
+</code></pre>
+<p><strong>FUNC-14: Swarm Workspace User Flow</strong></p>
+<pre><code class="language-text">[User] tạo Group Chat → bấm [+ Add Agent]
+    │ Consent Modal: &quot;Agent này sẽ đọc: [scope list]&quot;
+    │ User approve bằng Biometric
+    ▼
+[Agent join MLS Group như member — Agent_DID hiển thị trong member list]
+    │ User @mention Agent Orchestrator: &quot;Phân tích Q1 report và tóm tắt top 5 risks&quot;
+    ▼
+[Orchestrator phân công Worker Agents]
+    │ Worker 1: Data extraction
+    │ Worker 2: Risk classification
+    │ Worker 3: Vietnamese summary
+    ▼
+[Results stream về Group Chat qua Timeline View]
+    │ Items cần approval → Supervisor nhận Biometric prompt
+    ▼
+[User bấm [Remove Agent] → MLS remove_member → Epoch rotation]
+    → Agent không còn access kênh
+</code></pre>
+<p><strong>FUNC-15: Causal Smart Approval — Agent-Backed Decision Flow</strong></p>
+<pre><code class="language-text">[Agent Worker phân tích request]
+    ↓ PROPOSE action (ghi DecisionNode vào DAG)
+    ↓
+[Lõi Rust check: action có trong &quot;human-required&quot; list?]
+    ├── Không → Agent EXECUTE trực tiếp
+    └── Có → Notification đến Supervisor
+              &quot;Agent X đề xuất: [Tóm tắt action]. Approve?&quot;
+              [Supervisor xác thực Biometric → ký HumanApprovalRecord]
+              ↓ EXECUTE (ghi DecisionNode(type=Execute))
+              ↓ Non-Repudiation Audit → Append-Only Log
+</code></pre>
+<h3 id="26-he-thong-ux-glassmorphism">2.6 Hệ thống UX Glassmorphism</h3>
+<table>
+<thead>
+<tr>
+<th>Trạng thái</th>
+<th>Chế độ UI</th>
+<th>Màu Viền</th>
+<th>Indicator</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>☀️ Online</td>
+<td>Light Frosted Glass</td>
+<td>Xanh lam #24A1DE</td>
+<td>"E2EE Active · Key Epoch N"</td>
+</tr>
+<tr>
+<td>🌑 Mesh Fallback</td>
+<td>Dark Navy #0F172A</td>
+<td>Radar Pulse</td>
+<td>"📡 Survival Mesh Active"</td>
+</tr>
+<tr>
+<td>⚠️ Warning</td>
+<td>Amber Glow</td>
+<td>#F59E0B</td>
+<td>Warning banner</td>
+</tr>
+<tr>
+<td>🔴 Containment</td>
+<td>Red Border 4px</td>
+<td>#EF4444</td>
+<td>FCP pulse overlay</td>
+</tr>
+<tr>
+<td>☠️ Kill-Switch</td>
+<td>Blood-Red Frosted</td>
+<td>Đỏ máu</td>
+<td>Shatter animation + Shield</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="module-3-survival-mesh-network">Module 3 — Survival Mesh Network</h2>
+<blockquote>
+<p><strong>Cam kết:</strong> Khi Internet sụp đổ, TeraChat không suy giảm. Nó kích hoạt mạng P2P tự tổ chức, bảo mật mật mã học, không cần server trung tâm.</p>
+</blockquote>
+<h3 id="31-mo-hinh-ket-noi-4-tang">3.1 Mô hình Kết nối 4 Tầng</h3>
+<table>
+<thead>
+<tr>
+<th>Tầng</th>
+<th>Transport</th>
+<th>Throughput</th>
+<th>Kích hoạt khi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>☀️ Tier 1 — Online</td>
+<td>QUIC / gRPC / WSS</td>
+<td>&gt; 100 Mbps</td>
+<td>Bình thường</td>
+</tr>
+<tr>
+<td>🌑 Tier 2 — Wi-Fi Mesh</td>
+<td>AWDL / Wi-Fi Direct</td>
+<td>250–500 MB/s</td>
+<td>LAN, không Internet</td>
+</tr>
+<tr>
+<td>🌑 Tier 3 — BLE Control</td>
+<td>BLE 5.0 (&lt; 15 mW)</td>
+<td>~50ms latency</td>
+<td>Control plane</td>
+</tr>
+<tr>
+<td>🌑 Tier 4 — BLE Emergency</td>
+<td>BLE Long Range</td>
+<td>Text-only</td>
+<td>EMDP active</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-vai-tro-mesh-node">3.2 Vai trò Mesh Node</h3>
+<table>
+<thead>
+<tr>
+<th>Vai trò</th>
+<th>Platform</th>
+<th>Lưu trữ</th>
+<th>Trách nhiệm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Super Node</strong></td>
+<td>💻🖥️ Desktop (AC)</td>
+<td>500MB–1GB / 48–72h</td>
+<td>Backbone, DAG merge dictator</td>
+</tr>
+<tr>
+<td><strong>Relay Node</strong></td>
+<td>📱 Android (RAM ≥ 3GB)</td>
+<td>100MB / 24h</td>
+<td>Intermediate relay</td>
+</tr>
+<tr>
+<td><strong>Tactical Relay (EMDP)</strong></td>
+<td>📱 iOS (emergency)</td>
+<td>1MB / 60 phút</td>
+<td>Text-only CRDT buffer</td>
+</tr>
+<tr>
+<td><strong>Leaf Node</strong></td>
+<td>📱 iOS (luôn luôn)</td>
+<td>50MB receive-only</td>
+<td>Nhận tin, không định tuyến</td>
+</tr>
+<tr>
+<td><strong>Border Node</strong></td>
+<td>Bất kỳ (Internet + BLE)</td>
+<td>N/A</td>
+<td>Bridge TCP/IP ↔ BLE Mesh</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Quy tắc kiến trúc bất biến:</strong> <code>iOS election_weight = 0</code> — iOS không bao giờ là Merge Dictator.</p>
+</blockquote>
+<h3 id="33-emergency-mobile-dictator-protocol-emdp">3.3 Emergency Mobile Dictator Protocol (EMDP)</h3>
+<p>Kích hoạt khi: không có Desktop + không có Internet + ≥ 2 iOS pin &gt; 20%.</p>
+<ul>
+<li>📱 Text-only Store-and-Forward. Không merge DAG, không MLS Epoch rotation.</li>
+<li>📱 Key Escrow: Desktop chuyển session key sang iOS qua ECIES/Curve25519 trước khi offline.</li>
+<li>📱 TTL 60 phút. Extension ở phút 50: chuyển giao sang peer pin cao hơn.</li>
+</ul>
+<hr />
+<h2 id="module-4-ai-privacy-shield">Module 4 — AI Privacy Shield</h2>
+<blockquote>
+<p><strong>Cam kết:</strong> AI worker không bao giờ trực tiếp truy cập database tin nhắn. PII luôn được redact trước bất kỳ cuộc gọi ra ngoài.</p>
+</blockquote>
+<h3 id="41-pipeline-ai-co-lap">4.1 Pipeline AI Cô lập</h3>
+<pre><code>User Prompt
+    ↓ (bắt buộc)
+Micro-NER PII Detection (ONNX &lt; 1MB trên thiết bị)
+    → Phát hiện: Tên, SĐT, Email, CMND, Tài khoản ngân hàng, Địa chỉ
+    ↓
+SanitizedPrompt (newtype — không thể tạo nếu không qua redaction)
+    ↓
+SessionVault { [MASK_01] → real@email.com } — ZeroizeOnDrop &lt; 100ms
+    ↓
+AI Worker Process (cô lập OS — crash không ảnh hưởng Rust Core)
+    → On-device SLM (CoreML / ONNX) hoặc External LLM (nếu Admin cho phép)
+    ↓
+Response Vec&lt;ASTNode&gt; (HTML/Markdown raw bị reject bởi AST Sanitizer)
+    ↓
+SessionVault.restore_and_drop() — alias map zeroized
+</code></pre>
+<h3 id="42-tich-hop-ai-voi-terachat-app-suite">4.2 Tích hợp AI với TeraChat App Suite</h3>
+<ul>
+<li>📱💻 <strong>AI trong Base Workflow:</strong> Tự động đề xuất bước tiếp theo trong quy trình; phân loại request; gợi ý assignee dựa trên lịch sử.</li>
+<li>📱💻 <strong>AI trong Base HRM:</strong> Phân tích CV tự động (NER local); ranking ứng viên; không upload raw CV ra ngoài.</li>
+<li>📱💻 <strong>AI trong Base Finance:</strong> Phát hiện anomaly chi tiêu; gợi ý category cho transaction; tất cả chạy local-first.</li>
+<li>📱💻 <strong>AI trong Base CRM:</strong> Tóm tắt lịch sử khách hàng; gợi ý follow-up; sentiment analysis trên E2EE channel.</li>
+</ul>
+<h3 id="43-ai-runtime">4.3 AI Runtime</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Runtime</th>
+<th>Model tối đa</th>
+<th>Ghi chú</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS</td>
+<td>CoreML (.mlmodelc)</td>
+<td>74MB / 39MB</td>
+<td>W^X: không dynamic WASM AI</td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td>ONNX Runtime</td>
+<td>39MB</td>
+<td>HiAI fallback Huawei</td>
+</tr>
+<tr>
+<td>📱 Huawei</td>
+<td>HiAI / ONNX</td>
+<td>39MB</td>
+<td>AOT bundle only</td>
+</tr>
+<tr>
+<td>💻 macOS</td>
+<td>CoreML / ONNX</td>
+<td>74MB</td>
+<td>Isolated XPC Worker</td>
+</tr>
+<tr>
+<td>🖥️ Windows/Linux</td>
+<td>ONNX Runtime</td>
+<td>74MB</td>
+<td>CPU; GPU optional</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="module-5-he-sinh-thai-plugin-tapp">Module 5 — Hệ sinh thái Plugin (.tapp)</h2>
+<blockquote>
+<p><strong>Lập trường:</strong> Không có .tapp nào được phép yêu cầu exception khỏi Sandbox. Mọi capability khai báo tường minh trong manifest, OPA Policy kiểm soát. Không có ngoại lệ.</p>
+</blockquote>
+<h3 id="51-vong-oi-tapp">5.1 Vòng đời .tapp</h3>
+<pre><code>[Submit] → [WASM Static Scan] → [Manifest Audit] → [LLVM IR Heuristics]
+    ↓
+[Ed25519 Bundle Signing bởi Marketplace CA]
+    ↓
+[Client: BLAKE3 verify → Sandbox Launch]
+    ↓
+[Execute: OPA + Egress Circuit Breaker] ↔ [Suspend: AES-256-GCM Snapshot]
+    ↓
+[Terminate: RAM freed · Capability Tokens revoked · KV-Cache cleared]
+</code></pre>
+<h3 id="52-tapp-data-namespace-marketplace-12">5.2 Tapp Data Namespace (MARKETPLACE-12)</h3>
+<p>Mỗi .tapp được cấp một SQLite namespace riêng, encrypt bằng AES-256-GCM:</p>
+<pre><code class="language-json">{
+  &quot;tapp_id&quot;: &quot;base-hrm&quot;,
+  &quot;data_schema&quot;: {
+    &quot;tables&quot;: [
+      {
+        &quot;name&quot;: &quot;employees&quot;,
+        &quot;columns&quot;: [&quot;id UUID&quot;, &quot;name TEXT&quot;, &quot;department TEXT&quot;],
+        &quot;max_rows&quot;: 50000,
+        &quot;encrypted&quot;: true
+      }
+    ]
+  },
+  &quot;max_storage_mb&quot;: 256
+}
+</code></pre>
+<p>Host function <code>host_db_query(sql, params)</code> — tapp không bao giờ thấy raw key. SQL injection không nguy hiểm vì isolated SQLite instance, không phải <code>hot_dag.db</code>.</p>
+<h3 id="53-structured-datagrant-marketplace-13">5.3 Structured DataGrant (MARKETPLACE-13)</h3>
+<p>Column-level ACL mở rộng DelegationToken:</p>
+<pre><code class="language-rust">pub struct DataGrant {
+    source_tapp:  TappId,
+    table:        String,
+    columns:      Vec&lt;String&gt;,   // column-level ACL
+    row_filter:   Option&lt;String&gt;, // OPA policy expression
+    operations:   Vec&lt;DataOp&gt;,   // Read | Aggregate | Subscribe
+}
+</code></pre>
+<p>Ví dụ: Base Goal đọc <code>attendance.work_days</code> từ Base Checkin — nhưng KHÔNG đọc <code>salary</code> hay <code>personal_notes</code>. Admin approve một lần qua consent modal.</p>
+<h3 id="54-inbound-webhook-marketplace-14">5.4 Inbound Webhook (MARKETPLACE-14)</h3>
+<pre><code class="language-json">{
+  &quot;ingress_endpoints&quot;: [
+    {
+      &quot;path&quot;: &quot;/webhook/crm-update&quot;,
+      &quot;auth&quot;: &quot;hmac-sha256&quot;,
+      &quot;secret_ref&quot;: &quot;vault:crm_webhook_secret&quot;,
+      &quot;max_payload_bytes&quot;: 65536
+    }
+  ]
+}
+</code></pre>
+<p>Rust Core expose per-tapp webhook endpoint, verify HMAC, deliver vào tapp như host event. Tapp không bao giờ expose raw port ra ngoài.</p>
+<h3 id="55-host-function-abi-versioning">5.5 Host Function ABI Versioning</h3>
+<pre><code class="language-json">{ &quot;host_api_version&quot;: &quot;1.3.0&quot;, &quot;min_host_api_version&quot;: &quot;1.0.0&quot;, &quot;max_host_api_version&quot;: &quot;2.0.0&quot; }
+</code></pre>
+<p>Breaking changes chỉ trong major version. Support 2 major versions đồng thời (deprecation window 12 tháng).</p>
+<hr />
+<h2 id="module-6-terachat-app-suite">Module 6 — TeraChat App Suite</h2>
+<blockquote>
+<p>TeraChat App Suite là tập hợp 20+ ứng dụng doanh nghiệp chạy trong .tapp WASM sandbox, tích hợp sâu với lõi E2EE và CRDT của TeraChat. Mỗi app khai báo schema, permissions, và data grants trong manifest — không có app nào truy cập dữ liệu của app khác nếu không có DelegationToken được Admin duyệt.</p>
+</blockquote>
+<hr />
+<h3 id="61-nhom-quan-ly-cong-viec-van-hanh">6.1 Nhóm Quản lý Công việc &amp; Vận hành</h3>
+<h4 id="terachat-request-quan-ly-e-xuat-phe-duyet">TeraChat Request — Quản lý Đề xuất &amp; Phê duyệt</h4>
+<p><strong>Mục đích:</strong> Số hóa toàn bộ luồng đề xuất từ nhân viên → phê duyệt đa cấp → thực thi.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Mỗi Request là một <code>CRDT_Event</code> với <code>content_type: RequestProposal</code>, lưu trong DAG append-only.</li>
+<li>Workflow state machine chạy trong Rust Core (không trong WASM) — đảm bảo tính nhân quả kể cả khi offline.</li>
+<li>Smart Approval với Ed25519 biometric signing — mọi quyết định approve/reject không thể chối bỏ.</li>
+<li>Offline-first: Request được tạo local, sync khi có mạng; approver nhận notification qua Push E2EE.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Tạo request với form tùy chỉnh (JSON Schema declared in manifest)</li>
+<li>📱💻 Multi-level approval chain (serial hoặc parallel)</li>
+<li>📱💻 Gắn file/tài liệu via Zero-Byte Stub (TeraVault)</li>
+<li>📱💻 Real-time status tracking qua CoreSignal::StateChanged</li>
+<li>📱💻 Reminder tự động khi request chờ duyệt quá SLA</li>
+<li>💻🖥️ Dashboard tổng quan request theo phòng ban / trạng thái</li>
+<li>💻🖥️ Export audit trail có chữ ký số (Ed25519) cho compliance</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Nhận trigger từ TeraChat Workflow; đẩy kết quả vào TeraChat Finance khi request liên quan chi tiêu.</p>
+<hr />
+<h4 id="terachat-work-quan-ly-cong-viec-du-an">TeraChat Work — Quản lý Công việc &amp; Dự án</h4>
+<p><strong>Mục đích:</strong> Theo dõi task, project, sprint — tích hợp trực tiếp với kênh chat của team.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Task là CRDT_Event với <code>content_type: TaskItem</code> — merge conflict-free khi nhiều người cùng update.</li>
+<li>Gantt/Kanban state lưu trong Tapp Data Namespace (SQLite per-tapp, encrypted).</li>
+<li>@mention task trong chat tự động tạo cross-reference trong DAG.</li>
+<li>Agile board sync qua Structured DataGrant — PM đọc được progress không cần xem trực tiếp chat.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Tạo task, subtask, milestone với due date</li>
+<li>📱💻 Kanban board / Gantt chart (render local, không cần server)</li>
+<li>📱💻 Assign, tag, priority, label — tất cả FTS5-indexed</li>
+<li>📱💻 Nhắc việc (Reminder) qua BGTask — không cần app foreground</li>
+<li>📱💻 Progress tracking theo % + burndown tự động</li>
+<li>📱💻 Link task vào tin nhắn chat hai chiều</li>
+<li>💻🖥️ Timeline view với dependency visualization</li>
+<li>💻🖥️ Workload view theo người / phòng ban</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Đọc member list từ TeraChat HRM; đẩy completion event vào TeraChat Goal.</p>
+<hr />
+<h4 id="terachat-workflow-quy-trinh-lien-phong-ban">TeraChat Workflow — Quy trình Liên phòng ban</h4>
+<p><strong>Mục đích:</strong> Số hóa và tự động hóa các quy trình nghiệp vụ phức tạp vượt ranh giới phòng ban.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Workflow engine là state machine trong Rust Core, không trong WASM — đảm bảo atomic transition.</li>
+<li>Mỗi step là một CRDT_Event; rollback = append Tombstone_Stub với <code>type: ROLLBACK</code>.</li>
+<li>Inbound Webhook (MARKETPLACE-14) nhận trigger từ hệ thống ngoài (ERP, CRM).</li>
+<li>Event bus nội bộ qua <code>host_workflow_emit_event</code> — không tốn egress quota.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>💻🖥️ Visual workflow builder (drag-drop, khai báo trong manifest JSON Schema)</li>
+<li>📱💻 Auto-trigger theo condition (thời gian, event từ tapp khác, webhook ngoài)</li>
+<li>📱💻 Human-in-the-loop step với Smart Approval biometric</li>
+<li>📱💻 Conditional branching (if/else logic trong OPA Rego policy)</li>
+<li>💻🖥️ Monitoring: workflow instance tracking, bottleneck detection</li>
+<li>💻🖥️ Versioning: thay đổi workflow không ảnh hưởng instance đang chạy</li>
+<li>📱💻 Notification tự động theo step qua Push E2EE</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Gọi TeraChat Request, TeraChat Finance, TeraChat HRM như action trong workflow.</p>
+<hr />
+<h4 id="terachat-service-quan-ly-dich-vu-noi-bo">TeraChat Service — Quản lý Dịch vụ Nội bộ</h4>
+<p><strong>Mục đích:</strong> Catalog các dịch vụ IT/HR/Hành chính nội bộ; nhân viên tự phục vụ qua chat.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Service catalog lưu trong Tapp Data Namespace; query qua FTS5.</li>
+<li>Request dịch vụ chạy qua TeraChat Request (tích hợp native).</li>
+<li>SLA tracking bằng HLC timestamp — đảm bảo đúng thứ tự kể cả khi offline.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Catalog dịch vụ tìm kiếm được (IT support, văn phòng phẩm, đặt xe...)</li>
+<li>📱💻 Self-service request với form động</li>
+<li>📱💻 SLA countdown và escalation tự động</li>
+<li>💻🖥️ Admin: quản lý catalog, queue, agent assignment</li>
+<li>💻🖥️ Báo cáo SLA, thống kê ticket</li>
+</ul>
+<hr />
+<h3 id="62-nhom-quan-tri-nhan-su-hr">6.2 Nhóm Quản trị Nhân sự (HR)</h3>
+<h4 id="terachat-e-hiring-tuyen-dung">TeraChat E-Hiring — Tuyển dụng</h4>
+<p><strong>Mục đích:</strong> Quản trị toàn bộ vòng đời tuyển dụng từ JD → CV screening → interview → offer.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>CV upload qua <code>FileTransfer</code> capability riêng (tách khỏi API egress limit) — tối đa 50MB/file.</li>
+<li>AI local NER scan CV để extract thông tin (tên, kinh nghiệm, kỹ năng) — không upload raw CV ra ngoài.</li>
+<li>Interview scheduling sync với TeraChat Meeting qua DataGrant (read calendar availability).</li>
+<li>Offer letter ký số qua Smart Approval Ed25519.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Đăng JD, quản lý pipeline ứng viên (Kanban: Applied → Screening → Interview → Offer → Hired/Rejected)</li>
+<li>📱💻 AI screening CV: extract và rank tự động (local ONNX, không cloud)</li>
+<li>📱💻 Lịch phỏng vấn: booking tích hợp TeraChat Meeting</li>
+<li>📱💻 Scorecard phỏng vấn với cấu trúc tùy chỉnh</li>
+<li>📱💻 Offer letter E2EE: ký số sinh trắc học, không thể chối bỏ</li>
+<li>💻🖥️ Dashboard pipeline theo JD, phòng ban, recruiter</li>
+<li>💻🖥️ Export báo cáo tuyển dụng có audit trail</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Khi Hired → tự động trigger onboarding flow trong TeraChat Workflow; tạo profile trong TeraChat HRM.</p>
+<hr />
+<h4 id="terachat-hrm-ho-so-nhan-su">TeraChat HRM — Hồ sơ Nhân sự</h4>
+<p><strong>Mục đích:</strong> Lưu trữ và quản lý thông tin nhân viên, cơ cấu tổ chức, hợp đồng lao động.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Employee record lưu trong Tapp Data Namespace với schema khai báo (max_rows: 50,000).</li>
+<li>SCIM 2.0 sync với Azure AD / Google Workspace — offboarding tự động &lt; 30s.</li>
+<li>Document (hợp đồng, bằng cấp) lưu qua Zero-Byte Stub trong TeraVault — server không biết nội dung.</li>
+<li>Access control column-level: HR xem lương; Manager chỉ xem tên/phòng ban/role.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Profile nhân viên: thông tin cá nhân, phòng ban, vai trò, cấu trúc báo cáo</li>
+<li>📱💻 Org chart tự động từ SCIM sync</li>
+<li>💻🖥️ Quản lý hợp đồng lao động (upload, versioning, ký số)</li>
+<li>💻🖥️ Onboarding/Offboarding checklist tích hợp TeraChat Workflow</li>
+<li>💻🖥️ Lịch sử nghỉ phép, phúc lợi</li>
+<li>💻🖥️ Bulk import/export qua FileTransfer capability</li>
+</ul>
+<p><strong>Cross-tapp:</strong> DataGrant xuất <code>employee_id</code>, <code>department</code>, <code>role</code> cho TeraChat Checkin, TeraChat Goal, TeraChat Finance.</p>
+<hr />
+<h4 id="terachat-checkin-terachat-schedule-cham-cong-xep-ca">TeraChat Checkin &amp; TeraChat Schedule — Chấm công &amp; Xếp ca</h4>
+<p><strong>Mục đích:</strong> Chấm công điện tử, xếp ca làm việc, tính toán ngày công — tất cả encrypted.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Checkin record là CRDT_Event với timestamp HLC — đảm bảo thứ tự đúng kể cả offline.</li>
+<li>BLE Checkin: scan BLE beacon từ máy chấm công (capability <code>ble.peripheral_scan</code> với device UUID filter declared in manifest).</li>
+<li>Geofence checkin: OPA GeoHash policy — không lưu tọa độ chính xác, chỉ hash prefix.</li>
+<li>Ca làm việc lưu trong Tapp Data Namespace; conflict schedule resolved qua CRDT LWW với HLC tie-breaker.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Checkin/checkout: mobile tap, BLE beacon, QR code</li>
+<li>📱💻 Geofence checkin (OPA policy, không GPS raw)</li>
+<li>📱💻 Xếp ca: drag-drop, template ca, lặp lịch</li>
+<li>📱💻 Đăng ký nghỉ phép / đổi ca tích hợp TeraChat Request</li>
+<li>💻🖥️ Bảng tổng hợp ngày công, giờ tăng ca, ngày nghỉ</li>
+<li>💻🖥️ Export bảng công cho tính lương (kết nối TeraChat Finance)</li>
+<li>💻🖥️ Cảnh báo thiếu người theo ca tự động</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Xuất <code>work_days</code>, <code>overtime_hours</code> cho TeraChat Finance (lương); xuất <code>attendance_rate</code> cho TeraChat Goal (KPI).</p>
+<hr />
+<h4 id="terachat-goal-okr-kpi">TeraChat Goal — OKR / KPI</h4>
+<p><strong>Mục đích:</strong> Thiết lập, theo dõi và đánh giá mục tiêu cá nhân và phòng ban.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Goal là CRDT_Event có thể nested (Company OKR → Dept OKR → Individual KR).</li>
+<li>Progress auto-update qua DataGrant từ TeraChat Checkin (attendance), TeraChat Work (task completion), TeraChat Finance (revenue).</li>
+<li>Review cycle (quarterly) trigger qua TeraChat Workflow.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Tạo OKR/KPI theo cấp: công ty → phòng ban → cá nhân</li>
+<li>📱💻 Link Key Result với task trong TeraChat Work</li>
+<li>📱💻 Auto-update progress từ data nguồn (Checkin, Work, Finance)</li>
+<li>📱💻 Check-in định kỳ: comment, confidence level, blockers</li>
+<li>💻🖥️ Dashboard alignment: cascade OKR visualization</li>
+<li>💻🖥️ Review &amp; rating cycle với Smart Approval</li>
+<li>💻🖥️ Báo cáo performance theo phòng ban, cá nhân</li>
+</ul>
+<hr />
+<h3 id="63-nhom-truyen-thong-noi-bo-giao-tiep">6.3 Nhóm Truyền thông Nội bộ &amp; Giao tiếp</h3>
+<h4 id="terachat-meeting-quan-ly-cuoc-hop">TeraChat Meeting — Quản lý Cuộc họp</h4>
+<p><strong>Mục đích:</strong> Lên lịch, đặt phòng, tổ chức và lưu trữ biên bản cuộc họp.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Calendar event là CRDT_Event — sync ngay cả khi offline, merge conflict tự động.</li>
+<li>Phòng họp được quản lý qua Resource Booking với OPA policy phân quyền đặt phòng.</li>
+<li>Video call tích hợp native — nhấn vào meeting → join WebRTC session không cần link ngoài.</li>
+<li>Biên bản được lưu E2EE trong TeraVault, tag theo meeting_id.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Lên lịch meeting: single/recurring, invite by DID</li>
+<li>📱💻 Đặt phòng họp: xem lịch phòng real-time, booking conflict check</li>
+<li>📱💻 Video call tích hợp: 1-click join, không app riêng</li>
+<li>📱💻 Agenda: tạo trước, chia sẻ trong group chat E2EE</li>
+<li>📱💻 Biên bản: smart template, ký số khi duyệt</li>
+<li>📱💻 Action items từ meeting → tự động tạo task trong TeraChat Work</li>
+<li>💻🖥️ Đặt tài nguyên: máy chiếu, xe công ty, thiết bị</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Invite sync với TeraChat HRM (availability); action items push vào TeraChat Work.</p>
+<hr />
+<h4 id="terachat-square-at-tai-nguyen-cong-ty">TeraChat Square — Đặt Tài nguyên Công ty</h4>
+<p><strong>Mục đích:</strong> Quản lý và đặt lịch tài nguyên dùng chung: phòng họp, xe, thiết bị, chỗ làm việc.</p>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Catalog tài nguyên với ảnh, mô tả, điều kiện đặt</li>
+<li>📱💻 Booking flow với OPA approval (xe công ty cần GM duyệt)</li>
+<li>📱💻 QR check-in khi nhận tài nguyên</li>
+<li>💻🖥️ Utilization report, conflict detection</li>
+<li>💻🖥️ Maintenance schedule tích hợp TeraChat Service</li>
+</ul>
+<hr />
+<h4 id="terachat-office-cong-van-thong-bao">TeraChat Office — Công văn &amp; Thông báo</h4>
+<p><strong>Mục đích:</strong> Ban hành, phân phối và lưu trữ công văn, thông báo nội bộ chính thức.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Công văn là CRDT_Event với <code>content_type: OfficialDocument</code>, ký số Ed25519 bởi người ban hành.</li>
+<li>Phân phối qua MLS group channel — fully E2EE, server không đọc nội dung.</li>
+<li>Đọc receipt tracking qua CRDT ACK không tiết lộ identity cho server.</li>
+<li>Versioning: mọi sửa đổi append vào DAG, không overwrite.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Soạn thảo công văn với rich text, đính kèm file (TeraVault)</li>
+<li>📱💻 Ký số điện tử Ed25519 bởi người có thẩm quyền</li>
+<li>📱💻 Phân phối đến channel/nhóm/cá nhân theo OPA policy</li>
+<li>📱💻 Tracking đọc (đã đọc/chưa đọc) không lộ identity cho server</li>
+<li>💻🖥️ Quản lý sổ công văn đến/đi</li>
+<li>💻🖥️ Tìm kiếm full-text local (FTS5, không cloud)</li>
+<li>💻🖥️ Archive và retention policy theo quy định</li>
+</ul>
+<hr />
+<h4 id="terachat-inside-mang-truyen-thong-noi-bo">TeraChat Inside — Mạng Truyền thông Nội bộ</h4>
+<p><strong>Mục đích:</strong> Newsfeed nội bộ doanh nghiệp — thay thế Facebook Workplace, Microsoft Viva.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Post là CRDT_Event fanout tới subscriber list theo OPA visibility policy.</li>
+<li>Feed ranking xảy ra hoàn toàn tại client — server không biết ai đọc gì.</li>
+<li>Comment/like là lightweight CRDT_Event append vào post DAG.</li>
+<li>Media: ảnh/video lưu qua Chunked AEAD → Zero-Byte Stub, tải on-demand.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Newsfeed: bài đăng văn bản, ảnh, video từ công ty/phòng ban</li>
+<li>📱💻 Reactions, comments E2EE</li>
+<li>📱💻 @mention cá nhân hoặc phòng ban</li>
+<li>📱💻 Broadcast channel: một chiều từ HR/Ban lãnh đạo</li>
+<li>📱💻 Poll tích hợp (Base Poll .tapp)</li>
+<li>💻🖥️ Admin: quản lý nội dung, tạo trang chính thức (Company Page)</li>
+<li>💻🖥️ Analytics nội bộ: reach, engagement (aggregate only, không user-correlated)</li>
+</ul>
+<hr />
+<h4 id="terachat-message-nhan-tin-cot-loi">TeraChat Message — Nhắn tin Cốt lõi</h4>
+<p><strong>Mục đích:</strong> Công cụ nhắn tin và gọi video nội bộ — đây là tính năng cốt lõi của TeraChat, không phải standalone .tapp.</p>
+<blockquote>
+<p><strong>Kiến trúc quan trọng:</strong> TeraChat Message <strong>không</strong> chạy trong WASM sandbox. Nó là UI plugin tích hợp trực tiếp vào TeraChat Core, tránh double-encryption overhead và latency không cần thiết.</p>
+</blockquote>
+<p><strong>Tính năng đầy đủ:</strong></p>
+<ul>
+<li>📱💻🖥️ Chat 1-1 và nhóm E2EE (MLS RFC 9420)</li>
+<li>📱💻🖥️ Threads, reactions, pin, tag, bookmark</li>
+<li>📱💻🖥️ File sharing qua Zero-Byte Stub (TeraVault)</li>
+<li>📱💻🖥️ Voice message với adaptive codec (Opus → AMR-NB → Text)</li>
+<li>📱💻🖥️ Video call HD E2EE (WebRTC, DTLS-SRTP)</li>
+<li>📱💻🖥️ Scheduled send qua Egress_Outbox</li>
+<li>📱💻🖥️ Offline messaging qua BLE Mesh</li>
+<li>📱💻🖥️ @mention tạo task trong TeraChat Work (deep integration)</li>
+</ul>
+<hr />
+<h3 id="64-nhom-quan-tri-tai-chinh-tai-san">6.4 Nhóm Quản trị Tài chính &amp; Tài sản</h3>
+<h4 id="terachat-finance-quan-tri-tai-chinh">TeraChat Finance — Quản trị Tài chính</h4>
+<p><strong>Mục đích:</strong> Quản trị tổng thể tài chính doanh nghiệp — ngân sách, kế hoạch, báo cáo.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Financial record lưu trong Tapp Data Namespace (max_storage_mb: 512), encrypted.</li>
+<li>Aggregation xảy ra tại client — server không bao giờ biết số liệu tài chính.</li>
+<li>DataGrant nhận payroll data từ TeraChat Checkin; revenue từ TeraChat CRM.</li>
+<li>Export báo cáo có Ed25519 signature cho audit compliance.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>💻🖥️ Ngân sách: lập kế hoạch theo phòng ban, theo dự án</li>
+<li>📱💻 Dashboard tài chính: P&amp;L, cashflow (local render, không server)</li>
+<li>💻🖥️ Phân bổ chi phí theo cost center</li>
+<li>💻🖥️ Báo cáo tài chính: kỳ, năm — export PDF có chữ ký số</li>
+<li>💻🖥️ Cảnh báo vượt ngân sách tự động</li>
+<li>📱💻 Approval chi tiêu qua Smart Approval biometric</li>
+</ul>
+<hr />
+<h4 id="terachat-income-expense-doanh-thu-chi-phi">TeraChat Income &amp; Expense — Doanh thu &amp; Chi phí</h4>
+<p><strong>Mục đích:</strong> Ghi nhận, theo dõi và phân loại toàn bộ doanh thu và chi phí phát sinh.</p>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Tạo phiếu thu/chi: manual hoặc import từ BankFeeds</li>
+<li>📱💻 OCR receipt: chụp hóa đơn → AI extract amount, category (local ONNX)</li>
+<li>📱💻 Category tự động bằng AI (local model, không cloud)</li>
+<li>📱💻 Approval chi phí theo mức (tự duyệt &lt; X; manager &gt; X; CFO &gt; Y)</li>
+<li>💻🖥️ Báo cáo theo category, phòng ban, dự án, kỳ</li>
+<li>💻🖥️ Reconcile với BankFeeds tự động</li>
+<li>📱💻 Mobile expense report: chụp - submit - track</li>
+</ul>
+<hr />
+<h4 id="terachat-bankfeeds-oi-soat-ngan-hang">TeraChat BankFeeds — Đối soát Ngân hàng</h4>
+<p><strong>Mục đích:</strong> Kết nối và đối soát giao dịch ngân hàng tự động, bảo mật tuyệt đối.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Kết nối ngân hàng qua egress endpoint khai báo cụ thể trong manifest với TLS pinning.</li>
+<li>Response từ bank API phải pass JSON Schema validation trước khi vào DAG — không cho phép raw blob.</li>
+<li>Transaction được mã hóa ngay khi nhận, lưu trong Tapp Data Namespace.</li>
+<li>Mọi reconciliation action được ký Ed25519 và ghi vào Audit Log.</li>
+<li><strong>Không bao giờ</strong> lưu banking credentials plaintext — luôn đi qua API Secret Management (TeraVault).</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>💻🖥️ Kết nối đa ngân hàng (Open Banking API, bank statement import)</li>
+<li>💻🖥️ Auto-matching transaction với phiếu thu/chi (fuzzy match + AI suggestion)</li>
+<li>💻🖥️ Reconciliation dashboard: matched/unmatched/disputed</li>
+<li>💻🖥️ Cảnh báo giao dịch bất thường (anomaly detection, local AI)</li>
+<li>💻🖥️ Lịch sử đối soát với audit trail Ed25519-signed</li>
+<li>📱 Nhận notification giao dịch mới (Push E2EE, không lộ amount cho APNs/FCM)</li>
+</ul>
+<p><strong>Security:</strong> TLS pinning bắt buộc cho mọi bank endpoint. HMAC-SHA256 verify payload. Ed25519 audit trail mọi action. Zero-Knowledge: server TeraChat không bao giờ biết số dư hay giao dịch.</p>
+<hr />
+<h4 id="terachat-asset-quan-ly-tai-san">TeraChat Asset — Quản lý Tài sản</h4>
+<p><strong>Mục đích:</strong> Theo dõi vòng đời tài sản doanh nghiệp từ mua → sử dụng → bảo trì → thanh lý.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Asset record lưu trong Tapp Data Namespace.</li>
+<li>Document đính kèm (hóa đơn mua, phiếu bảo hành) dùng Zero-Byte Stub trong TeraVault — server không biết file name hay nội dung.</li>
+<li>QR/barcode scan tích hợp native camera.</li>
+<li>Depreciation calculation chạy hoàn toàn local (không cần server).</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Catalog tài sản: thông tin, location, người phụ trách, trạng thái</li>
+<li>📱 QR/barcode scan để tra cứu và cập nhật nhanh</li>
+<li>📱💻 Lịch bảo trì: reminder tự động, tích hợp TeraChat Service</li>
+<li>📱💻 Bàn giao tài sản: ký số điện tử Ed25519, không thể chối bỏ</li>
+<li>💻🖥️ Khấu hao tự động (straight-line, declining balance)</li>
+<li>💻🖥️ Báo cáo tài sản: tổng giá trị, theo loại, theo location</li>
+<li>💻🖥️ Thanh lý tài sản workflow qua TeraChat Workflow</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Giá trị tài sản xuất vào TeraChat Finance; bàn giao tích hợp TeraChat HRM (employee assignment).</p>
+<hr />
+<h3 id="65-nhom-khach-hang-khong-gian-so">6.5 Nhóm Khách hàng &amp; Không gian số</h3>
+<h4 id="terachat-crm-quan-tri-quan-he-khach-hang">TeraChat CRM — Quản trị Quan hệ Khách hàng</h4>
+<p><strong>Mục đích:</strong> Quản lý pipeline bán hàng, lịch sử khách hàng, và quy trình chăm sóc — hoàn toàn E2EE.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Contact/Deal lưu trong Tapp Data Namespace — không bao giờ lên cloud plaintext.</li>
+<li>External webhook nhận trigger từ web form, email, Zalo OA qua Inbound Webhook (MARKETPLACE-14) với HMAC-SHA256 auth.</li>
+<li>AI local summarize conversation history, suggest follow-up (không cloud AI).</li>
+<li>Giao tiếp với khách hàng qua TeraChat Message tích hợp native — mọi tin nhắn E2EE.</li>
+<li>Federation Bridge: cross-org với đối tác/vendor qua mTLS Sealed Sender.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 Contact management: thông tin, tags, segments, lịch sử tương tác</li>
+<li>📱💻 Deal pipeline: Kanban theo stage, value, probability</li>
+<li>📱💻 Activity log: call, email, meeting — tự động sync từ TeraChat Meeting</li>
+<li>📱💻 AI suggest: follow-up next action, conversation summary (local)</li>
+<li>📱💻 Quote / Proposal: tạo, ký số, gửi E2EE cho khách hàng</li>
+<li>💻🖥️ Inbound webhook: nhận lead từ web form, Zalo, email gateway</li>
+<li>💻🖥️ Sales dashboard: pipeline value, win rate, cycle time</li>
+<li>💻🖥️ Báo cáo doanh số xuất vào TeraChat Finance</li>
+</ul>
+<p><strong>Cross-tapp:</strong> Revenue data xuất vào TeraChat Finance (Income); meeting log sync từ TeraChat Meeting; proposal approval qua TeraChat Request.</p>
+<hr />
+<h4 id="terachat-workspace-khong-gian-lam-viec-ca-nhan">TeraChat Workspace — Không gian Làm việc Cá nhân</h4>
+<p><strong>Mục đích:</strong> Dashboard cá nhân hóa cho từng nhân viên — tổng hợp thông tin từ toàn bộ App Suite.</p>
+<p><strong>Kiến trúc:</strong></p>
+<ul>
+<li>Workspace là aggregated view — không lưu data riêng, chỉ aggregate qua DataGrant read-only từ các tapp khác.</li>
+<li>Personalization config lưu trong sled KV per-DID (encrypted).</li>
+<li>Widget system: mỗi widget là một mini-view của tapp khác, render local.</li>
+<li>Không có data nào về workspace usage lên server — hoàn toàn local.</li>
+</ul>
+<p><strong>Tính năng:</strong></p>
+<ul>
+<li>📱💻 My Dashboard: task hôm nay (TeraChat Work), lịch họp (TeraChat Meeting), request pending (TeraChat Request)</li>
+<li>📱💻 My Goals: OKR/KPI cá nhân (TeraChat Goal) với progress bar</li>
+<li>📱💻 My Checkin: trạng thái chấm công hôm nay (TeraChat Checkin)</li>
+<li>📱💻 Inbox tổng hợp: tin nhắn ưu tiên cao, mention, approval cần xử lý</li>
+<li>📱💻 Quick action: tạo task, tạo request, checkin — không cần mở app riêng</li>
+<li>💻🖥️ Widget customization: drag-drop, resize, pin/unpin</li>
+<li>💻🖥️ Focus mode: ẩn notification, hiển thị chỉ priority items</li>
+<li>💻🖥️ Activity digest: tóm tắt ngày của team (aggregate, không detail)</li>
+</ul>
+<hr />
+<h2 id="module-7-chia-se-a-phuong-tien-tep-tin">Module 7 — Chia sẻ Đa phương tiện &amp; Tệp tin</h2>
+<h3 id="71-media-file-transfer">7.1 Media &amp; File Transfer</h3>
+<ul>
+<li>📱💻🖥️ <strong>Chunked AEAD Streaming (max 10GB):</strong> File chunk 2MB → per-chunk HKDF key → AES-256-GCM → MinIO. RAM tối đa tại mọi thời điểm: ~10MB (Double Buffer). Không bao giờ tràn RAM.</li>
+<li>📱💻 <strong>Compression:</strong> WebP/HEIC auto-convert cho ảnh; video giữ nguyên hoặc transcode theo tag "Gửi HD".</li>
+<li>📱 <strong>iOS Background Transfer:</strong> NSURLSession Background Transfer Service với pre-signed URL (TTL 15 phút, HMAC bound).</li>
+<li>📱 <strong>Android Background:</strong> WorkManager với constraint <code>NetworkType.CONNECTED + requiresBatteryNotLow</code>.</li>
+<li>📱💻 <strong>Codec Tự động Hạ cấp:</strong> Voice message Online → Opus 128kbps; Mesh → AMR-NB 4.75kbps; BLE Emergency → Whisper transcription → text.</li>
+<li>📱💻 <strong>Deduplication (Server-Blind):</strong> Salted MLE <code>BLAKE3(ciphertext + Channel_Key)</code> — server không học được gì từ dedup.</li>
+<li>📱💻 <strong>Zero-Byte Stub Preview:</strong> Thumbnail ẩn trong stub, decrypt local khi render — server không biết ảnh preview.</li>
+</ul>
+<h3 id="72-teravault-vfs">7.2 TeraVault VFS</h3>
+<ul>
+<li>📱💻 <strong>Virtual File System:</strong> Cây thư mục ảo, pointer <code>cas_ref</code> phi vật lý — không tốn storage khi pin.</li>
+<li>📱💻 <strong>Tier tự động:</strong> Tier 1 Auto (channel files), Tier 2 Manual (organized by user).</li>
+<li>📱💻 <strong>Make Available Offline:</strong> Pre-fetch chunks về local cache, tự decrypt khi cần.</li>
+<li>📱💻 <strong>Version history:</strong> Mọi thay đổi file append vào DAG — rollback bất kỳ version.</li>
+<li>💻🖥️ <strong>Bulk operations:</strong> Multi-select, move, copy — tất cả local operation, không re-upload.</li>
+</ul>
+<hr />
+<h2 id="module-8-identity-rbac-quan-tri">Module 8 — Identity, RBAC &amp; Quản trị</h2>
+<h3 id="81-role-based-access-control">8.1 Role-Based Access Control</h3>
+<table>
+<thead>
+<tr>
+<th>Vai trò</th>
+<th>Năng lực</th>
+<th>Ràng buộc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CISO / Admin</strong></td>
+<td>Toàn quyền: KMS, policy, revocation, federation, audit</td>
+<td>HSM quorum cho policy changes</td>
+</tr>
+<tr>
+<td><strong>HR Recovery Officer</strong></td>
+<td>Device re-provisioning, identity recovery</td>
+<td>Không thể đọc nội dung tin nhắn</td>
+</tr>
+<tr>
+<td><strong>Editor</strong></td>
+<td>Tạo/sửa tài liệu, <code>ffi_propose_change</code></td>
+<td>Không có quyền key ceremony</td>
+</tr>
+<tr>
+<td><strong>Commenter</strong></td>
+<td>Ghi chú shadow branch</td>
+<td>Read + comment only</td>
+</tr>
+<tr>
+<td><strong>Viewer</strong></td>
+<td>Chỉ đọc, FFI pointer frozen</td>
+<td><code>ZeroizeOnDrop</code> khi thoát</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-opa-policy-engine">8.2 OPA Policy Engine</h3>
+<ul>
+<li>📱💻☁️ Mọi hành động phải qua OPA Rego Policy. Không có bypass.</li>
+<li>🗄️☁️ <strong>M-of-N HSM Quorum (2-of-3: CISO + CTO + Legal):</strong> Không một cá nhân đơn lẻ nào có thể thay đổi production policy.</li>
+<li>☁️ <strong>Policy Rollback Protection:</strong> Monotonic version counter — client từ chối bundle version thấp hơn.</li>
+<li>📱💻 <strong>Local enforcement:</strong> OPA WASM build tại thiết bị. Không round-trip server.</li>
+</ul>
+<h3 id="83-ang-nhap-device-recovery">8.3 Đăng nhập &amp; Device Recovery</h3>
+<p><strong>Đăng nhập:</strong>
+Không hỗ trợ OTP SMS hay đăng nhập social. TeraChat dùng Identity Broker (Keycloak/Dex) với Azure AD, Google Workspace, Okta (SAML/OIDC). Deep-link tự động liên kết hardware key. Magic 1-tap link: <code>pre_authenticated</code>, <code>Device_Key</code> sinh trước OIDC hoàn tất.</p>
+<p><strong>TH1 — Mất CẢ thiết bị:</strong></p>
+<ol>
+<li>CEO khởi tạo Break-glass → BLE beacon đến C-Level trong phạm vi &lt; 2m.</li>
+<li>≥ 3-of-5 C-Level xác thực sinh trắc học trong <strong>10 phút</strong> (Quorum Timer).</li>
+<li>Lagrange Interpolation tái tạo <code>Escrow_Key</code> trong mlock-protected arena <strong>&lt; 100ms</strong> → zeroize.</li>
+<li>Thiết bị cũ nhận Remote Wipe khi chạm mạng.</li>
+</ol>
+<p><strong>TH2 — Mất Điện thoại, Laptop còn:</strong></p>
+<ol>
+<li>Laptop → Gossip Crypto-Shredding Device_Key cũ.</li>
+<li>Điện thoại mới sinh khóa, QR → Laptop quét → Pending Approval trên VPS.</li>
+<li>HR xác minh qua video call → ký Authorization Ticket.</li>
+<li>Company_Key truyền qua P2P (BLE/Wi-Fi Direct). <strong>Zero cloud exposure.</strong></li>
+</ol>
+<h3 id="84-scim-20-identity-sync">8.4 SCIM 2.0 &amp; Identity Sync</h3>
+<ul>
+<li>☁️ Azure AD / Google Workspace: nghỉ việc → tài khoản khóa trong <strong>&lt; 30 giây</strong>.</li>
+<li>☁️ Federation Revocation: cross-org mTLS vô hiệu trong &lt; 30 giây.</li>
+<li>📱💻 <strong>1-Tap Magic Deep-Link:</strong> App tự chuyển <code>pre_authenticated</code>, <code>Device_Key</code> sinh trước OIDC hoàn tất.</li>
+</ul>
+<hr />
+<h2 id="module-9-federation-cross-org-communication">Module 9 — Federation &amp; Cross-Org Communication</h2>
+<h3 id="91-kien-truc">9.1 Kiến trúc</h3>
+<ul>
+<li>Mỗi tổ chức vận hành <strong>Private Cluster độc lập</strong> với ranh giới mã hóa riêng.</li>
+<li>☁️ <strong>Federation Bridge (Zone 2):</strong> mTLS + <strong>Sealed Sender</strong> — server nhận không thể xác định người gửi.</li>
+<li>🗄️ <strong>Trust Registry:</strong> append-only SQLite — không dùng public CA.</li>
+<li>Schema Version: ±1 minor → read-only federation. ±1 major → <code>SCHEMA_INCOMPATIBLE</code>, rejected.</li>
+<li><strong>OPA Policy channel</strong> luôn hoạt động bất kể schema version gap — bảo đảm security policy (CRL, revocation) luôn đến được Branch cluster.</li>
+</ul>
+<h3 id="92-quy-trinh-ket-noi">9.2 Quy trình Kết nối</h3>
+<pre><code>Admin HQ → Federation Invite Token (Signed JWT)
+    ↓
+Admin Branch → nạp Token → gửi kết nối kèm Public Key
+    ↓
+HQ approve → key exchange vào federation_trust_registry
+    ↓
+OPA Rate Limiting ngăn cross-org DoS
+    ↓
+SCIM offboarding → mTLS vô hiệu &lt; 30s tự động
+</code></pre>
+<hr />
+<h2 id="module-10-compliance-dlp-audit">Module 10 — Compliance, DLP &amp; Audit</h2>
+<blockquote>
+<p><strong>Nguyên tắc:</strong> Tuân thủ thực thi bằng toán học, không phải hợp đồng. Không Admin nào có thể thay đổi lịch sử mà không phá vỡ Merkle chain.</p>
+</blockquote>
+<h3 id="101-data-loss-prevention">10.1 Data Loss Prevention</h3>
+<ul>
+<li>📱💻 <strong>OPA Egress Whitelist:</strong> Egress đến domain không khai báo → bị chặn tại OS.</li>
+<li>📱💻 <strong>Byte-Quota Circuit Breaker:</strong> 4KB/call. Vượt 100% session quota → Egress khóa 24h, CISO alert.</li>
+<li>📱💻 <strong>Format Whitelist:</strong> [.pdf, .txt, .jpg]. <code>.vbs</code>, <code>.xlsm</code> bị chặn.</li>
+<li>💻📱 <strong>Redaction Rules:</strong> Rust Core local ML redact CC numbers, nội bộ IP khỏi AI prompt.</li>
+<li>🗄️ <strong>Anti-Remanence Policy (ARP):</strong> TTL Crypto-Shredding. CISO-initiated Wipe → zero-fill với Ed25519-signed checkpoint.</li>
+</ul>
+<h3 id="102-tamper-proof-audit-log">10.2 Tamper-Proof Audit Log</h3>
+<ul>
+<li>🗄️ Mọi entry mang chữ ký Ed25519. Entry không ký → reject khi ghi, không bao giờ lưu.</li>
+<li>🗄️ <strong>Merkle Chain:</strong> Xóa bất kỳ entry nào → phá vỡ chain ngay lập tức, audit độc lập được.</li>
+<li>☁️ Marketplace Transparency Log: append-only, Merkle-proofed.</li>
+</ul>
+<h3 id="103-terachat-app-suite-compliance">10.3 TeraChat App Suite Compliance</h3>
+<p>Mọi action trong TeraChat App Suite đều được ghi vào Audit Log:</p>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Sự kiện bắt buộc ghi Audit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TeraChat Request</td>
+<td>Mọi approve/reject với biometric signature</td>
+</tr>
+<tr>
+<td>TeraChat Finance</td>
+<td>Mọi transaction trên ngưỡng cấu hình</td>
+</tr>
+<tr>
+<td>TeraChat BankFeeds</td>
+<td>Mọi reconciliation action</td>
+</tr>
+<tr>
+<td>TeraChat HRM</td>
+<td>Onboarding/offboarding, contract signing</td>
+</tr>
+<tr>
+<td>TeraChat E-Hiring</td>
+<td>Offer letter signing, hiring decision</td>
+</tr>
+<tr>
+<td>TeraChat Asset</td>
+<td>Bàn giao, thanh lý tài sản</td>
+</tr>
+<tr>
+<td>TeraChat CRM</td>
+<td>Deal won/lost, quote signing</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="module-11-infrastructure-deployment">Module 11 — Infrastructure &amp; Deployment</h2>
+<h3 id="111-server-topology">11.1 Server Topology</h3>
+<pre><code>[GeoDNS]
+    ├──► Zone 1: VPS Relay (Rust Blind Relay · SQLite WAL · NATS JetStream)
+    ├──► Zone 2: Federation Bridge (mTLS · Sealed Sender)
+    └──► Zone 0: Bare-metal HSM (HSM FIPS 140-3 · PostgreSQL · MinIO EC+4)
+</code></pre>
+<h3 id="112-scale-tiers">11.2 Scale Tiers</h3>
+<table>
+<thead>
+<tr>
+<th>Quy mô</th>
+<th>Topology</th>
+<th>Hardware Tối thiểu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≤ 10.000 users</td>
+<td>Single-node Rust relay</td>
+<td>512MB VPS</td>
+</tr>
+<tr>
+<td>≤ 100.000 users</td>
+<td>Geo-federated clusters</td>
+<td>PostgreSQL HA + MinIO</td>
+</tr>
+<tr>
+<td>≥ 1.000.000 users</td>
+<td>Multi-cloud active-active</td>
+<td>PostgreSQL Geo-Partitioning</td>
+</tr>
+</tbody>
+</table>
+<h3 id="113-performance-targets">11.3 Performance Targets</h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Target</th>
+<th>Platform</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ALPN negotiation (full fallback)</td>
+<td>&lt; 50ms</td>
+<td>All</td>
+</tr>
+<tr>
+<td>MLS encrypt (single message)</td>
+<td>&lt; 5ms</td>
+<td>All</td>
+</tr>
+<tr>
+<td>Push notification decrypt (NSE)</td>
+<td>&lt; 500ms</td>
+<td>📱 iOS</td>
+</tr>
+<tr>
+<td>End-to-end relay delivery</td>
+<td>&lt; 200ms</td>
+<td>All</td>
+</tr>
+<tr>
+<td>TURN failover</td>
+<td>&lt; 3s</td>
+<td>WebRTC</td>
+</tr>
+<tr>
+<td>.tapp cold start (wasm3 iOS)</td>
+<td>&lt; 20ms</td>
+<td>📱 iOS</td>
+</tr>
+<tr>
+<td>.tapp cold start (wasmtime Desktop)</td>
+<td>&lt; 50ms</td>
+<td>💻🖥️ Desktop</td>
+</tr>
+<tr>
+<td>Tapp Data Namespace query</td>
+<td>&lt; 10ms</td>
+<td>All (local SQLite)</td>
+</tr>
+<tr>
+<td>DataGrant cross-tapp fetch</td>
+<td>&lt; 50ms</td>
+<td>All</td>
+</tr>
+<tr>
+<td>VPS concurrent WebSocket</td>
+<td>~500.000</td>
+<td>☁️ 4GB VPS</td>
+</tr>
+<tr>
+<td>File chunk throughput</td>
+<td>300–500 MB/s</td>
+<td>☁️🗄️</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="licensing-service-tiers">Licensing &amp; Service Tiers</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Community</th>
+<th>Enterprise</th>
+<th>GovMilitary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offline TTL</td>
+<td>24 giờ</td>
+<td>7 ngày (configurable)</td>
+<td><strong>30 ngày</strong></td>
+</tr>
+<tr>
+<td>EMDP Tactical Relay</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Air-Gapped License</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Compliance Retention</td>
+<td>❌</td>
+<td>90 ngày</td>
+<td><strong>7 năm</strong></td>
+</tr>
+<tr>
+<td>TEE Enclaves (SGX)</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Chaos Engineering</td>
+<td>❌</td>
+<td>Optional</td>
+<td><strong>Bắt buộc</strong></td>
+</tr>
+<tr>
+<td>Federation</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅ Air-gapped</td>
+</tr>
+<tr>
+<td>AI Token Quota</td>
+<td>10K/giờ</td>
+<td>Unlimited</td>
+<td>Unlimited + local-only</td>
+</tr>
+<tr>
+<td>TeraChat App Suite</td>
+<td>Read-only</td>
+<td>✅ Full</td>
+<td>✅ Full + custom .tapp</td>
+</tr>
+<tr>
+<td>Tapp Data Namespace</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>DataGrant Cross-tapp</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Inbound Webhook</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Open-Core Boundary:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>License</th>
+<th>Auditable by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>terachat-core</code> (Crypto, MLS, CRDT, Mesh)</td>
+<td>AGPLv3</td>
+<td>Gov, Bank, Public</td>
+</tr>
+<tr>
+<td><code>terachat-license-guard</code></td>
+<td>BSL</td>
+<td>Không public</td>
+</tr>
+<tr>
+<td><code>terachat-ui</code> (Tauri, Flutter)</td>
+<td>Apache 2.0</td>
+<td>Public</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="constraints-open-items">Constraints &amp; Open Items</h2>
+<h3 id="platform-hard-constraints">Platform Hard Constraints</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Ràng buộc</th>
+<th>Giải pháp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📱 iOS</td>
+<td>W^X: không WASM JIT</td>
+<td>wasm3 + AOT .dylib trong XPC Worker</td>
+</tr>
+<tr>
+<td>📱 iOS</td>
+<td>NSE RAM: 20MB ceiling</td>
+<td>Ghost Push + Main App decrypt</td>
+</tr>
+<tr>
+<td>📱 iOS</td>
+<td>AWDL tắt khi Hotspot/CarPlay</td>
+<td>Auto-downgrade BLE Tier 3</td>
+</tr>
+<tr>
+<td>📱 Android</td>
+<td>FCM throttled 10/h Restricted battery</td>
+<td>FCM high-priority + Companion Device Manager</td>
+</tr>
+<tr>
+<td>📱 Huawei</td>
+<td>Không có content-available background push</td>
+<td>Foreground polling; CRL ≤ 4h</td>
+</tr>
+<tr>
+<td>🖥️ Linux</td>
+<td>Flatpak không tương thích seccomp-bpf</td>
+<td>.deb / .rpm / AppImage Cosign</td>
+</tr>
+<tr>
+<td>☁️ VPS</td>
+<td>eBPF/XDP yêu cầu bare-metal</td>
+<td>Tokio Token Bucket userspace</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tapp-app-suite-constraints">.tapp App Suite Constraints</h3>
+<table>
+<thead>
+<tr>
+<th>Constraint</th>
+<th>Impact</th>
+<th>Giải pháp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WASM sandbox memory ≤ 64MB</td>
+<td>Finance/HRM với dataset lớn</td>
+<td>Tapp Data Namespace pagination + Tapp Data Namespace streaming</td>
+</tr>
+<tr>
+<td>Egress hard limit 4KB/call</td>
+<td>BankFeeds cần payload lớn hơn</td>
+<td>FileTransfer capability riêng (tách egress quota)</td>
+</tr>
+<tr>
+<td>Cross-tapp chỉ qua Honest Broker</td>
+<td>Latency DataGrant fetch</td>
+<td>Caching trong Tapp Data Namespace với TTL</td>
+</tr>
+<tr>
+<td>WasmParity gate bắt buộc</td>
+<td>Mọi app mới phải test wasm3/wasmtime</td>
+<td>CI automation cho tất cả App Suite tapp</td>
+</tr>
+<tr>
+<td>Storage quota watchdog</td>
+<td>Tapp độc hại exhaust disk</td>
+<td>INFRA-03 heartbeat table monitor per-tapp storage</td>
+</tr>
+</tbody>
+</table>
+<h3 id="blocker-items-phai-hoan-thanh-truoc-production">Blocker Items (Phải hoàn thành trước production)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Mức độ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CI/CD code signing pipeline (5 platform)</td>
+<td><strong>BLOCKER</strong></td>
+</tr>
+<tr>
+<td>WasmParity CI gate (wasm3 vs wasmtime)</td>
+<td><strong>BLOCKER</strong></td>
+</tr>
+<tr>
+<td>Dart FFI NativeFinalizer Clippy lint</td>
+<td><strong>BLOCKER</strong></td>
+</tr>
+<tr>
+<td>MARKETPLACE-12: Tapp Data Namespace implementation</td>
+<td><strong>BLOCKER cho App Suite</strong></td>
+</tr>
+<tr>
+<td>MARKETPLACE-13: Structured DataGrant extension</td>
+<td><strong>BLOCKER cho cross-tapp</strong></td>
+</tr>
+<tr>
+<td>MARKETPLACE-14: Inbound Webhook</td>
+<td><strong>BLOCKER cho CRM/BankFeeds</strong></td>
+</tr>
+<tr>
+<td>AppArmor / SELinux postinstall (Linux)</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>Storage quota watchdog (INFRA-03)</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>BLE peripheral scan capability (Checkin)</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>FileTransfer capability separation</td>
+<td>HIGH</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="document-navigation-map">Document Navigation Map</h2>
+<table>
+<thead>
+<tr>
+<th>Audience</th>
+<th>Document</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Developer</td>
+<td><code>Spec-Wasm-Tapp-Runtime.md</code> (TERA-RUNTIME)</td>
+<td>WASM runtime, IPC, OS hooks, .tapp behavior</td>
+</tr>
+<tr>
+<td>System Architect</td>
+<td><code>Spec-Core-Cryptography-And-Mesh.md</code> (TERA-CORE)</td>
+<td>MLS, CRDT, Mesh, Crypto</td>
+</tr>
+<tr>
+<td>Designer</td>
+<td><code>Design.md</code> (TERA-DESIGN)</td>
+<td>UI state machine, Glassmorphism, animations</td>
+</tr>
+<tr>
+<td>Ecosystem Builder</td>
+<td><code>Spec-Ecosystem-And-Trust-Chain.md</code> (TERA-ECO)</td>
+<td>.tapp lifecycle, Marketplace, Plugin registry</td>
+</tr>
+<tr>
+<td>Security Auditor</td>
+<td><code>Spec-Identity-And-Governance.md</code> (TERA-GOV)</td>
+<td>OPA, RBAC, Cloud Enclave, Federation</td>
+</tr>
+<tr>
+<td>Investor / Executive</td>
+<td><code>BusinessPlan.md</code> (TERA-BIZ)</td>
+<td>GTM, pricing, licensing</td>
+</tr>
+<tr>
+<td>New Team Member</td>
+<td><code>Introduction.md</code> (TERA-INTRO)</td>
+<td>Vision, architecture overview, terminology</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>TeraChat — Hệ điều hành Công việc Sinh tồn. Trao lại chủ quyền số cho người tiên phong.</em></p>
+<hr />
+<pre><code class="language-yaml"># CHANGELOG
+- version:  &quot;0.3.0&quot;
+  date: &quot;2026-03-28&quot;
+  changes:
+    - &quot;Add Module 6: TeraChat App Suite — 20+ enterprise apps across 5 verticals&quot;
+    - &quot;Add TeraChat Request, Work, Workflow, Service (Operations)&quot;
+    - &quot;Add TeraChat E-Hiring, HRM, Checkin, Schedule, Goal (HR)&quot;
+    - &quot;Add TeraChat Meeting, Square, Office, Inside, Message (Communications)&quot;
+    - &quot;Add TeraChat Finance, Income/Expense, BankFeeds, Asset (Finance)&quot;
+    - &quot;Add TeraChat CRM, Workspace (Customer &amp; Digital Space)&quot;
+    - &quot;Add MARKETPLACE-12/13/14 capability specs (Tapp Data Namespace, DataGrant, Inbound Webhook)&quot;
+    - &quot;Add cross-tapp integration matrix for all App Suite tapp&quot;
+    - &quot;Expand Module 2 with Threads, Tags, Pin, Reactions, Scheduled Send specs&quot;
+    - &quot;Add FUNC-12 FCP Trust Boundary Declaration&quot;
+    - &quot;Add FUNC-13 Burner Agent Cross-Org Collaboration Flow&quot;
+    - &quot;Add FUNC-14 Swarm Workspace User Flow&quot;
+    - &quot;Add FUNC-15 Causal Smart Approval Agent-Backed Decision Flow&quot;
+    - &quot;Update Module 7 with full file transfer and TeraVault VFS specs&quot;
+    - &quot;Update Licensing tiers with App Suite feature gates&quot;
+    - &quot;Update Constraints with .tapp App Suite blockers&quot;
+    - &quot;Clarify TeraChat Message as UI plugin, not standalone WASM sandbox&quot;
+
+- version:  &quot;0.2.6&quot;
+  date: &quot;2026-03-19&quot;
+  changes:
+    - &quot;Complete rewrite from CEO/CTO perspective&quot;
+    - &quot;Synthesized from legacy specs, Design.md, BusinessPlan.md, Introduction.md&quot;
+    - &quot;Added Module 3 (Survival Mesh), Module 4 (AI Shield), Module 5 (.tapp)&quot;
+    - &quot;Added TCO Reference, Performance Targets, Platform Constraints tables&quot;
+    - &quot;Standardized platform icons and Online/Mesh mode indicators&quot;
+    - &quot;Full Licensing Tiers table (Community / Enterprise / GovMilitary)&quot;
+    - &quot;Consolidated Recovery flows into Module 6&quot;
+</code></pre>
+
+    <div style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);
+                color:var(--text-secondary);font-size:0.9rem;text-align:center;">
+        <p>TeraChat Enterprise OS &copy; 2026</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const searchInput = document.getElementById('tocSearch');
+    const noResults = document.getElementById('searchNoResults');
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+    // Filter TOC on input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        navLinks.forEach(function(link) {
+            if (!query) {
+                link.classList.remove('search-hidden');
+                visibleCount++;
+            } else {
+                const text = link.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    link.classList.remove('search-hidden');
+                    visibleCount++;
+                } else {
+                    link.classList.add('search-hidden');
+                }
+            }
+        });
+
+        noResults.style.display = (query && visibleCount === 0) ? 'block' : 'none';
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
