@@ -405,3 +405,28 @@ extern "C" {
 | ApprovalSignature hardware fail | Biometric API unavailable | Fallback to PIN + audit log `AttestationFallback` |
 | Legal Hold placed but vacuum runs | Race condition | TERA-SYNC checks LegalHoldFlag atomically before vacuum; hold wins |
 | OPA policy divergence (client vs gateway) | Policy version mismatch | Client re-fetches latest bundle; grace period 60s |
+
+---
+
+## §11 — COMPLIANCE DISCLOSURES & AUDIT RESOLUTIONS (GOVERNANCE)
+
+### 11.1 Huawei HMS — SLA Disclosure in Enterprise Contracts (GAP-F)
+**Constraint:** Huawei HMS Push không hỗ trợ `data-only` message type. Enterprise SCIM < 30s SLA không thể đảm bảo — polling interval tối thiểu là 4h. Không có disclosure nào trong pricing/feature documentation hiện tại.
+**Resolution:**
+- **Enterprise contracts** phải explicitly disclose: *"Huawei HarmonyOS devices không nằm trong Enterprise SLA tier (SCIM < 30s). Huawei devices dùng Polling Mode (CRL ≤ 4h) và TIDAK eligible cho Gov/Military deployment tier."*
+- **Pricing_Packages.html** phải cò footnote rõ ràng cho mọi package listing tính năng mà Huawei không hỗ trợ.
+- Spec cross-reference: TERA-ECO §7 — Huawei HMS Trust Tier Limitation.
+- **Tech_Debt**: XPLAT-03 và GAP-F.
+
+### 11.2 Tauri Linux — Cross-Origin Isolation Enforcement (XPLAT-05)
+**Constraint:** Tauri WebView (GTK WebKitGTK) trên Linux sử dụng `SharedArrayBuffer` cho zero-copy Data Plane. Trình duyệt webkit modern yêu cầu `COOP: same-origin` + `COEP: require-corp` headers được set bởi Rust Core local HTTP server. Nếu không set, `SharedArrayBuffer` trở về `undefined` và Data Plane **silently degrade** về JSON serialization mà không có bất kỳ error hay log nào. Không được mention trong bất kỳ spec nào.
+**Resolution:**
+- Rust Core local HTTP server **phải** set headers:
+  ```
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  ```
+- CI gate trên Linux: after startup, assert `typeof SharedArrayBuffer !== 'undefined'`.
+- Nếu Linux distro không hỗ trợ Cross-Origin Isolation (cụ khối GTK < 2.36): **Explicit degradation warning** trong Admin Console — không silent.
+- Cross-reference: TERA-CLIENT sẽ thêm `XPLAT_SHARED_ARRAY_BUFFER_UNAVAILABLE` signal vào CoreSignal table.
+- **Tech_Debt**: XPLAT-05.

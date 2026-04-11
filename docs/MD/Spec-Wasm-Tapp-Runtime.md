@@ -79,10 +79,12 @@ Switch condition at compile-time: `#[cfg(target_os = "ios")]`
 
 **Latency penalty (wasm3 interpreter):** +15–20ms/call vs wasmtime JIT. **Chấp nhận được** cho Enterprise UX.
 
-**WasmParity CI Gate:**
+**WasmParity CI Gate (EXPANDED):**
 
 - Cùng test vector phải chạy identical trên `wasm3` và `wasmtime`.
 - Fail → block merge. Latency delta ≤ 20ms. Output semantic **phải identical**.
+- **Float Detection Gate (HIGH-3):** LLVM IR analysis phải explicitly flag và reject bất kỳ `f32`/`f64` instruction trong `.tapp` mang manifest `arithmetic_mode: fixed_point`. CI block merge nếu float detected. Không phải soft warning.
+- **Fuel Limit Gate (TD-003):** Mọi `.tapp` chạy trên `wasm3` và `wasmtime` phải demonstrably complete trong `instruction_fuel` budget. CI phải simulate worst-case execution path và verify fuel không bị exhausted trước khi hoàn thành core logic.
 
 ### 2.2 .tapp Sandbox Architecture
 
@@ -524,6 +526,8 @@ pub extern "C" fn on_webhook_received(
 **Constraint:** Platform floating-point semantics diverge (e.g., `wasm3` vs. `wasmtime`), leading to compliance-breaking drift in financial calculations over long life-cycles.
 **Resolution:** All financial math must utilize **fixed-point arithmetic** (`i64` with up to 4 decimal places). Floating-point math is restricted solely to non-critical logic (e.g., probability scoring). The tapp manifest must explicitly declare `"arithmetic_mode": "fixed_point"`.
 
+> **Enforcement (HIGH-3 Fix):** Float detection phải là **required CI gate**, không chỉ là documentation recommendation. LLVM IR analysis pipeline (TERA-ECO §4.1) phải explicit scan và block merge nếu `f32`/`f64` xuất hiện trong financial `.tapp` (manifest `arithmetic_mode: fixed_point`). Không phải soft warning.
+
 ### 11.4 Host ABI Gaps (Cursor Protocol)
 **Constraint:** Existing definitions lack clear signatures for `host_db_query` cursor flows, risking OOM and boundary leaks.
 **Resolution:** Defined streaming API:
@@ -540,7 +544,35 @@ Params must be serialized as `MessagePack`. Error codes must align with `host_eg
 **Constraint:** Asynchronous quota enforcement enables mid-transaction overflow vulnerabilities.
 **Resolution:** Enforcement must be **synchronous at the write path** (`host_db_query`). A hard ceiling (`max_storage_mb: 256`) is enforced prior to SQL transaction commit. Violations immediately return `ERR_STORAGE_QUOTA_EXCEEDED` (-5). Tapps must handle their own eviction strategies; the host will never auto-evict data.
 
+> **Deadlock vector — HIGH-6 (triggers GAP-A):** Nếu `.tapp` background tick bị block trên quota và 30s timeout giết WASM instance mid-transaction, Saga Journal sẽ thấy `CrdtCommitted` entry không có corresponding cold_state write — trigger GAP-A (TERA-SYNC §8.4). `CoreBootSequence::SagaRecoveryGuard` sẽ detect và recover tại next startup. UI phải hiển thị "Chờ đồng bộ" thay vì "Đã duyệt" cho đến khi Saga resolved.
+
 ### 11.7 Strict Engineering Guardrails (Runtime Contracts)
 - **Rule 1 (Typed FFI Boundary):** The WASM boundary is a strict typed contract. Do not pass unstructured bytes. Use MessagePack with declared schema versions. New host functions must be defined in the ABI specification accompanied by WasmParity test vectors.
-- **Rule 3 (No Float in Finance):** `f32/f64` primitives are categorically forbidden for financial parameters. Fixed-point is mandatory.
+- **Rule 3 (No Float in Finance):** `f32/f64` primitives are categorically forbidden for financial parameters. Fixed-point is mandatory. **Enforced via LLVM IR CI gate — not advisory.**
 - **Rule 7 (Migration Contract):** Every schema update necessitates a defined migration path within the manifest (`schema_version`, `migrations`). Unmigrated tapps will fail to launch, emitting `CoreSignal::ComponentFault`.
+
+### 11.8 Gas/Fuel Metering — Deterministic Execution (TD-003 / XPLAT-01)
+**Constraint:** Timeout theo giây thiên vị phần cứng mạnh. `.tapp` chạy ổn trên Desktop (`wasmtime` JIT) có thể vượt 30s timeout trên iOS (`wasm3` interpreter) — không biết trước khi deploy.
+**Resolution:** Host ABI áp đặt Gas/Fuel Metering. Mỗi `.tapp` được cấp `instruction_fuel: u64` cố định thay vì timeout theo giây. Khi hết Fuel, `.tapp` bị buộc dừng — Deterministic tuyệt đối trên cả 2 engine.
+
+```yaml
+# .tapp Manifest additions:
+computation:
+  instruction_fuel: 50_000_000   # Deterministic regardless of engine/hardware
+  fuel_per_background_tick: 5_000_000
+```
+
+```rust
+// Rust Core host side:
+let mut store = Store::new(&engine, ());
+store.add_fuel(tapp_manifest.computation.instruction_fuel)?;
+// WASM instances được monitor deterministically trên cả wasm3 và wasmtime
+```
+
+### 11.9 Burner Agent TTL + EMDP Epoch Freeze Intersection (HIGH-4 / GAP-G)
+**Constraint:** Burner Agent (FUNC-13, TTL=60min) join MLS group như một member. Khi TTL expire, phải bị remove, triggering MLS Epoch Rotation. Trong Mesh Mode đang có EMDP Epoch Freeze active, removal được queued nhưng Epoch không advance. Burner Agent trở thành **"zombie member"** — removed logically nhưng derived keys vẫn valid past TTL.
+**Resolution:**
+- Khi EMDP Epoch Freeze active và Burner Agent TTL expire: removal được đánh dấu `removal_pending_freeze: true` trong Saga Journal.
+- Epoch Ratchet advance được scheduled ngay sau `EmdpSessionTerminated` signal — trước khi sync bất kỳ message nào.
+- Burner Agent CRDT events trong freeze window mang flag `emdp_forced: true` — đi vào review queue.
+- **TestMatrix SC-36** phải implement scenario này (xem TERA-TEST).

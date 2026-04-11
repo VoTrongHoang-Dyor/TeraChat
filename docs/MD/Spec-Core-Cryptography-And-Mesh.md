@@ -454,22 +454,35 @@ extern "C" {
 ### 11.2 Strict Engineering Guardrails (Mesh Degradation Limits)
 - **Rule 4 (No Silent Security Degradation):** P2P WebRTC fallback (e.g., TLS-via-WebSocket) authorizes routing latency compromises, but strictly rejects any downgrades to the MLS cryptographic protocol. If a secure session verification fails in Mesh Mode, Rust Core generates a `CoreSignal::FeatureDegradedInMesh` error instead of quietly dropping parameters. Fallback logic is fully managed by the Host and never delegated to the Tapp space.
 
-### 11.3 NSE Serial Queue — Concurrent Push Flood Protection (CRIT-02)
+### 11.3 NSE Serial Queue — Concurrent Push Flood Protection (CRIT-02 / CRIT-C Audit Fix)
 **Constraint:** iOS NSE với ~5MB peak RAM per invocation có thể bị forked thành nhiều instances khi nhận burst notifications từ nhiều MLS group đồng thời (10 groups × 5MB = 50MB > iOS 20MB ceiling → Jetsam kill toàn bộ → zero notification rendered).
-**Resolution:** NSE phải implement serial queue với mutex qua Shared Keychain semaphore. Nếu một NSE instance đang chạy, instance thứ hai phải yield và cache raw ciphertext vào `nse_staging.db`. Rust Core expose `host_nse_acquire_lock()` / `host_nse_release_lock()` qua Shared Keychain semaphore.
+
+**Previous approach (REJECTED — TOCTOU race):** Shared Keychain semaphore có fundamental race condition: iOS có thể launch nhiều NSE process đồng thời TRƯỚC KHI process A có thời gian write lock vào Keychain. Process B launch và check Keychain — không thấy lock — proceed in parallel. Đây là TOCTOU (Time-of-Check-Time-of-Use) vulnerability. Ngoài ra, `nse_staging.db` là SQLite bị concurrent multi-process write — reintroduce vấn đề Saga pattern đang giải quyết.
+
+**Resolution (POSIX flock + Ring Buffer):** Thay Keychain semaphore bằng POSIX advisory file lock (`flock()`) trên file trong App Group container. File lock là process-safe và atomic tại kernel level.
 
 ```rust
-// iOS Shared Keychain semaphore key: "com.terachat.nse.lock"
+// POSIX flock trên App Group container file:
+// Path: /AppGroup/com.terachat.nse.lock
 pub fn handle_notification(payload: &EncryptedPayload) -> NotificationContent {
-    let lock = SharedKeychainSemaphore::acquire_or_buffer(payload);
-    match lock {
-        Acquired(guard) => { /* decrypt và return */ }
-        Buffered => {
-            // Write raw ciphertext vào nse_staging.db
-            // Return generic "Tin nhắn mới" notification
+    let lock_path = app_group_path().join("nse.lock");
+    match flock_try_acquire(&lock_path) {
+        Acquired(guard) => {
+            // Decrypt và return notification
+            guard // auto-release khi drop
+        }
+        Contended => {
+            // Write raw ciphertext vào memory-mapped ring buffer
+            // (KHÔNG phải SQLite — tránh concurrent writer deadlock)
+            // Path: /AppGroup/com.terachat.nse.ringbuf
+            ring_buffer_write(payload.raw_ciphertext);
+            // Return generic notification
+            NotificationContent::generic("Tin nhắn mới")
         }
     }
 }
+// Main App drains ring buffer khi foreground:
+// pub fn on_foreground() { nse_ring_buffer_drain_and_decrypt(); }
 ```
 
 ### 11.4 EMDP Epoch Freeze Protocol (CRIT-04)
@@ -497,4 +510,56 @@ fn check_memory_security() -> Result<(), StartupError> {
 
 ### 11.6 PENDING_SECURE_CHANNEL — SC-35 Key Escrow Race (CRIT-05 extension)
 **Constraint:** Khi Key Escrow chưa kịp transfer (SC-35 race condition), cần balance giữa bảo mật tuyệt đối và UX không gây hoang mang.
-**Resolution:** Tầng Network bị suspend hoàn toàn (không byte nào rời thiết bị). Tầng UI: user tiếp tục gõ bình thường, tin nhắn mã hóa bằng ephemeral key (RAM/HSM) và đưa vào `Outbox Queue`. UI hiển thị "Securing channel..." indicator thay vì error. Khi Escrow hoàn tất: Core re-key, mã hóa lại payload trong queue và flush lên Mesh. Giới hạn bắt buộc: TTL hoặc Max-Queue-Size cho Outbox Queue để tránh OOM.
+**Resolution:** Tầng Network bị suspend hoàn toàn (không byte nào rời thiết bị). Tầng UI: user tiếp tục gõ bình thường, tin nhắn mã hóa bằng ephemeral key (RAM/HSM) và đưa vào `Outbox Queue`. UI hiển thị "Securing channel..." indicator thay vì error. Khi Escrow hoàn tất: Core re-key, mã hóa lại payload trong queue và flush lên Mesh. Giới hạn bắt buộc:
+- `Max-Queue-Size`: chặn nhập liệu nếu đầy để tránh OOM.
+- `TTL = 24h`: nếu Key Escrow không complete sau 24h, messages expire và UI hiển thị "Messages could not be sent securely — please reconnect to a secure channel."
+- Nếu app crash khi Queue chưa flush: dữ liệu mất — UI phải cảnh báo user không tắt app khi đang "Securing channel...".
+
+### 11.7 Composite Key Derivation — Defense in Depth (Hardware Zero-Day)
+**Constraint:** `DeviceIdentityKey` phụ thuộc hoàn toàn vào Secure Enclave/TPM vi phạm Zero-Trust (trust 100% vào một vendor). Nếu hardware bị compromise, toàn bộ key material bị exposed.
+**Resolution:** Áp dụng Defense in Depth — Key thực sự được sinh qua KDF kết hợp 3 yếu tố:
+
+```
+Session_Key = KDF(Hardware_Secret || License_JWT_Entropy || User_PIN_or_Biometric)
+```
+
+- `Hardware_Secret`: từ Secure Enclave / StrongBox / TPM (không export được)
+- `License_JWT_Entropy`: derived từ tenant license JWT (server-controlled)
+- `User_PIN_or_Biometric`: user-controlled factor
+
+Nếu attacker crack được TPM, họ thu được `Hardware_Secret` nhưng vẫn cần License entropy và user PIN để reconstruct key. Dữ liệu mã hóa offline vẫn an toàn tuyệt đối dù phần cứng bị bẻ gãy.
+
+### 11.8 CoreBootSequence Protocol — Startup Safety Guards (GAP-A, GAP-B, GAP-C)
+**Constraint:** Nhiều critical invariants (Saga orphans, NSE ring buffer, WAL integrity) chỉ có thể được detected và recovered tại startup — không thể detect real-time mà không có significant overhead.
+**Resolution:** Mỗi Rust Core startup, trước khi mở bất kỳ IPC channel nào, phải chạy tuần tự (< 300ms tổng):
+
+```rust
+pub async fn core_boot_sequence() -> Result<(), BootError> {
+    // Phase 1: Saga integrity
+    SagaRecoveryGuard::scan_and_recover().await?;
+    
+    // Phase 2: NSE ring buffer drain
+    NseRingBufferDrain::flock_drain_to_decrypt_queue().await?;
+    
+    // Phase 3: WAL integrity
+    WalIntegrityCheck::pragma_integrity_check_both_dbs().await?;
+    
+    // Chỉ sau đây mới mở IPC channels:
+    IpcServer::open_channels().await
+}
+```
+
+### 11.9 Binary Transparency Gossip Authentication (HIGH-7)
+**Constraint:** TERA-CORE §4.5 định nghĩa Binary Transparency via BLAKE3 hash gossip qua Mesh. Gossip message KHÔNG yêu cầu sender authentication — chỉ original binary được signed. Malicious insider có thể broadcast fake `Global_Update_Log` entry với BLAKE3 hash giả, gây DoS (peers block legitimate module).
+**Resolution:** Gossip message mang Binary Transparency hash phải được signed bằng TeraChat Root CA key:
+
+```rust
+pub struct BinaryTransparencyGossip {
+    module_id: String,
+    blake3_hash: Blake3Hash,
+    /// PHẢI được sign bởi TeraChat Root CA — không phải chỉ per-device key
+    root_ca_sig: Ed25519Sig,
+    hlc: HLCTimestamp,
+}
+// Peers: reject nếu root_ca_sig invalid. Không trust gossip message không có CA signature.
+```

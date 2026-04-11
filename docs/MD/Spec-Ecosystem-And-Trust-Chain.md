@@ -567,3 +567,34 @@ fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -> i32;
 ### 8.6 Mesh Revocation Gossip — Zero-Trust Enforcement (CRIT-03)
 **Constraint:** Nếu Admin revoke DataGrant trong lúc field agents đang Mesh-only, không có cơ chế nào đảm bảo revocation signal đến *tất cả* nodes theo thứ tự nhất quán. Node A có thể nhận revocation trước Node B 30 giây — vi phạm Zero-Trust invariant (ISO 27001 A.5.18).
 **Resolution:** Revocation signal phải được broadcast như signed CRDT_Event với `content_type: "governance/data_grant_revoked@v1"` vào `hot_dag.db` (gossip qua Mesh), không chỉ qua OPA push channel. Mech check: mọi DataGrant serve phải query local DAG trước khi serve data. Gov-tier offline policy: "require-quorum-confirmation" thay vì binary "0s".
+
+### 8.7 DataGrant Generation Counter — Quorum Activation for Gov-Tier (GAP-E)
+**Constraint:** DataGrant `generation` counter: node offline khi grant issued không thể distinguish "grant never seen" (gen 0) vs "revoked grant" (gen > 0). Nếu node bày giờ mới join mesh sau khi grant được issued, làm sao biết nó chưa thấy grant hay grant đã bị thu hồi? Gov-tier quorum protocol hoàn toàn undefined.
+**Resolution:**
+- Thêm `activation_quorum` field vào DataGrant: Node chỉ serve data sau khi **majority của `election_weight > 0` nodes** confirm receipt via `Hash_Frontier` gossip.
+- Unacknowledged grant (chưa đủ quorum): node return `PENDING_QUORUM` — không serve data, show UX "Chưa xác nhận quyền truy cập".
+- Standard Enterprise tier: quorum không bắt buộc (single-node activation OK).
+- **Gov/Military tier bắt buộc:** `activation_quorum: "majority"`. Khi mesh partition, data bị lock đến khi quorum được khởi phục. Trade-off: availability vs security — **security wins cho Gov-tier.**
+
+```rust
+pub struct DataGrant {
+    id: DataGrantId,
+    generation: u64,
+    activation_quorum: ActivationPolicy, // None | Majority | SuperMajority
+    hash_frontier: HashFrontier,         // Compact Bloom/Hash summary for gossip
+} 
+```
+
+### 8.8 Windows EV Code Signing — CI Pipeline Constraint (XPLAT-06)
+**Constraint:** EV Code Signing cho Windows binary yêu cầu hardware token (USB HSM). CI pipeline trên cloud agents không hold được EV token. Nếu dùng Software CSP, Microsoft SmartScreen flag binary như unknown publisher.
+**Resolution:** Windows EV signing **phải** chạy trên dedicated self-hosted runner với physical USB HSM (EV Certificate). CI orchestration: build trên cloud agents → transfer unsigned binary vào self-hosted signing runner qua sealed TLS channel → sign → transfer signed binary lại. Không được qua cloud agent signing có internet exposure. Ghi chú trong SBOM: mọi Windows `.exe`/`.msi` phải có EV signature trước distribution.
+
+### 8.9 HarmonyOS AOT Portability — Build Validation Requirement (XPLAT-07)
+**Constraint:** HarmonyOS `.waot` bundle là AOT-compiled, device-specific native code. Huawei không document cross-device AOT portability guarantees. WasmParity CI hiện chỉ test JIT paths (Android/iOS), không có AOT validation.
+**Resolution:** WasmParity CI Gate mở rộng thêm HarmonyOS AOT path:
+- Build WASM → `.waot` cho 3 HarmonyOS reference devices (Mate 40, Nova 9, MatePad 11)
+- Chạy identical test vectors trên cả 3 AOT bundles
+- Semantic output phải identical; performance delta documented
+- Block listing nếu diverge
+
+P2P LAN delivery strategy (Huawei HMS restriction — xem §7 và Tech_Debt XPLAT-03): `.waot` bundle size limit = 8MB. Bundles vượt 8MB phải split và deliver qua Mesh fragmentation protocol (TERA-CORE §4.x).

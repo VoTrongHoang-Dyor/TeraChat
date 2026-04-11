@@ -59,6 +59,21 @@ Không có license hợp lệ → app hiển thị màn hình "Liên hệ IT Adm
 
 Không có thành phần "người dùng công khai". Mọi identity đều thuộc về một tổ chức có license.
 
+### 2.3. Platform Capability Matrix & Hardware Requirements (Source of Truth)
+
+Để đảm bảo các cam kết về bảo mật và khả năng sinh tồn (Offline-first Survival), TeraChat yêu cầu các phần cứng tối thiểu sau đây. Tính năng sẽ bị suy giảm (Degradation) nếu phần cứng không đáp ứng, và một số môi trường đặc thù (Gov/Military) sẽ có những giới hạn cứng không thể vượt qua.
+
+> ⚠️ **Source of Truth:** Mọi tài liệu pricing và feature matrix phải tham chiếu bảng này. Không được liệt kê khả năng platform mâu thuẫn với bảng bên dưới.
+
+| Tính năng cốt lõi (Feature) | Yêu cầu phần cứng tối thiểu (Minimum Hardware) | Kịch bản dự phòng (Fallback / Degradation) |
+| :--- | :--- | :--- |
+| **BLE 5.0 Coded PHY** (Mesh tầm xa) | iPhone XS trở lên / Android 9+ với chip BLE 5.0 | Chỉ hỗ trợ BLE 4.2 advertising, không có Long Range. |
+| **Secure Hardware Root of Trust** | Apple A9+ (Secure Enclave) / Android StrongBox API 28+ / TPM 2.0 | Chuyển sang Software Key kèm Explicit Security Warning. |
+| **Silent Push & Zero-Knowledge E2EE** | Apple APNs / Google FCM | **Huawei HMS:** Không khả thi. Buộc dùng Polling Mode (CRL ≤ 4h). **Huawei không hỗ trợ Gov/Military tier và không đảm bảo SCIM < 30s SLA.** |
+| **Memory Lock (mlock) / Bảo vệ Key Material** | macOS / Windows / Linux kernel hỗ trợ `mlock()` | **Hard Block:** Nếu HĐH/AppArmor từ chối `mlock()`, Rust Core từ chối khởi động (exit code 78, log syslog). Không có fallback. |
+| **WASM JIT Runtime** | Android 5+ / macOS / Windows / Linux | **iOS (W^X):** Bắt buộc dùng `wasm3` interpreter — latency penalty +15–20ms/call. App Suite .tapps nặng tính toán có thể hit 30s timeout limit. |
+| **Tauri Zero-Copy Data Plane (Linux)** | Linux kernel + WebKitGTK với Cross-Origin Isolation | Nếu Rust Core HTTP server không set `COOP: same-origin` + `COEP: require-corp`, Data Plane silently degrade về JSON serialization. |
+
 ---
 
 ## 3. Nguyên lý Kiến trúc Bất biến
