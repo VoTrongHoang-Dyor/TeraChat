@@ -19,6 +19,7 @@ purpose: "Buffer cho deep technical audit findings. Nội dung đã được án
 Sử dụng file này làm buffer để ghi các audit findings, architectural decisions, hoặc refactoring notes trước khi ánh xạ chính thức vào các spec file.
 
 **Quy trình làm việc:**
+
 1. Ghi findings vào file này theo format có cấu trúc
 2. AI đọc, phân tích và ánh xạ vào các file spec phù hợp
 3. Sau khi ánh xạ xong → xóa nội dung tương ứng
