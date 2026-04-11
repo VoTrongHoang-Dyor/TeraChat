@@ -37,7 +37,16 @@ Một "Tech Debt" trong TeraChat không chỉ là "code bẩn", mà bao gồm:
 | **TD-002** | `TERA-CLIENT` | **WidgetDataState được tính toán hai lần (UI & Core)** <br> *Mô tả:* Rust Core đang tính toán State cho WidgetData, nhưng ở Flutter Layer lại đang có dấu hiệu tái tạo State Machine này (NeverLoaded, Restoring...). Gây rủi ro conflict State. | 🟡 MEDIUM | Tồn đọng | — | Làm rõ lại Spec ranh giới render: Rust Core là nguồn chân lý duy nhất. Gỡ bỏ logic tính toán State khỏi Dart layer, chỉ giữ lại UI rendering logic (Passive Client). |
 | **TD-003** | `TERA-RUNTIME` | **WASM Dual-Engine: Phân mảnh wasm3 vs wasmtime** <br> *Mô tả:* `wasm3` (Interpreter trên iOS) chậm hơn `wasmtime` JIT từ 10–100 lần. App Suite .tapps nặng tính toán (BankFeeds reconciliation, Finance aggregation) có thể vượt 30s background tick timeout trên iOS trong khi Desktop qua mặt dễ dàng. WasmParity CI gate hiện chỉ kiểm tra semantic equivalence, không kiểm tra resource limits theo từng engine. | 🟠 HIGH | Tồn đọng | iOS App Store launch | Bổ sung Gas/Fuel metering vào Host ABI: cấp `instruction_fuel` cố định per .tapp thay vì timeout theo giây. Đảm bảo Deterministic trên cả hai engine. Xem Combo Giải pháp §3 bên dưới. |
 | **TD-004** | `TERA-RUNTIME` | **First-Party .tapp ABI Versioning Overhead** <br> *Mô tả:* TERA-RUNTIME định nghĩa 12-month deprecation window cho Host ABI versioning — thiết kế cho third-party publishers. App Suite first-party (TeraChat Finance, HRM, BankFeeds) sẽ được cập nhật đồng bộ với Rust Core. Không có exemption path cho first-party tapps trong spec. | 🟡 MEDIUM | Tồn đọng | — | Thêm `"first_party": true` flag vào Manifest. Native tapps với flag này được phép skip ABI version negotiation và giả định luôn latest. CI kiểm tra consistency. |
-| **TD-005** | `TERA-ENCLAVE` | **ZK Memory Agent IPC Contract Chưa Được Đặc Tả** <br> *Mô tả:* ZK Memory Agent sử dụng "anonymous pipe IPC giữa Rust Core daemon và MLX inference server" nhưng TERA-ENCLAVE §1 chỉ mô tả PII redaction constraints. Không có spec nào (TERA-CORE, TERA-ENCLAVE, TERA-SYNC) xác lập ownership của ZK Memory Agent IPC contract. Consolidation trigger (batch vs continuous) cũng chưa được định nghĩa. | 🟠 HIGH | Tồn đọng | AI feature launch | Tạo `Spec-ZK-Memory-Agent.md` dưới TERA-ENCLAVE ownership. Nội dung tối thiểu: pipe IPC frame format, backpressure mechanism, Consolidation trigger (thời gian: 2 AM local OR 80% NAS quota), NAS storage quota enforcement, failure model khi MLX unavailable. |
+| **TD-005** | `TERA-ENCLAVE` | **ZK Memory Agent IPC Contract Chưa Được Đặc Tả** <br> *Mô tả:* ZK Memory Agent sử dụng "anonymous pipe IPC giữa Rust Core daemon và MLX inference server" nhưng TERA-ENCLAVE §1 chỉ mô tả PII redaction constraints. Không có spec nào xác lập ownership của ZK Memory Agent IPC contract. Consolidation trigger (batch vs continuous) cũng chưa được định nghĩa. | 🟠 HIGH | Tồn đọng | AI feature launch | Tạo `Spec-ZK-Memory-Agent.md` dưới TERA-ENCLAVE ownership. Nội dung: pipe IPC frame format, backpressure mechanism, Consolidation trigger (2AM local OR 80% NAS quota), NAS quota enforcement, failure model khi MLX unavailable. |
+| **TD-006** | `TERA-CORE` | **FFI Panic Abort Bypass ZeroizeOnDrop** <br> *Mô tả:* `panic = "abort"` tại mọi FFI boundary khiến `Drop()` không bao giờ được gọi khi Rust Core panic do `.tapp` lỗi. `Session_Key` và `Company_Key` tồn tại plaintext trong RAM cho đến khi OS ghi đè. Vi phạm ISO 27001 A.8.24. | 🔴 CRITICAL | Tồn đọng | Gov/Military launch | Implement `GlobalKeyArena` + `std::panic::set_hook` + `ffi_boundary!` macro. Tham chiếu: TERA-CORE §12.1. Chaos test: `cargo miri test --test ffi_boundary_zeroize`. |
+| **TD-007** | `TERA-CORE` | **iOS Memory Compression Bypass ZeroizeOnDrop** <br> *Mô tả:* iOS XNU kernel compress RAM pages khi RAM pressure cao. `ZeroizeOnDrop` chỉ xóa bản decompressed — bản đã nén vẫn tồn tại trong Compressed Memory segment và có thể extract nếu có kernel exploit. | 🟠 HIGH | Tồn đọng | iOS Enterprise launch | Implement Continuous XOR RAM Masking (100ms nonce rotation). Tách nonce và masked bytes vào 2 `mmap` riêng biệt. Tham chiếu: TERA-CORE §12.2. |
+| **TD-008** | `TERA-CORE` | **BLE Mesh không có QoS — Control Plane Starvation** <br> *Mô tả:* File chunk transfers (2MB) trên BLE 5.0 (~100-200kbps) có thể saturate channel, khiến `EmdpSessionTerminated` và `KillDirective` bị drop. Split-brain scenario trong EMDP mode. | 🔴 CRITICAL | Tồn đọng | Mesh deployment | Implement `MeshMultiplexer` với P0/P1/P2 priority tags + Dynamic Backpressure (RTT > 200ms → suspend P2). CI: SC-38. Tham chiếu: TERA-CORE §12.3. |
+| **TD-009** | `TERA-CORE` | **EMDP Key Escrow dùng Curve25519 thuần túy — Quantum Harvest Risk** <br> *Mô tả:* `EmdpKeyEscrow` truyền qua BLE được mã hóa chỉ bằng ECIES/Curve25519. Trong khi MLS chính dùng Hybrid PQ-KEM, EMDP fallback path phơi bày Session Key trước Store-Now-Decrypt-Later attacks từ quantum adversaries. | 🔴 CRITICAL | Tồn đọng | Gov/Military launch | Upgrade EmdpKeyEscrow → Hybrid ECIES + ML-KEM-768. Dùng RaptorQ FEC để fragment ~1KB Kyber ciphertext qua 3 BLE beacon frames. Tham chiếu: TERA-CORE §12.4. |
+| **TD-010** | `TERA-CORE` | **OS Time Spoofing bypass TTL trong Offline Mode** <br> *Mô tả:* `DataGrantRevoked` TTL, EMDP TTL (60min), Burner Agent TTL dùng `SystemTime::now()`. Khi Offline, user có thể chỉnh lùi OS clock để bypass TTL expiry — giữ quyền truy cập bất hợp pháp vĩnh viễn. | 🟠 HIGH | Tồn đọng | Gov/Military launch | Implement Hardware Monotonic Tick-Clock dựa trên `mach_absolute_time()` (iOS/macOS) hoặc TPM Monotonic Counter (Desktop). Clock rollback → force-expire tất cả TTL. Tham chiếu: TERA-CORE §12.5. |
+| **TD-011** | `TERA-CLIENT` | **Localhost Streaming Proxy — Plaintext Exfiltration Vector** <br> *Mô tả:* `127.0.0.1` HTTP port không có process-level auth. Bất kỳ process nào trên máy (malware, AV tool) có thể intercept plaintext stream của video/file sau khi Rust Core decrypt. Zero-Knowledge hoàn toàn bị bypass. | 🔴 CRITICAL | Tồn đọng | Enterprise launch | Desktop: UDS + SO_PEERCRED auth. Mobile: One-Time Streaming Token (OTST 256-bit, TTL=30s). Tham chiếu: TERA-CLIENT §12.1. |
+| **TD-012** | `TERA-CLIENT` | **Hard Wipe PIN là Asymmetric DoS** <br> *Mô tả:* 5 lần sai PIN → Crypto-shred. Kẻ địch chỉ cần cầm thiết bị chỉ huy, nhập sai 5 lần. Toàn bộ Mesh tactical data mất không thể phục hồi. Không có defense. | 🟠 HIGH | Tồn đọng | Gov/Military launch | Thay bằng Exponential Backoff Tarpit + Duress PIN. Tham chiếu: TERA-CLIENT §12.2. Remote wipe do Admin trigger, không tự động sau N lần. |
+| **TD-013** | `TERA-SYNC` | **CAS Global Dedup — Proof-of-Existence Side-Channel** <br> *Mô tả:* `cas_hash = BLAKE3(chunk)` global → User B upload cùng file → 0ms → biết file đã tồn tại trong hệ thống. Thông tin tình báo rò rỉ không cần decrypt nội dung. | 🟠 HIGH | Tồn đọng | Gov/Military launch | Tenant-salted CAS: `BLAKE3(workspace_id || salt || chunk)`. Dedup chỉ trong cùng Workspace. Tham chiếu: TERA-SYNC §9.1. |
+| **TD-014** | `TERA-SYNC` | **BLAKE3 Single-Algorithm Blob Identity** <br> *Mô tả:* Blob identity dùng duy nhất BLAKE3. NSA Suite B extended cho Gov/Military yêu cầu dual-algorithm identity để loại trừ Chosen-Prefix Collision attack về mặt toán học. | 🟡 MEDIUM | Tồn đọng | Gov/Military compliance | Dual-Hash: `cas_hash = BLAKE3(data) || SHA-512(data)[0:32]`. Tham chiếu: TERA-SYNC §9.2. |
 
 ---
 
@@ -54,6 +63,10 @@ Một "Tech Debt" trong TeraChat không chỉ là "code bẩn", mà bao gồm:
 | **XPLAT-05** | Linux Desktop | Tauri WebView (GTK WebKitGTK): `SharedArrayBuffer` requires `COOP: same-origin` + `COEP: require-corp` headers. Rust Core local HTTP server phải set headers hoặc zero-copy Data Plane silently degrade về JSON serialization. | **Không được mention trong bất kỳ spec nào** | ⚠️ Unresolved — cần add vào TERA-CLIENT |
 | **XPLAT-06** | Windows | EV Code Signing cần hardware token (USB HSM). CI pipeline trên cloud agents không hold được EV token. Cần dedicated self-hosted runner. | Build pipeline cho signed Windows binary chưa có CI solution | No solution documented |
 | **XPLAT-07** | HarmonyOS | `.waot` bundle — AOT compilation tạo device-specific native code. Cross-device AOT portability không được Huawei document đảm bảo. | WasmParity CI cần validate cả JIT và AOT paths | Flagged in spec, no resolution |
+| **XPLAT-08** | Android OEM | ColorOS/MIUI/OriginOS mặc định kill Background Task không có callback. `TERA-RUNTIME` phụ thuộc vào OS Background Task 30s tick cho `.tapp`. Không thể đảm bảo Mesh Survival trên >40% Android Asia market. | Background Sync và Survival Mesh tê liệt khi user không bật "Autostart" | Must use Android ForegroundService — Tham chiếu: TERA-CORE §12.6 |
+| **XPLAT-09** | All Platforms | Build Non-determinism: Rust + C/Assembly (SQLCipher, `ring` crate) cross-compiled qua môi trướng khác nhau (macOS/Xcode, Linux/NDK, MSVC) tạo ra Non-deterministic binaries. Không thể verify hệ thống giống nhau giữa `.ipa` và `.apk`. Vi phạm ISO 27001 A.8.4. | Không thể xuất trình Hermetic Build proof cho Gov/Military audit | Nix Flakes + YubiKey HSM on-premise CI — Tham chiếu Tech_Debt §5.6 |
+| **XPLAT-10** | iOS | AWDL được disable khi iOS làm Personal Hotspot. Chỉ BLE (~4.75kbps) available. EMDP Mesh Coordinator role trở nên vô nghĩa. | EMDP Mesh degraded khi iOS device chia sẻ mạng | No workaround — document in EMDP user guide; exclude from Gov-tier SLA |
+
 
 ---
 
@@ -101,6 +114,28 @@ Mỗi Rust Core startup, trước khi mở IPC channels, chạy tuần tự:
 3. `WalIntegrityCheck` — `PRAGMA integrity_check` trên cả 2 databases.
 
 Mỗi guard < 100ms, tổng overhead < 300ms — chấp nhận được cho enterprise startup.
+
+### 5.5 Aegis FFI Boundary Protocol (TD-006, TD-007)
+
+Triển khai các biện pháp bảo vệ FFI boundary theo hướng:
+1. **GlobalKeyArena + Panic Hook:** `std::panic::set_hook` cài đặt khi startup, wipe Arena trước abort.
+2. **`ffi_boundary!` macro:** Wrap mọi `extern "C"` function trong `catch_unwind`. Trả error code an toàn thay vì propagate panic.
+3. **iOS XOR Masking:** Background task 100ms rotate XOR nonce trên key material. Tách nonce và masked bytes vào 2 `mmap` tại địa chỉ cách xa nhau.
+4. CI gate bắt buộc: `cargo miri test --test ffi_boundary_zeroize` pass 100% trước release.
+
+### 5.6 Hermetic Build Forge (XPLAT-09 / ISO 27001 A.8.4)
+
+- **Nix Flakes:** Lock toàn bộ build environment (glibc, MSVC, Clang, Rustc) xuống từng bit. Build trong network-isolated Nix container sau khi tải dependency.
+- **On-premise CI Runner:** Mac mini với YubiKey FIPS USB cắm trực tiếp. Trigger build pipeline yêu cầu Admin nhập mã PIN vật lý (hoặc TPM 2.0 Auto-unseal) để sign `.exe`, `.ipa`.
+- Build artifact = signed binary + SBOM + `cosign` attestation + Nix build log.
+- Bất kỳ artifact nào không có đủ 4 thành phần trên: **block distribution**.
+
+### 5.7 BLE Mesh Priority Protocol (TD-008 / CRIT-MESH-01)
+
+- `MeshMultiplexer` trong `tc-mesh` crate: P0 (Critical), P1 (Standard), P2 (Bulk).
+- Dynamic Backpressure: RTT > 200ms → suspend P2 ngay lập tức. Resume khi RTT < 100ms sustained 5s.
+- CI chaos test SC-38: Inject 100kbps cap + 250ms RTT. Assert `EmdpSessionTerminated` delivered < 2s cùng lúc transfer file 2MB.
+- P0 packets: không bao giờ bị suspend, không bao giờ queue sau P2.
 
 ---
 

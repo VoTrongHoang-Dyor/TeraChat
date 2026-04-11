@@ -563,3 +563,199 @@ pub struct BinaryTransparencyGossip {
 }
 // Peers: reject nếu root_ca_sig invalid. Không trust gossip message không có CA signature.
 ```
+
+---
+
+## §12 — DEEP AUDIT RESOLUTIONS (WAVE 2 — FFI / NETWORK PHYSICS / BUILD)
+
+### 12.1 FFI Panic Abort Bypass ZeroizeOnDrop — "Aegis Boundary" (CRIT-FFI-01)
+**Constraint:** Rust Core sử dụng `panic = "abort"` tại mọi `extern "C"` boundary (bắt buộc để tránh Undefined Behavior khi Rust panic vượt C-ABI). Khi một `.tapp` độc hại hoặc bị lỗi truyền null/garbage pointer vào `host_aes256gcm_encrypt`, Rust Core sẽ `abort()` ngay lập tức — **hàm `Drop()` CỦA MỌI STRUCT SẼ KHÔNG BAO GIỜ ĐƯỢC GỌI**. `Session_Key`, `Company_Key` nằm nguyên dạng (plaintext) trong RAM cho đến khi OS ghi đè hoặc bị dump ra coredump/swap. ZeroizeOnDrop trở nên vô dụng trong path này. Vi phạm ISO 27001 A.8.24.
+
+**Resolution — Panic Hook + Global Key Arena:**
+1. **Global Panic Hook:** Ngay khi Rust Core khởi động, cài đặt `std::panic::set_hook` toàn cục. Hook này giữ một raw pointer tới `GlobalKeyArena` (pre-allocated, ephemeral). Khi panic xảy ra từ bất kỳ source nào, hook chạy TRƯỚC khi process abort và ghi đè `0x00` lên toàn bộ Arena.
+2. **Catch Unwind Barrier:** Mọi `extern "C"` function phải bọc toàn bộ logic trong `std::panic::catch_unwind`. Nếu unwinding xảy ra, gọi thủ công `GlobalKeyArena::wipe()`, sau đó return error code an toàn về Host (Flutter/Tauri). **Không để panic propagate qua C-ABI.**
+3. **Pre-allocated Secure Arena:** Không cấp phát key material rải rác trên heap. Toàn bộ key vật liệu (`Session_Key`, `MLS_Epoch_Secret`, v.v.) phải nằm trong một vùng nhớ tập trung (Pre-allocated Arena) sử dụng anonymous `mmap` với `MAP_ANONYMOUS | MAP_PRIVATE`. Arena này là ephemeral — OS không nén và không swap (xem §12.2 cho iOS caveat).
+
+```rust
+static GLOBAL_KEY_ARENA: OnceLock<Arc<Mutex<SecureArena>>> = OnceLock::new();
+
+pub fn install_panic_hook() {
+    let arena_ref = GLOBAL_KEY_ARENA.get().expect("Arena not initialized").clone();
+    std::panic::set_hook(Box::new(move |_info| {
+        // Run BEFORE abort() — zero the entire arena
+        if let Ok(mut arena) = arena_ref.try_lock() {
+            arena.wipe_all(); // Atomic write of 0x00 over every byte
+        }
+        // abort() is called by Rust runtime after hook returns
+    }));
+}
+
+/// Every extern "C" entry point must use this wrapper
+macro_rules! ffi_boundary {
+    ($body:expr) => {
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body)) {
+            Ok(result) => result,
+            Err(_) => {
+                GlobalKeyArena::wipe();
+                return FFI_ERR_PANIC_ABORT;
+            }
+        }
+    };
+}
+```
+
+**Invariant cứng:** Không một byte key material nào được tồn tại ngoài `GlobalKeyArena`. CI gate: `cargo miri test --test ffi_boundary_zeroize` phải pass 100% trước mọi release.
+
+### 12.2 iOS Memory Compression Bypass — Continuous XOR RAM Masking (XPLAT-IOS-01)
+**Constraint:** iOS XNU kernel không cho phép `mlock()`. Khi iPhone RAM pressure cao, XNU compress các memory pages. `ZeroizeOnDrop` chỉ xóa được bản copy đã được decompress trên RAM, nhưng **bản copy đã nén trong Compressed Memory segment vẫn tồn tại** dưới dạng ciphertext-like bytes hoàn toàn có thể reconstruct nếu có kernel exploit.
+
+**Resolution — Continuous XOR RAM Masking:**
+- Thay vì lưu key material dưới dạng plaintext trong RAM, Rust Core chạy một background task (100ms tick cycle) liên tục XOR key với random nonce mới:
+
+```rust
+struct MaskedKey {
+    masked_bytes: Vec<u8>,    // key XOR nonce (stored in RAM / may be compressed)
+    nonce: Vec<u8>,           // rotated every 100ms
+}
+
+impl MaskedKey {
+    fn use_key<F, R>(&mut self, f: F) -> R
+    where F: FnOnce(&[u8]) -> R 
+    {
+        let plaintext: Vec<u8> = self.masked_bytes.iter()
+            .zip(&self.nonce).map(|(b, n)| b ^ n).collect();
+        let result = f(&plaintext); // < 1ms window
+        // Immediately re-mask with new nonce
+        let new_nonce = rand::random_bytes(plaintext.len());
+        self.masked_bytes = plaintext.iter().zip(&new_nonce).map(|(b,n)| b^n).collect();
+        self.nonce = new_nonce;
+        zeroize(plaintext);
+        result
+    }
+}
+```
+
+- Nếu XNU nén trang nhớ chứa `MaskedKey`, nó chỉ nén được bản đã XOR — không có ý nghĩa nếu không có nonce tương ứng.
+- Nonce rotation mỗi 100ms đảm bảo bản nén cũ không còn valid sau một cycle.
+- **Limitation:** Nonce và masked bytes có thể cùng nằm trên một page — XNU có thể nén cả hai. Mitigation: tách nonce và masked bytes vào hai `mmap` allocation riêng biệt ở địa chỉ cách xa nhau.
+
+### 12.3 BLE Mesh QoS — Spectrum Multiplexer (CRIT-MESH-01)
+**Constraint:** BLE 5.0 MTU thực tế ~512 bytes, throughput thực tế ~100-200kbps shared. `TERA-SYNC` cho phép đồng bộ `CRDT_Event` text **và** File blob chunks (2MB) qua cùng một BLE channel. Khi Data Plane (file chunks) bão hòa kênh, Control Plane packets (`EmdpSessionTerminated`, `DataGrantRevoked`, `KillDirective`) bị drop hoặc kẹt queue — gây Split-brain hoàn toàn. Vi phạm EMDP survival contract.
+
+**Resolution — Priority Multiplexer tại Data-link Layer:**
+
+Tích hợp `MeshMultiplexer` vào `tc-mesh` crate, gán **hard priority tags** không thể override:
+
+| Priority | Tag | Traffic Type |
+|---|---|---|
+| **P0 — Critical** | `0x00` | MLS Handshake, Epoch Ratchet, `DataGrantRevoked`, `KillDirective`, `EmdpSessionTerminated` |
+| **P1 — Standard** | `0x01` | Text CRDT_Event, Presence updates |
+| **P2 — Bulk** | `0x02` | File chunks (`ZeroByteStub` payload), Binary update gossip |
+
+**Dynamic Backpressure Rule:** `MeshMultiplexer` đo RTT của BLE ACK. Nếu RTT > 200ms (congestion signal), P2 traffic được **SUSPEND ngay lập tức**. Chỉ P0 và P1 được phép. P2 resume khi RTT < 100ms sustained trong 5s.
+
+```rust
+pub struct MeshMultiplexer {
+    rtt_tracker: ExponentialMovingAverage,
+    p2_suspended: AtomicBool,
+}
+
+impl MeshMultiplexer {
+    pub fn send(&self, packet: MeshPacket) -> Result<(), MeshError> {
+        if packet.priority == P2 && self.p2_suspended.load(Ordering::Acquire) {
+            return Err(MeshError::Backpressure); // Caller queues for later
+        }
+        // ... transmit
+    }
+    
+    pub fn on_ack_received(&self, rtt_ms: f64) {
+        self.rtt_tracker.update(rtt_ms);
+        if self.rtt_tracker.value() > 200.0 {
+            self.p2_suspended.store(true, Ordering::Release);
+        } else if self.rtt_tracker.value() < 100.0 {
+            self.p2_suspended.store(false, Ordering::Release);
+        }
+    }
+}
+```
+
+**CI test requirement (SC-38):** Inject BLE congestion (100kbps cap + 250ms RTT) trong chaos test. Assert: `EmdpSessionTerminated` phải được delivered trong < 2s ngay cả khi có concurrent 2MB file transfer.
+
+### 12.4 EMDP Key Escrow — Quantum Harvest Gap (PQ-EMDP-01)
+**Constraint:** Hệ thống chính (MLS) dùng **Hybrid PQ-KEM (Kyber768 + X25519)** — đúng chuẩn chống lượng tử. Nhưng `EmdpKeyEscrow` (gói dự phòng Session Key truyền qua BLE khi Border Node mất điện) được mã hóa chỉ bằng **ECIES với Curve25519 thuần túy** (`relay_device_pubkey`). Đây là "Store-Now-Decrypt-Later" vulnerability: cơ quan tình báo đối địch có thể thu thập `EmdpKeyEscrow` blobs ngay hôm nay và giải mã trong 5-10 năm khi có quantum computer.
+
+**Resolution — Hybrid PQ-KEM cho EmdpKeyEscrow:**
+- Nâng cấp `EmdpKeyEscrow` encryption: thay `ECIES(Curve25519)` bằng **Hybrid ECIES + ML-KEM-768** (chuẩn NIST FIPS 203).
+- BLE MTU constraint: Kyber768 ciphertext ~1100 bytes. Giải pháp: dùng **RaptorQ FEC (Forward Error Correction)** để phân mảnh gói Escrow thành 3 beacon frames phát trong 3 BLE advertisement intervals liên tiếp.
+
+```rust
+pub struct EmdpKeyEscrow {
+    // CŨNG: dùng relay_device_pubkey (Curve25519) để ECIES encrypt
+    // MỚI: dùng relay_device_kem_pubkey (ML-KEM-768) để hybrid encrypt
+    session_key_ciphertext: HybridKemCiphertext, // ECIES(X25519) || ML-KEM-768(Kyber)
+    hlc: HLCTimestamp,
+    issuer_sig: Ed25519Sig, // Signed by Border Node
+    
+    // RaptorQ fragmentation metadata
+    fragment_index: u8,    // 0, 1, 2
+    fragment_total: u8,    // 3
+    raptor_repair_symbols: Vec<u8>,
+}
+```
+
+**Invariant:** `EmdpKeyEscrow` với `session_key_ciphertext` non-hybrid (Curve25519 only) phải bị reject tại ingress sau upgrade. CI gate: kiểm tra schema version của Escrow struct.
+
+### 12.5 Offline TTL — Hardware Monotonic Tick-Clock (SECURITY-TIME-01)
+**Constraint:** `DataGrantRevoked` TTL, EMDP Session TTL (60min), Burner Agent TTL đều phụ thuộc vào `SystemTime::now()`. Khi thiết bị Offline hoàn toàn (Mesh mode), không có NTP sync. User hoặc malware có thể **chỉnh lùi OS clock về quá khứ** để bypass TTL expiry — kéo dài quyền truy cập bất hợp pháp vĩnh viễn trong chế độ Offline.
+
+**Resolution — Monotonic Sealed Timer:**
+- Rust Core **NEVER** dùng `SystemTime::now()` cho TTL calculations trong Offline mode.
+- Khi network available: Rust Core sync NTP và lưu `AnchorTime { ntp_unix_sec, monotonic_ticks_at_sync }`.
+- Khi Offline: TTL elapsed được tính bằng: `elapsed = (current_monotonic_ticks - anchor_ticks) / tick_freq`. Monotonic counter không thể rollback — nó đếm CPU cycles.
+- Trên hardware với TPM 2.0: dùng TPM Monotonic Counter (không thể reset ngay cả khi battery pull). Trên iOS/macOS: dùng `mach_absolute_time()` (dựa trên hardware counter, không bị OS clock affect).
+- **Hard rule:** Nếu phát hiện `SystemTime::now() < AnchorTime.ntp_unix_sec` (clock rollback), Rust Core emit `CoreSignal::ClockTamperingDetected` và force-expire TẤT CẢ active TTL policies (fail-secure).
+
+```rust
+pub fn secure_elapsed_ms(anchor: &AnchorTime) -> u64 {
+    let now_ticks = hardware_monotonic_ticks(); // mach_absolute_time / TSC / TPM
+    let elapsed_ticks = now_ticks.saturating_sub(anchor.monotonic_ticks_at_sync);
+    (elapsed_ticks * 1000) / anchor.tick_frequency_hz
+}
+
+pub fn is_ttl_expired(anchor: &AnchorTime, ttl_ms: u64) -> bool {
+    secure_elapsed_ms(anchor) >= ttl_ms
+}
+```
+
+### 12.6 Headless Rust Daemon — Kiến trúc tách biệt Core khỏi UI Process (ARCH-HEADLESS-01)
+**Constraint (Multi-source):**
+- Windows NTFS: Tauri multi-process architecture (main + WebView) cùng mở `cold_state.db` gây `SQLITE_BUSY` / WAL lock conflicts (TD-002 mới).
+- Android OEM (MIUI/ColorOS/OriginOS): Khi user swipe-close UI, hệ điều hành kill toàn bộ process group kể cả Rust Core — Mesh BLE/Wi-Fi Direct chết hoàn toàn (XPLAT-OEM-01).
+- iOS NSE race: NSE process và Main App cùng truy cập ring buffer (CRIT-NSE-01 / GAP-C).
+
+**Resolution — Headless Daemon Architecture:**
+
+**Platform: Android (Priority 1):**
+- Rust Core chạy trong một `Android ForegroundService` độc lập với persistent notification ("Secure Mesh Active").
+- Flutter UI kết nối vào Core qua `gRPC over Local Unix Domain Socket (UDS)`.
+- Khi user swipe-close Flutter UI: UI process chết, nhưng ForegroundService (Rust Core) tiếp tục chạy, duy trì BLE/Wi-Fi Direct Mesh. OEM battery managers không thể kill ForegroundService đang có visible notification.
+
+**Platform: Desktop (Windows/macOS/Linux):**
+- Rust Core chạy dưới dạng `Windows Service` (Windows), `systemd service` (Linux), hoặc `launchd daemon` (macOS) — auto-start at system boot.
+- Tauri App là pure "dumb client" — chỉ render, zero business logic.
+- IPC: `gRPC over Named Pipes` (Windows) hoặc `gRPC over UDS` (Unix). Không còn `SharedArrayBuffer` hay `localhost HTTP`.
+- Lợi ích: chỉ DUY NHẤT 1 process (Daemon) chạm vào SQLite — loại bỏ hoàn toàn `SQLITE_BUSY` trên Windows NTFS.
+
+**IPC Unification:**
+- Tất cả UI-to-Core communication đi qua `TeraCore gRPC Service` với Protobuf schema duy nhất.
+- Thay thế `dart:ffi + SharedArrayBuffer (Mobile)` và `Tauri Command + localhost HTTP (Desktop)` bằng một `gRPC client` duy nhất.
+- Lợi ích: Xóa sổ TD-001 (IPC fragmentation) và TD-002 (WidgetDataState double-computation).
+
+**OEM Foreground Service Detection:**
+```kotlin
+// Android: detect OEM OS for ForegroundService upgrade
+val isResrictedOEM = Build.MANUFACTURER.lowercase() in listOf("xiaomi", "oppo", "vivo", "realme")
+if (isRestrictedOEM || Build.VERSION.SDK_INT < 31) {
+    startForegroundService(Intent(context, TeraCoreDaemonService::class.java))
+}
+```

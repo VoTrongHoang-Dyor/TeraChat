@@ -510,3 +510,124 @@ class TeraCore {
 - Tầng UI: `CoreSignal::CHANNEL_SECURING` kích hoạt `PENDING_SECURE_CHANNEL` state. Tin nhắn ưu tiên vào Outbox Queue (ephemeral key trên RAM/HSM). UI hiển thị "Securing channel..." — không hiển thị lỗi đỏ.
 - Khi Escrow hoàn tất: Core re-key, flush Outbox Queue lên Mesh.
 - Giới hạn bắt buộc: Outbox Queue phải có Max-Queue-Size (chặn nhập liệu nếu đầy) và TTL (xoá nếu quá thời gian). Nếu app crash khi Queue chưa flush: dữ liệu trong Queue sẽ mất — UI phải cảnh báo user không tắt app khi đang "Securing channel...".
+
+---
+
+## §12 — DEEP AUDIT RESOLUTIONS (WAVE 2 — IPC, PROXY SECURITY, PLATFORM)
+
+### 12.1 Streaming Decryption Proxy — Localhost Exfiltration Vector (CRIT-PROXY-01)
+**Constraint:** TERA-CLIENT §3.4 định nghĩa `Local Decryption Proxy (127.0.0.1:PORT)` để stream video/file mã hóa lên native player. **`127.0.0.1` không có process-level access control** — bất kỳ process nào trên cùng máy (malware, antivirus, monitoring software) đều có thể port-scan và intercept plaintext stream. Metadata của port (state, connections) visible qua `netstat`. Zero-Knowledge bị phá vỡ hoàn toàn tại tầng transport này.
+
+**Resolution — Platform-specific Secure IPC:**
+
+**Desktop (Windows/macOS/Linux):**
+- Thay thế `127.0.0.1 HTTP server` bằng **Named Pipes** (Windows) hoặc **Unix Domain Sockets (UDS)** (macOS/Linux).
+- UDS/Named Pipes cung cấp **mandatory process credential authentication**: Rust Core verify PID + UID/GID của tiến trình kết nối. Chỉ PID của process Tauri UI với matching UID được accept.
+- Không có socket binding visible trên network interface — không thể port-scan.
+
+```rust
+// macOS/Linux: UDS with credential verification
+use std::os::unix::net::UnixListener;
+
+let listener = UnixListener::bind("/tmp/terachat-stream.sock")?;
+for stream in listener.incoming() {
+    let stream = stream?;
+    // Verify peer PID/UID using SO_PEERCRED
+    let cred = stream.peer_cred()?;
+    if cred.uid() != expected_tauri_uid || cred.pid() != expected_tauri_pid {
+        drop(stream); // Reject immediately
+        continue;
+    }
+    // ... serve decrypted stream
+}
+```
+
+**Mobile (Android/iOS):**
+- Áp dụng **One-Time Streaming Token (OTST)** thay vì persistent port.
+- Flow: UI request file → Rust Core generate 256-bit random OTST → Core bind ephemeral port với TTL=30s → return `http://127.0.0.1:{random_port}/stream?token={OTST}` → UI play → port auto-close sau stream hoặc sau TTL.
+- Nếu malware kịp scan port: không có token → Core reject và **close port + ban 127.0.0.1 requests trong 5 phút** để prevent timing attack.
+- CoreSignal thêm: `STREAMING_PROXY_UNAUTHORIZED_ACCESS` — alert Admin Console.
+
+**Invariant cứng:** Không được phép tồn tại `TCPListener` bound trên `0.0.0.0` hay `127.0.0.1` trong Rust Core lâu hơn TTL. Automated port-scan test chạy trong CI: sau stream session, không có open port nào thuộc Core process.
+
+### 12.2 Anti-DoS Auth — Tarpit + Duress PIN (SECURITY-AUTH-01)
+**Constraint:** TERA-CORE §4.1 định nghĩa `Failed_PIN_Attempts (max 5) → Crypto-Shredding toàn bộ Local DB → Factory Reset`. Trong Gov/Military context, kẻ địch hoặc insider chỉ cần **vật lý lấy thiết bị, nhập sai PIN 5 lần** → toàn bộ dữ liệu mesh/chiến thuật bị hủy. Đây là **Asymmetric DoS Attack** không thể bị ngăn chặn bởi thiết bị nạn nhân.
+
+**Resolution — Tarpit + Duress PIN (thay thế Hard Wipe):**
+
+**1. Exponential Backoff Tarpit (thay thế "wipe sau 5 lần"):**
+- PIN sai lần 1-3: delay `Argon2id(cost=high) × 2^attempt` — ví dụ: 2s, 4s, 8s.
+- PIN sai lần 4-5: delay 60 giây + emit `CoreSignal::SuspiciousAuthAttempt` → Admin Console alert.
+- PIN sai lần 6-10: device lock 5 phút/attempt. `hardware_monotonic_tick` (§12.5 TERA-CORE) đảm bảo lockout không thể bypass bằng OS clock rollback.
+- PIN sai `≥ 11` lần: Admin Console có thể remotely trigger crypto-shred.
+- **Không bao giờ wipe tự động** — chỉ Admin explicit action hoặc Duress PIN.
+
+**2. Duress PIN (Mã PIN áp lực):**
+- User cấu hình một PIN thứ hai tùy chọn. Khi nhập: thiết bị "mở thành công" nhưng load `VaultDecoy` (empty vault / non-sensitive data).
+- Background: Rust Core emit `CoreSignal::DuressAuthentication` (silent, không visible trên UI) → Admin nhận alert → Admin có thể trigger remote wipe.
+- Optional: kích hoạt `ZeroizeOnDrop` trên Master Key silently trong background sau delay 30 giây.
+
+```rust
+pub enum PinVerifyResult {
+    AuthSuccess,
+    DuressSuccess { trigger_remote_alert: bool },
+    AuthFailure { attempt: u32, lockout_ms: u64 },
+    AuthLockedOut { remaining_ms: u64 },
+}
+```
+
+**CoreSignal thêm:**
+- `SuspiciousAuthAttempt { device_id, attempt_count, hlc }` — emit at attempt 4.
+- `DuressAuthentication { device_id, hlc }` — emit on Duress PIN entry (silent, signed).
+
+### 12.3 IPC Architecture Migration — gRPC Unification (ARCH-IPC-MIGRATION-01)
+**Constraint (Multi-source):** Hệ thống hiện tại dùng 2 IPC layers không đồng nhất:
+- **Mobile:** `dart:ffi` + Shared Memory / `SharedArrayBuffer` (zero-copy, nhưng Android OEM kill main process → Core chết theo).
+- **Desktop:** `Tauri Command` (JSON over WebView IPC) + `localhost HTTP` (Data Plane).
+
+Kết quả: phải maintain 2 bộ Adapter riêng biệt cho mọi host ABI function, bug rate nhân đôi khi extend. Ngoài ra, `SharedArrayBuffer` trên Linux Desktop cần `COOP/COEP` headers (XPLAT-05 — đã map ở §11.2).
+
+**Resolution — Unified gRPC/Protobuf IPC Layer (từng bước):**
+
+Migration path (không break existing):
+
+**Phase 1 (Non-breaking):** Thêm `TeraCore gRPC Service` listen trên UDS cạnh cơ chế IPC hiện tại. Đây là opt-in cho feature mới.
+
+**Phase 2:** New Flutter/Tauri screens sử dụng gRPC client thay vì `dart:ffi`. Validate performance và stability.
+
+**Phase 3:** Migrate toàn bộ `dart:ffi` calls → gRPC. Retire `SharedArrayBuffer` và `Tauri Command` IPC.
+
+**Lợi ích kép:**
+- Rust Core daemon tách biệt khỏi UI process (§12.6 TERA-CORE): UI crash không kill Core.
+- `WidgetDataState` chỉ được tính một lần tại Core, stream qua gRPC event stream → Dart chỉ render.
+- Xóa TD-001 (ABI fragmentation) và TD-002 (double state computation).
+
+**CoreSignal mapping trong gRPC:**
+```protobuf
+service TeraCore {
+  rpc Subscribe(SubscribeRequest) returns (stream CoreSignal);
+  rpc Command(UICommand) returns (CommandResult);
+  rpc StreamFile(StreamRequest) returns (stream FileChunk); // replaces localhost proxy
+}
+
+message CoreSignal {
+  oneof signal {
+    WidgetStateChanged widget_state = 1;
+    SecurityEvent security = 2;       // Priority channel — must be processed first
+    SyncProgress sync_progress = 3;
+    // ...
+  }
+  Priority priority = 100; // CRITICAL | STANDARD (replaces old sync mechanism)
+}
+```
+
+### 12.4 Windows SQLite WAL Blind State — NTFS Lock Contention (TD-WIN-01)
+**Constraint:** Tauri Desktop App chạy multi-process: `main process` (Rust Core thread) + `WebView process` (renderer). Khi cả hai truy cập `cold_state.db` trong WAL mode, SQLite yêu cầu `shared-memory` WAL index file (`.db-shm`). **NTFS file lock behavior**: nếu Rust Core đang checkpoint WAL trong lúc WebView đọc, Windows trả `ERROR_SHARING_VIOLATION` → SQLite interpret là `SQLITE_BUSY`. Không có retry logic → silent data read failure trên UI.
+
+**Resolution:** Headless Daemon Architecture (§12.6 TERA-CORE) là long-term fix: chỉ 1 process chạm vào SQLite. Short-term mitigation:
+- Rust Core phải be the **sole SQLite writer**. WebView process KHÔNG BAO GIỜ được mở SQLite trực tiếp — chỉ qua Rust Core IPC.
+- WAL checkpoint được thực hiện exclusively trong Rust Core daemon thread với explicit `SQLITE_CHECKPOINT_RESTART` + `SQLITE_BUSY_TIMEOUT = 5000ms`.
+- Nếu `SQLITE_BUSY` sau 5s: Rust Core emit `CoreSignal::StorageLockTimeout { db: "cold_state", duration_ms }` → Admin Console alert.
+
+**CI test (SC-39):** Mô phỏng 10 concurrent WebView read requests + 1 WAL checkpoint. Assert: không có process nào nhận `SQLITE_BUSY` — tất cả requests được serialized qua Rust Core IPC.
+

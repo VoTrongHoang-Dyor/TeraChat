@@ -106,8 +106,12 @@ TeraChat là sản phẩm cấp enterprise vận hành trong môi trường có 
 | **SC-35** | SC-34 + Key Escrow chưa kịp transfer khi Border Node mất (< 5s window) | `EMDP_STALE_KEY_RECOVERY` signal emit; UI hiển thị cảnh báo "Securing channel..."; session suspended until Desktop reconnects; không có plaintext accessible; ZeroizeOnDrop được gọi đúng |
 | **SC-36** | Burner Agent TTL=60min expire tại **đúng lúc** EMDP Epoch Freeze đang active (Race Condition simulation) | Removal được queue với `removal_pending_freeze: true`; sau `EmdpSessionTerminated`, Epoch Ratchet advances NGAY; không có Burner Agent "zombie member" nào xuất hiện trong membership list |
 | **SC-37** | Cold start sau crash: orphaned `CrdtCommitted` Saga + NSE ring buffer chứa undecrypted ciphertext + WAL integrity bit flip (1 byte) | `CoreBootSequence` hoàn thành < 300ms: SagaRecoveryGuard, NseRingBufferDrain, WalIntegrityCheck đều pass; IPC channels CHỈ open sau khi cả 3 guards thành công; không có data loss |
+| **SC-38** | BLE congestion inject: 100kbps cap + 250ms RTT + concurrent 2MB file transfer | `MeshMultiplexer` suspend P2 (file chunks) ngay khi RTT > 200ms; `EmdpSessionTerminated` (P0) phải delivered trong < 2s bất kể congestion; không có Control Plane packet bị drop |
+| **SC-39** | Windows Desktop: 10 concurrent WebView read requests + 1 WAL checkpoint cùng lúc trên `cold_state.db` | Không có process nào nhận `SQLITE_BUSY`; tất cả reads serialized qua Rust Core IPC; WAL checkpoint hoàn thành sau tối đa 5s; `CoreSignal::StorageLockTimeout` emit nếu vượt 5s |
+| **SC-40** | Vacuum process bắt đầu đồng thời với REPLAY_DELTA WAL write (race condition inject) | Vacuum acquire `WAL_FLUSH_ACK` lock trước khi begin; REPLAY_DELTA không bị interrupt; không có concurrent vacuum instances; zero data loss |
 
 ---
+
 
 
 ## 3. Pre-Production Deployment Gates
@@ -147,11 +151,12 @@ Security auditor độc lập phải verify trước khi ký Gov/Military contra
 - [ ] Crypto-shred verification (forensic tool: không recovery được sau wipe)
 - [ ] WasmParity gate: 100% pass rate
 - [ ] AppArmor/SELinux profiles verified trên target Gov Linux distro
-- [ ] All 37 chaos scenarios pass automated CI suite
+- [ ] All 40 chaos scenarios pass automated CI suite
 - [ ] SC-34: Border Node failure EMDP_FORCED không mất CRDT_Event đã ACK
 - [ ] SC-35: Key Escrow race — ZeroizeOnDrop gọi đúng; không có plaintext accessible
 - [ ] SC-36: Burner Agent TTL expire trong EMDP Epoch Freeze — không có zombie member sau Freeze terminate
 - [ ] SC-37: CoreBootSequence — SagaRecoveryGuard phải hoàn thành < 100ms; startup sequence < 300ms
+- [ ] SC-38: BLE QoS — EmdpSessionTerminated (P0) delivered < 2s ngay cả khi concurrent 2MB file transfer
 
 ---
 
@@ -159,12 +164,12 @@ Security auditor độc lập phải verify trước khi ký Gov/Military contra
 
 | Platform   | Required Pass Rate   | Critical Scenarios                |
 | ---------- | -------------------- | --------------------------------- |
-| 📱 iOS     | 100% SC-01–21, SC-34–37 | SC-08, SC-14, SC-15, SC-17, SC-26, SC-34, SC-35, SC-36 |
-| 📱 Android | 100% SC-01–21        | SC-16, SC-24                      |
+| 📱 iOS     | 100% SC-01–21, SC-34–38 | SC-08, SC-14, SC-15, SC-17, SC-26, SC-34, SC-35, SC-36, SC-38 |
+| 📱 Android | 100% SC-01–21        | SC-16, SC-24, SC-38               |
 | 📱 Huawei  | 100% SC-01–20        | SC-16 (TrustZone variant) — **Not eligible for Gov/Military tier** |
-| 💺 macOS   | 100% SC-01–25, SC-37  | SC-23 (XPC), SC-37 (CoreBootSequence) |
-| 🖥️ Windows | 100% SC-01–20        | SC-33                             |
-| 🖥️ Linux   | 100% SC-01–20, SC-30, SC-37 | SC-30 (AppArmor/SELinux — must refuse start, not degrade), SC-37 |
+| 💺 macOS   | 100% SC-01–25, SC-37–38 | SC-23 (XPC), SC-37 (CoreBootSequence), SC-38 (BLE QoS) |
+| 🖥️ Windows | 100% SC-01–20, SC-39  | SC-33, SC-39 (WAL concurrent)     |
+| 🖥️ Linux   | 100% SC-01–20, SC-30, SC-37, SC-40 | SC-30 (AppArmor/SELinux), SC-37, SC-40 (Vacuum race) |
 
 ---
 

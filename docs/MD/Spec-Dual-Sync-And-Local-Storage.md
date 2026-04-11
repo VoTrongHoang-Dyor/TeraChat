@@ -448,3 +448,148 @@ Flow: write Saga `Pending` → write CRDT event → update Saga `CrdtCommitted` 
 ### 8.6 ZK Memory Agent — Blind RAG Removal (DEBT-01)
 **Constraint:** `BlindVectorIndex` đang được mô tả như live component trong §3.4 và §4.5 nhưng ZK Memory Agent đã **fully replaced** Vector DB + Embeddings. Documentation drift này gây ra tech debt: engineer mới sẽ implement Blind RAG thay vì ZK Memory Agent.
 **Resolution:** `BlindVectorIndex` đã được thay thế hoàn toàn bởi `ZKMemoryIndex` (Zero-Knowledge Memory Agent). Mọi reference đến "Blind RAG", "BlindVectorIndex", "blind vector indexing" trong toàn bộ spec suite phải được cập nhật thành ZK Memory Agent. Search §4.5 đã được cập nhật ở bín dưới.
+
+---
+
+## §9 — DEEP AUDIT RESOLUTIONS (WAVE 2 & 3 — STORAGE SECURITY & SCALABILITY)
+
+### 9.1 CAS Side-Channel Attack — Tenant-Salted Deduplication (SECURITY-CAS-01)
+**Constraint:** File blob chunks được lưu theo `cas_hash = BLAKE3(chunk_ciphertext)` global. Nếu cùng một plaintextchunk được 2 user khác nhau upload, `cas_hash` trùng nhau và NAS tiết kiệm 1 bản (global deduplication). Điều này tạo **Proof-of-Existence Side-Channel**: User B có thể biết User A đã upload tài liệu X bằng cách upload cùng tài liệu đó — nếu upload time là `0ms` (dedup bỏ qua write), User B biết tài liệu đã tồn tại trong hệ thống. Dù không đọc được nội dung, việc biết "tài liệu X đã tồn tại" là thông tin tình báo có giá trị trong Gov/Military context.
+
+**Resolution — Workspace-scoped Tenant Salting:**
+
+Thay đổi công thức `cas_hash`:
+```
+// TRƯỚC (CŨ — không an toàn):
+cas_hash = BLAKE3(chunk_ciphertext)
+
+// SAU (MỚI — safe):
+cas_hash = BLAKE3(workspace_id || context_salt || chunk_ciphertext)
+```
+
+Trong đó:
+- `workspace_id`: ID của Workspace/tenant (already available in context).
+- `context_salt`: Random 32-byte salt được generate lần đầu khi Workspace khởi tạo, stored in `cold_state.db`, không bao giờ thay đổi.
+- Deduplication chỉ hoạt động **trong scope của cùng một Workspace** — hai Workspaces khác nhau với cùng file sẽ không tìm thấy trùng nhau.
+
+**Trade-off:** Mất deduplication cross-tenant (NAS storage tăng tỷ lệ với số Workspace × file). Acceptable trade-off để đổi lấy Zero-Knowledge invariant hoàn toàn.
+
+**Migration:** Existing blobs dùng old `cas_hash` format phải được migrated. Add `hash_version: u8` field vào `BlobManifest`:
+- `hash_version = 1`: legacy BLAKE3(content) — read-only support.
+- `hash_version = 2`: Tenant-salted BLAKE3 — required for new uploads.
+
+### 9.2 Dual-Hash BLAKE3+SHA-512 — Collision Resistance (SECURITY-HASH-01)
+**Constraint:** Toàn bộ blob identity và integrity verification dựa vào duy nhất `BLAKE3`. Dù BLAKE3 có collision resistance tốt (256-bit output), trong một hệ thống Gov/Military lưu trữ decades với hàng tỷ chunks, xác suất **Birthday Attack** không phải zero về mặt lý thuyết. Quan trọng hơn: nếu tồn tại **Chosen-Prefix Collision** (adversarially crafted) trong một thuật toán, dùng hai thuật toán độc lập khác hệ (hash families khác nhau) loại bỏ attack hoàn toàn.
+
+**Resolution — Dual-Hash Identity:**
+```
+cas_hash = BLAKE3(workspace_id || context_salt || chunk_ciphertext)
+         || SHA-512(chunk_ciphertext)[0:32]  // 32 bytes = 256 bits từ SHA-512
+```
+
+- `cas_hash` = 32 bytes BLAKE3 + 32 bytes SHA-512/256 = **64 bytes total**.
+- Storage key = `BLAKE3_part || SHA512_part` (hex-encoded, lexicographically sortable).
+- Tạo ra collision yêu cầu break cả BLAKE3 **VÀ** SHA-512 simultaneously — bất khả thi về mặt toán học trong vũ trụ hiện tại.
+- NSA Suite B compliance: SHA-512 là chuẩn được NSA phê duyệt cho classified systems.
+
+**Performance:** SHA-512 trên BLAKE3's throughput target (~GB/s) — overhead < 8% trên modern hardware. Acceptable for Gov/Military.
+
+### 9.3 Tombstone Vacuum — Adaptive Rate-Based Trigger (SCALE-VACUUM-01)
+**Constraint:** Spec định nghĩa Tombstone Vacuum trigger tại "WAL size > 500MB OR weekly schedule". Với Enterprise tier (500+ users, 50MB WAL growth/day), weekly schedule không đủ — WAL đạt 500MB trong 10 ngày. Metric `wal_growth_rate_mb_per_hour` đã được thêm vào `ClientMetricBatch` nhưng **không có server-side aggregation logic** để trigger proactive vacuum dựa trên growth rate. Pattern với 5,000 Gov users sẽ gây WAL bloat trong vài ngày sau go-live.
+
+**Resolution — Adaptive Vacuum Trigger:**
+
+Thêm logic vào `tc-store` crate, chạy background vacuum check mỗi 15 phút:
+
+```rust
+#[derive(Debug)]
+pub struct VacuumPolicy {
+    /// Absolute size trigger
+    wal_size_trigger_mb: u64,           // Default: 200MB (thay 500MB)
+    /// Growth rate trigger  
+    growth_rate_trigger_mb_per_hour: f64, // Trigger nếu rate > X MB/h
+    /// Time-since-last-vacuum trigger
+    max_vacuum_interval_hours: u64,     // Default: 24h (thay weekly)
+    /// Gov/Military tier: aggressive
+    tombstone_age_days: u32,           // Default: 90 days (thay 365)
+}
+
+pub fn should_vacuum(policy: &VacuumPolicy, stats: &WalStats) -> VacuumDecision {
+    if stats.size_mb > policy.wal_size_trigger_mb {
+        return VacuumDecision::Immediate("size_threshold");
+    }
+    if stats.growth_rate_mb_per_hour > policy.growth_rate_trigger_mb_per_hour {
+        return VacuumDecision::Scheduled("growth_rate_threshold", Duration::from_hours(1));
+    }
+    if stats.hours_since_last_vacuum > policy.max_vacuum_interval_hours {
+        return VacuumDecision::Scheduled("interval_threshold", Duration::from_mins(30));
+    }
+    VacuumDecision::Skip
+}
+```
+
+**Tier configuration:**
+| Tier | WAL Trigger | Growth Rate Trigger | Max Interval | Tombstone Age |
+|---|---|---|---|---|
+| Personal | 500MB | 50MB/h | 7 days | 365 days |
+| Enterprise | 200MB | 20MB/h | 24h | 180 days |
+| Gov/Military | 100MB | 10MB/h | 12h | 90 days |
+
+**Vacuum race protection (SC-40):** Vacuum process phải acquire WAL write lock (TERA-SYNC §8.5 `WAL_FLUSH_ACK` protocol) trước khi begin. Concurrent vacuum instances prevented via `EXCLUSIVE` SQLite lock.
+
+### 9.4 Federation Schema Gap — Cross-Version Warning (SCALE-FED-01)
+**Constraint:** TERA-SYNC §6.x định nghĩa Schema Version ±1 minor → read-only federation. Nhưng không có **automated testing** cho cross-version federation compatibility. Enterprise với Branch cluster tại schema v1.2 và HQ tại v1.4 sẽ có read-only federation mà không có bất kỳ warning nào trong UI cho đến khi Admin manually check version table. Trong field deployments (military units thường lag 2-3 versions), đây là common case, không phải edge case.
+
+**Resolution:**
+
+1. **Automated Cross-Version CI Tests:** Thêm `cargo test --test federation_compat -- --all-versions-matrix` vào CI suite. Test matrix: {v_current-2, v_current-1, v_current} × {v_current-2, v_current-1, v_current} = 9 combinations. Block release nếu bất kỳ combo nào fail.
+
+2. **UI Federation Warning:** `CoreSignal::FederationModeChanged` thêm field:
+```rust
+pub struct FederationModeChanged {
+    peer_cluster_id: ClusterId,
+    our_schema_version: SchemaVersion,
+    peer_schema_version: SchemaVersion,
+    federation_mode: FederationMode, // ReadWrite | ReadOnly | Incompatible
+    /// Non-empty nếu ReadOnly hoặc Incompatible
+    user_visible_reason: Option<String>,
+}
+```
+UI phải hiển thị amber banner: **"Kết nối với chi nhánh [X] đang ở chế độ chỉ đọc do chênh lệch phiên bản. Liên hệ IT Admin để nâng cấp."**
+
+3. **Pre-sync schema negotiation:** Trước khi sync bắt đầu, hai clusters exchange schema version. Nếu > 2 minor versions apart: **block sync, emit `FederationIncompatible`**, không để silent read-only cascade.
+
+### 9.5 Audit Log Scale — Partitioning & Cold Storage Tiering (SCALE-AUDIT-01)
+**Constraint:** Gov/Military tier: 7-year retention, 5,000 users × 100 audit events/day = **1.28 tỷ entries** tổng cộng. PostgreSQL append-only table với Merkle verification không thể scale đến đây mà không có horizontal partitioning. Không có spec nào định nghĩa sharding strategy, cold storage tiering, hoặc query performance SLA cho historical audit data.
+
+**Resolution — Time-partitioned Audit Archive:**
+
+```sql
+-- PostgreSQL range partitioning by month
+CREATE TABLE audit_log (
+    id          UUID NOT NULL,
+    hlc         BIGINT NOT NULL,
+    partition_key VARCHAR(7) NOT NULL, -- 'YYYY-MM'
+    event_type  TEXT NOT NULL,
+    actor_id    UUID NOT NULL,
+    payload_hash BYTEA NOT NULL,
+    ed25519_sig  BYTEA NOT NULL,
+    prev_hash   BYTEA NOT NULL  -- Merkle chain
+) PARTITION BY RANGE (partition_key);
+
+-- Active partitions: last 6 months on NVMe (hot)
+-- Months 7-24: on NAS (warm) 
+-- Months 25+: compressed archive on S3/MinIO (cold) with integrity proof
+```
+
+**Tiering Policy:**
+| Age | Storage | Access Time | Verification |
+|---|---|---|---|
+| 0-6 months | PostgreSQL NVMe (hot) | < 10ms | Real-time Merkle |
+| 7-24 months | PostgreSQL HDD/NAS (warm) | < 500ms | On-demand Merkle |
+| 25+ months | Compressed archive MinIO (cold) | < 5s | Archive integrity proof |
+
+**Merkle Chain across tiers:** Monthly Merkle root được computed at end-of-month, stored in `cold_state.db` as immutable `AuditMonthlyRoot`. Cold archive integrity verified bằng cách recompute Merkle root và so sánh với stored root — không cần uncompress full archive.
+
+**Query SLA enforcement:** Gov audit queries (`last 30 days`) phải complete trong < 5s. Queries > 30 days đi qua admin-only async job queue.
+
