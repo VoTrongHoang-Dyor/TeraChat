@@ -243,6 +243,8 @@ enum CoreSignalType {
     BLOB_STREAM_READY = 4;      // Local proxy URL ready
     ERROR = 5;
     SECURITY_ALERT = 6;         // DMA intrusion, attestation fail, etc.
+    CHANNEL_SECURING = 7;       // Key Escrow in progress — Outbox Queue active; UI shows "Securing channel..."
+    IPC_DEFERRED_DELIVERY = 8;  // Deferred IpcPayload now delivered (Mesh re-established)
 }
 
 message CoreSignal {
@@ -331,12 +333,21 @@ Key properties:
      ├── Nếu là tĩnh: [TeraChat Message Boundary] 
      │   → Map Markdown string thẳng ra Native Text Widget.
      │
-     └── Nếu là tương tác: [Workspace Widget Loader]
-         │ (Snapshot cung cấp `WidgetDataState` theo DataGrant)
-         ├── State: NeverLoaded (Skeleton tĩnh)
-         ├── State: Restoring (Slide Up content)
-         ├── State: StaleServing (Render cũ + Amber Dot indicator)
-         └── State: Fresh (Render nội dung đầy đủ)
+     ├── Nếu là tương tác: [Workspace Widget Loader]
+     │   │ (Snapshot cung cấp `WidgetDataState` theo DataGrant)
+     │   ├── State: NeverLoaded (Skeleton tĩnh)
+     │   ├── State: Restoring (Slide Up content)
+     │   ├── State: StaleServing (Render cũ + Amber Dot indicator)
+     │   └── State: Fresh (Render nội dung đầy đủ)
+     │
+     ├── Nếu nhận CoreSignal::CHANNEL_SECURING (Key Escrow in progress):
+         [PENDING_SECURE_CHANNEL]
+         │ UI hiển thị "Securing channel..." indicator (không hiển thị error)
+         │ User tiếp tục gõ bình thường — tin nhắn đưa vào Outbox Queue
+         │ Network bị suspend — không byte nào rời thiết bị
+         │ Escrow hoàn tất → Core re-key, flush Outbox Queue lên Mesh
+         ▼
+         [RENDERING] (tiếp tục bình thường)
      │
      ▼
 [IDLE]
@@ -491,3 +502,11 @@ class TeraCore {
 ### 11.4 Strict Engineering Guardrails (Signals)
 
 - **Rule 6 (Security Priority Channel):** Security Events (`ModelIntegrityViolation`, `DataGrantRevoked`) must never reside in standard asynchronous queues. They are dispatched through a dedicated **Synchronous Priority Channel** polled at the beginning of every UI frame, preventing data backlog (DAG merge pressure) from suppressing urgent security interventions.
+
+### 11.5 PENDING_SECURE_CHANNEL — Key Escrow Race UX (SC-35)
+**Constraint:** Khi Key Escrow chưa kịp transfer (SC-35 race), cần bảo mật tuyệt đối ở tầng Network nhưng không gây hoang mang UX cho user.
+**Resolution:**
+- Tầng Core: Network bị suspend hoàn toàn. Không byte nào rời thiết bị khi chưa có PFS.
+- Tầng UI: `CoreSignal::CHANNEL_SECURING` kích hoạt `PENDING_SECURE_CHANNEL` state. Tin nhắn ưu tiên vào Outbox Queue (ephemeral key trên RAM/HSM). UI hiển thị "Securing channel..." — không hiển thị lỗi đỏ.
+- Khi Escrow hoàn tất: Core re-key, flush Outbox Queue lên Mesh.
+- Giới hạn bắt buộc: Outbox Queue phải có Max-Queue-Size (chặn nhập liệu nếu đầy) và TTL (xoá nếu quá thời gian). Nếu app crash khi Queue chưa flush: dữ liệu trong Queue sẽ mất — UI phải cảnh báo user không tắt app khi đang "Securing channel...".

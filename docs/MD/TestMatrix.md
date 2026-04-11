@@ -98,10 +98,12 @@ TeraChat là sản phẩm cấp enterprise vận hành trong môi trường có 
 | **SC-27** | Jetsam NSE mid-WAL + Desktop offline + EMDP active      | WAL rollback → DAG self-heal → EMDP key escrow intact                  |
 | **SC-28** | EMDP 60min + Desktop reconnect + 1000 relay messages    | Key escrow decrypt → DAG merge → epoch reconcile; < 30s                |
 | **SC-29** | Battery < 20% + Mesh active + Whisper loading attempt   | Whisper disabled; voice text-fallback; BLE only; no crash              |
-| **SC-30** | AppArmor deny memfd + mlock + seccomp active (Linux)    | Graceful degrade to software crypto; performance warn emitted          |
+| **SC-30** | AppArmor deny memfd + mlock + seccomp active (Linux)    | **Refuse to start** — emit structured `MemoryLockUnavailable` error; no silent degrade |
 | **SC-31** | License expire T+0 + Active Gov emergency call          | Call continues; Admin Console lock; no data loss; auto-audit           |
 | **SC-32** | Android Doze mid-ZeroizeOnDrop + StrongBox wrap         | Key material zero-exposure; Wrap-on-derive completes atomically        |
 | **SC-33** | Dart FFI GC race: buffer released before releaseNow()   | NativeFinalizer catches; ZeroizeOnDrop executes; no UAF; metric logged |
+| **SC-34** | Border Node (Starlink) mất điện đột ngột, không có Desktop trong mesh | EMDP kích hoạt trong < 30s, text-only mode; key escrow transfer thành công; không mất CRDT_Event nào đã được ACK trước thời điểm mất điện |
+| **SC-35** | SC-34 + Key Escrow chưa kịp transfer khi Border Node mất (< 5s window) | `EMDP_STALE_KEY_RECOVERY` signal emit; UI hiển thị cảnh báo "Securing channel..."; session suspended until Desktop reconnects; không có plaintext accessible; ZeroizeOnDrop được gọi đúng |
 
 ---
 
@@ -142,7 +144,9 @@ Security auditor độc lập phải verify trước khi ký Gov/Military contra
 - [ ] Crypto-shred verification (forensic tool: không recovery được sau wipe)
 - [ ] WasmParity gate: 100% pass rate
 - [ ] AppArmor/SELinux profiles verified trên target Gov Linux distro
-- [ ] All 33 chaos scenarios pass automated CI suite
+- [ ] All 35 chaos scenarios pass automated CI suite
+- [ ] SC-34: Border Node failure EMDP_FORCED không mất CRDT_Event đã ACK
+- [ ] SC-35: Key Escrow race — ZeroizeOnDrop gọi đúng; không có plaintext accessible
 
 ---
 
@@ -150,12 +154,12 @@ Security auditor độc lập phải verify trước khi ký Gov/Military contra
 
 | Platform   | Required Pass Rate   | Critical Scenarios                |
 | ---------- | -------------------- | --------------------------------- |
-| 📱 iOS     | 100% SC-01–21        | SC-08, SC-14, SC-15, SC-17, SC-26 |
+| 📱 iOS     | 100% SC-01–21, SC-34–35 | SC-08, SC-14, SC-15, SC-17, SC-26, SC-34, SC-35 |
 | 📱 Android | 100% SC-01–21        | SC-16, SC-24                      |
 | 📱 Huawei  | 100% SC-01–20        | SC-16 (TrustZone variant)         |
 | 💻 macOS   | 100% SC-01–25        | SC-23 (XPC)                       |
 | 🖥️ Windows | 100% SC-01–20        | SC-33                             |
-| 🖥️ Linux   | 100% SC-01–20, SC-30 | SC-30 (AppArmor/SELinux)          |
+| 🖥️ Linux   | 100% SC-01–20, SC-30 | SC-30 (AppArmor/SELinux — must refuse start, not degrade) |
 
 ---
 
@@ -171,4 +175,4 @@ Scenarios liên quan đến key material phải **không emit** bất kỳ log n
 
 ---
 
-_Cross-references: TERA-CORE · TERA-RUNTIME · TERA-CLIENT · TERA-FUNC Module 9_
+

@@ -176,7 +176,7 @@ cold_state.db — Relational Encrypted App State
 | Object | Type | Storage | Scope | Notes |
 |---|---|---|---|---|
 | `FTS5Index` | SQLite FTS5 | `hot_dag.db` local | Last 30 days of chat | Plain text (under SQLCipher) |
-| `BlindVectorIndex` | Encrypted vector embeddings | NAS / VPS Enclave | Documents & long-term | Blind RAG — server sees only vectors, not content |
+| `ZKMemoryIndex` | Zero-Knowledge Memory Agent | NAS / Mac mini local LLM cluster | Documents & long-term context | **Replaces** Blind RAG / BlindVectorIndex. ZK invariant: no vector embeddings leave device boundary. |
 | `SearchableEncryptedField` | AES-SIV deterministic encrypted | `cold_state.db` | CRM/App structured fields | Allows exact-match lookup without decryption |
 
 ---
@@ -211,6 +211,12 @@ cold_state.db — Relational Encrypted App State
   - Do Tapp có thể đính kèm payload tuỳ ý vào lưới chat qua `Tapp_Extensibility_Payload`.
   - Nếu Mesh Sync node phát hiện Event chứa Tapp Payload vượt quá DataGrant, vi phạm Schema, hoặc size quá khổ -> Event đó sẽ bị flag là **`Tainted`**.
   - Node nội hạt (LAN/Mesh) nhận được event `Tainted` sẽ filter bỏ đi payload độc hại, bảo vệ các node xung quanh khỏi lỗi dây chuyền, nhưng vẫn giữ nguyên vẹn core Message Text để không đứt chuỗi DAG.
+- **EMDP Forced Flag (Border Node Failure):**
+  - Khi Border Node failure dẫn đến EMDP_FORCED kích hoạt:
+    - `hot_dag.db` trên iOS ghi nhận `emdp_forced_reason: "border_node_lost"`
+    - Mọi CRDT_Event trong window này mang flag `emdp_forced: true`
+    - Khi Desktop reconnect: events này được ưu tiên merge nhưng bị **quarantine** trong review queue trước khi apply vào `cold_state.db` Finance/HR
+    - Lý do: không muốn 60 phút quyết định phê duyệt chi tiêu trong EMDP forced mode được merge silently vào ledger chính thức.
 
 ### 4.2 App State Sync Protocol (Relational — MỚI)
 
@@ -262,16 +268,17 @@ cold_state.db — Relational Encrypted App State
 | Data Type | Engine | Scope | Notes |
 |---|---|---|---|
 | Chat text (< 30 days) | SQLite FTS5 (local) | On-device only | Fast, private |
-| Chat text (> 30 days) | Blind Vector Search | VPS/NAS Enclave | Data stays encrypted |
+| Chat text (> 30 days) | ZK Memory Search (ZKMemoryIndex) | Mac mini local cluster | Zero-Knowledge: data never leaves device boundary |
 | App/CRM fields | Searchable Symmetric Encryption (AES-SIV) | Server-side exact match | Server sees hash, not data |
-| Documents/PDFs | Blind RAG (vector embeddings) | VPS/NAS Enclave | Used by AI for context |
+| Documents/PDFs | ZK Memory Agent (local LLM consolidation) | Mac mini / NAS Enclave | **Replaces Blind RAG.** AI context built locally; no embedding egress. |
 
 ### 4.6 Tombstone Vacuum Policy
 
-- Vacuum trigger: `hot_dag.db` WAL size > 500MB OR weekly schedule.
+- Vacuum trigger: `hot_dag.db` WAL size > 500MB OR — trigger by growth rate: nếu WAL growth > 10MB/hour, trigger incremental vacuum trong background.
 - Eligible for vacuum: Tombstone_Stubs older than 365 days with no legal hold flag.
 - Vacuum log: Append to append-only `Audit_Log_Entry` with Ed25519 signature.
 - Mobile: Vacuum during charging + Wi-Fi only window.
+- Metric `wal_growth_rate_mb_per_hour` được thêm vào `ClientMetricBatch` để proactive monitoring. Weekly schedule là insufficient cho Enterprise tier (50MB/ngày × 10 = 500MB trong 10 ngày không vacuum).
 
 ---
 
@@ -417,3 +424,27 @@ extern "C" {
 
 ### 8.3 Strict Engineering Guardrails (DAG Immutability)
 - **Rule 5 (Immutable Append-Only Events):** Operations against the `hot_dag.db` are strictly append-only. No `UPDATE` or `DELETE` mutation is permitted under any circumstances. Removals or alterations must utilize Compensating Events with explicit causal `parent_id` bindings. CI verification actively blocks mutable DML against the ledger.
+
+### 8.4 Cross-DB Saga Pattern — Atomic Dual-Plane Write (CRIT-01)
+**Constraint:** `hot_dag.db` và `cold_state.db` là hai SQLCipher instances độc lập. Không có cross-DB transaction. Nếu write thành công vào `hot_dag.db` nhưng fail ở `cold_state.db` (ví dụ Jetsam-kill trên iOS), CRDT DAG hiển thị "approved" nhưng Finance ledger không có record tương ứng — data inconsistency không phát hiện được.
+**Resolution:** Implement **Saga Journal** trong `hot_dag.db` chính nó:
+
+```rust
+pub struct SagaEntry {
+    saga_id: Uuid,
+    crdt_event_id: Uuid,
+    cold_state_patch_hash: Blake3Hash,
+    status: SagaStatus, // Pending | CrdtCommitted | FullyCommitted | Compensated
+    hlc: HLCTimestamp,
+}
+```
+
+Flow: write Saga `Pending` → write CRDT event → update Saga `CrdtCommitted` → write cold_state → update Saga `FullyCommitted`. Khi restart, scan Sagas có status `CrdtCommitted` và replay cold_state write idempotently. Nếu cold_state write fail, emit compensating Tombstone event vào DAG kèm `error: cold_state_write_failed`. UI nhận signal này và hiển thị "Chờ đồng bộ" thay vì "Đã duyệt".
+
+### 8.5 EMDP-to-NORMAL Atomic Transition (CRIT-05)
+**Constraint:** TERA-SYNC §5.1 mô tả state machine `OFFLINE_QUEUE → REPLAY_DELTA → IN_SYNC` nhưng không nói gì về trường hợp iOS Tactical Relay đang mid-write vào `hot_dag.db` WAL khi Desktop reconnect và bắt đầu gửi 1000 CRDT events. SQLite WAL mode không hỗ trợ concurrent writers từ hai process — behavior là undefined.
+**Resolution:** Khi Desktop reconnect, Rust Core phải acquire WAL write lock trước khi bắt đầu REPLAY_DELTA. iOS Tactical Relay phải flush và release WAL lock trước khi Desktop bắt đầu replay. Sequence: `iOS: WAL_FLUSH_ACK` → `Desktop: WAL_LOCK_ACQUIRED` → `Desktop: BEGIN REPLAY_DELTA`.
+
+### 8.6 ZK Memory Agent — Blind RAG Removal (DEBT-01)
+**Constraint:** `BlindVectorIndex` đang được mô tả như live component trong §3.4 và §4.5 nhưng ZK Memory Agent đã **fully replaced** Vector DB + Embeddings. Documentation drift này gây ra tech debt: engineer mới sẽ implement Blind RAG thay vì ZK Memory Agent.
+**Resolution:** `BlindVectorIndex` đã được thay thế hoàn toàn bởi `ZKMemoryIndex` (Zero-Knowledge Memory Agent). Mọi reference đến "Blind RAG", "BlindVectorIndex", "blind vector indexing" trong toàn bộ spec suite phải được cập nhật thành ZK Memory Agent. Search §4.5 đã được cập nhật ở bín dưới.

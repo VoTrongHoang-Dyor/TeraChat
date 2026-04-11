@@ -276,14 +276,43 @@ Step 3 │ WebSocket Secure (wss:// over TCP:443)
 
 ```text
 [Internet Available] ─────────────────────────────────────┐
-                                                          │ Network Lost
-                                                          ▼
+                                                           │ Network Lost
+                                                           ▼
 [BLE Scan] ──peers found──> [BLE Active Mesh]
      │                              │
-     │ no peers                     │ Internet restored
-     ▼                              ▼
-[Standby - SOS only]         [Hybrid Sync]
-                              (send queued CRDT events)
+     │ no peers                     │ Internet restored          │ Border Node timeout
+     ▼                              ▼                            │ + No Desktop present
+[Standby - SOS only]         [Hybrid Sync]                       ▼
+                              (send queued CRDT events)  [EMDP_FORCED]
+                                                          (text-only, Key Escrow transferred)
+                                                                  │ New Border Node detected
+                                                                  ▼
+                                                          [Hybrid Sync resume]
+```
+
+**EMDP_FORCED Trigger Conditions (Border Node Failure):**
+
+```
+EMDP Trigger Condition (Border Node Failure):
+  Border Node (internet-capable) mất kết nối > T_border_timeout (default: 30s)
+  VÀ không có Border Node backup nào trong mesh:
+    → Rust Core trên mọi thiết bị emit CoreSignal::BorderNodeLost
+    → Nếu không có Desktop Super Node trong mesh:
+        → EMDP tự động kích hoạt (không cần manual trigger)
+        → iOS với pin cao nhất nhận EmdpKeyEscrow từ peer cuối cùng có session key
+
+Border Node Election Recovery:
+  Nếu một thiết bị mới có internet xuất hiện trong vòng EMDP_TTL (60 phút):
+    → Tự động promote thành Border Node
+    → EMDP terminated cleanly, MLS epoch sync resume
+    → EmdpTerminationProof emit với reason: BORDER_RESTORED
+
+Failure Case — Ungraceful Border Node Shutdown:
+  Nếu Key Escrow chưa kịp transfer trước khi Border Node mất điện đột ngột:
+    → Session key bị mất theo máy đó
+    → Recovery path: Desktop re-derive session key từ Company_Key khi có mạng
+    → Emit: EMDP_STALE_KEY_RECOVERY signal (xem §10)
+    → UI: "Encryption key expired — re-establishing secure channel"
 ```
 
 ### 5.2 Key Lifecycle State
@@ -412,6 +441,8 @@ extern "C" {
 | DMA intrusion detected | `SecurityEvent::DMA_INTRUSION` | Immediate `Session_Key` zeroize → lockscreen → alert Admin |
 | HSM unreachable at KMS bootstrap | Bootstrap blocks | Admin must restore from Shamir shard quorum (3-of-5) |
 | Monotonic counter rollback | `Counter < Server's Last Valid Counter` | Reject + Self-Destruct + notify Admin |
+| Border Node (Starlink) mất điện đột ngột, không có Desktop | `CoreSignal::BorderNodeLost` sau T=30s | EMDP_FORCED kích hoạt; text-only mode; iOS pin cao nhất nhận EmdpKeyEscrow; UI hiển thị "Offline secure mode" |
+| Key Escrow chưa kịp transfer khi Border Node mất (<5s window) | Escrow transfer timeout; ACK không nhận được | `EMDP_STALE_KEY_RECOVERY` signal emit; session suspended; UI cảnh báo; Desktop re-derive từ Company_Key khi reconnect; ZeroizeOnDrop được gọi ngay |
 
 
 ## §11 — ARCHITECTURAL INVARIANTS & AUDIT RESOLUTIONS (CRYPTOGRAPHY & MESH)
@@ -422,3 +453,48 @@ extern "C" {
 
 ### 11.2 Strict Engineering Guardrails (Mesh Degradation Limits)
 - **Rule 4 (No Silent Security Degradation):** P2P WebRTC fallback (e.g., TLS-via-WebSocket) authorizes routing latency compromises, but strictly rejects any downgrades to the MLS cryptographic protocol. If a secure session verification fails in Mesh Mode, Rust Core generates a `CoreSignal::FeatureDegradedInMesh` error instead of quietly dropping parameters. Fallback logic is fully managed by the Host and never delegated to the Tapp space.
+
+### 11.3 NSE Serial Queue — Concurrent Push Flood Protection (CRIT-02)
+**Constraint:** iOS NSE với ~5MB peak RAM per invocation có thể bị forked thành nhiều instances khi nhận burst notifications từ nhiều MLS group đồng thời (10 groups × 5MB = 50MB > iOS 20MB ceiling → Jetsam kill toàn bộ → zero notification rendered).
+**Resolution:** NSE phải implement serial queue với mutex qua Shared Keychain semaphore. Nếu một NSE instance đang chạy, instance thứ hai phải yield và cache raw ciphertext vào `nse_staging.db`. Rust Core expose `host_nse_acquire_lock()` / `host_nse_release_lock()` qua Shared Keychain semaphore.
+
+```rust
+// iOS Shared Keychain semaphore key: "com.terachat.nse.lock"
+pub fn handle_notification(payload: &EncryptedPayload) -> NotificationContent {
+    let lock = SharedKeychainSemaphore::acquire_or_buffer(payload);
+    match lock {
+        Acquired(guard) => { /* decrypt và return */ }
+        Buffered => {
+            // Write raw ciphertext vào nse_staging.db
+            // Return generic "Tin nhắn mới" notification
+        }
+    }
+}
+```
+
+### 11.4 EMDP Epoch Freeze Protocol (CRIT-04)
+**Constraint:** Khi EMDP session active, nếu một member khác rời MLS group và trigger epoch rotation, `EmdpKeyEscrow` đang giữ session key của epoch cũ đã bị invalidate. Desktop reconnect cố merge sẽ dẫn đến decryption failure trên toàn bộ messages được buffer bởi iOS Tactical Relay → permanent message loss.
+**Resolution:** Khi EMDP session active, Rust Core set `emdp_epoch_freeze = true` trên server relay. MLS `Update_Path` vẫn được prepared nhưng **Epoch_Ratchet không advance** cho các messages trong Tactical Relay buffer. Epoch chỉ advance sau khi Desktop reconnect và emit `EmdpSessionTerminated` signal, tại đó Tactical Relay buffer được re-encrypted với new epoch key trước khi delivery ("deferred epoch commit").
+
+### 11.5 mlock() Hard Requirement on Linux (XPLAT-04)
+**Constraint:** TERA-CORE §7 nêu `mlock()` available trên Linux. Nếu `mlock()` bị denied, key material có thể bị swap ra disk — đây không phải "degradation," đây là **security violation**.
+**Resolution:** Rust Core phải refuse to start nếu `mlock()` không khả dụng, không silent degrade:
+
+```rust
+fn check_memory_security() -> Result<(), StartupError> {
+    #[cfg(target_os = "linux")]
+    {
+        if unsafe { libc::mlock(test_ptr, 64) } != 0 {
+            return Err(StartupError::MemoryLockUnavailable {
+                reason: "mlock() denied by OS/AppArmor. Cannot guarantee key material security.",
+                action: "Configure AppArmor profile to allow mlock, or run with CAP_IPC_LOCK."
+            });
+        }
+    }
+    Ok(())
+}
+```
+
+### 11.6 PENDING_SECURE_CHANNEL — SC-35 Key Escrow Race (CRIT-05 extension)
+**Constraint:** Khi Key Escrow chưa kịp transfer (SC-35 race condition), cần balance giữa bảo mật tuyệt đối và UX không gây hoang mang.
+**Resolution:** Tầng Network bị suspend hoàn toàn (không byte nào rời thiết bị). Tầng UI: user tiếp tục gõ bình thường, tin nhắn mã hóa bằng ephemeral key (RAM/HSM) và đưa vào `Outbox Queue`. UI hiển thị "Securing channel..." indicator thay vì error. Khi Escrow hoàn tất: Core re-key, mã hóa lại payload trong queue và flush lên Mesh. Giới hạn bắt buộc: TTL hoặc Max-Queue-Size cho Outbox Queue để tránh OOM.

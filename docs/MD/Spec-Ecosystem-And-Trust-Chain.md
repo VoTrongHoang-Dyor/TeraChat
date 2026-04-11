@@ -190,6 +190,16 @@ Các Widget DataGrant có 3 State riêng biệt tuỳ chỉnh để tránh Flick
 - `Scenario B (Restoring)`: Sau khi bị Admin Revoke. Nếu cấp lại, hiển thị Restoring Label. Xong thì Slide Up Content từ dưới.
 - `Scenario C (StaleServing - Scope Rotation):` Kế thừa Data cũ đang chạy, Fetch mới ngầm chạy. RENDER DATA CŨ KÈM XUẤT HIỆN 1 *Amber Dot* opacity 0.6 góc thẻ. Khi hoàn tất, silent replace những Row khác.
 
+#### 4. Mesh Revocation Gossip Protocol (CRIT-03)
+
+Revocation phải effective trước offline guard TTL. Nếu Admin revoke DataGrant trong lúc một nhóm field agents đang Mesh-only, OPA push channel không đủ để đảm bảo cấp độ nhất quán:
+
+- Revocation signal phải được broadcast như một signed `CRDT_Event` vào `hot_dag.db` (không chỉ qua OPA push channel).
+- `content_type: "governance/data_grant_revoked@v1"` — namespace chuẩn per §8.2.
+- Mọi node khi serve DataGrant phải check local DAG: `SELECT 1 FROM crdt_events WHERE content_type = 'governance/data_grant_revoked@v1' AND payload->>'grant_id' = ? AND hlc > grant_issued_at`
+- Gov-tier `max_offline_serve_duration = 0s` — biến thành policy "require-quorum-confirmation" thay vì binary "0s" để tương thích Offline Survival invariant.
+- Cost: một SQLite query per DataGrant access — negligible.
+
 ---
 
 ## §3 — DATA MODEL & ENCRYPTION STATE
@@ -483,6 +493,10 @@ fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -> i32;
 - Runtime: JIT-with-AOT-fallback.
 - WasmParity CI must validate both JIT and AOT execution paths.
 
+> ⚠️ **HMS Gov/Military Tier — Fundamental Incompatibility (XPLAT-03):**  
+> HMS Push Service (HPush) không hỗ trợ `data-only` message type như FCM. Mọi push notification trên HarmonyOS phải có visible notification body, nghĩa là HMS sẽ thấy notification metadata — vi phạm Sealed Sender principle.  
+> **Gov/Military tier trên Huawei device là impossible** theo thiết kế hiện tại nếu cần Zero-Knowledge notification. Feature matrix cho Gov/Military không nên list Huawei cho đến khi HMS gải quyết được data-only push. Phiên bản hiện tại: Huawei chỉ hỗ trợ tới Enterprise tier với polling mode (CRL ≤ 4h).
+
 ---
 
 ## §8 — NON-FUNCTIONAL REQUIREMENTS (NFR)
@@ -549,3 +563,7 @@ fn host_app_state_write(patch_ptr: *const u8, patch_len: usize) -> i32;
 
 ### 8.5 Strict Engineering Guardrails (Ecosystem Boundaries)
 - **Rule 2 (Tapp Ownership Invariant):** `.tapp` containers exclusively own their internal databases. Tapps are forbidden from direct cross-namespace reads. To collaborate, tapps must message each other explicitly via `host_event_publish`, enforcing total isolation and accountability.
+
+### 8.6 Mesh Revocation Gossip — Zero-Trust Enforcement (CRIT-03)
+**Constraint:** Nếu Admin revoke DataGrant trong lúc field agents đang Mesh-only, không có cơ chế nào đảm bảo revocation signal đến *tất cả* nodes theo thứ tự nhất quán. Node A có thể nhận revocation trước Node B 30 giây — vi phạm Zero-Trust invariant (ISO 27001 A.5.18).
+**Resolution:** Revocation signal phải được broadcast như signed CRDT_Event với `content_type: "governance/data_grant_revoked@v1"` vào `hot_dag.db` (gossip qua Mesh), không chỉ qua OPA push channel. Mech check: mọi DataGrant serve phải query local DAG trước khi serve data. Gov-tier offline policy: "require-quorum-confirmation" thay vì binary "0s".
