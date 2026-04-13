@@ -39,6 +39,7 @@ phase/
 .idea/
 .antigravity/
 .cursor/
+.npm/
 # Công cụ, scripts phát triển nội bộ
 Tools/
 tests/

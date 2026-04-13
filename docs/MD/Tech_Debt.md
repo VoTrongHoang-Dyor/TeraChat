@@ -46,7 +46,7 @@ Một "Tech Debt" trong TeraChat không chỉ là "code bẩn", mà bao gồm:
 | **TD-011** | `TERA-CLIENT` | **Localhost Streaming Proxy — Plaintext Exfiltration Vector** <br> *Mô tả:* `127.0.0.1` HTTP port không có process-level auth. Bất kỳ process nào trên máy (malware, AV tool) có thể intercept plaintext stream của video/file sau khi Rust Core decrypt. Zero-Knowledge hoàn toàn bị bypass. | 🔴 CRITICAL | Tồn đọng | Enterprise launch | Desktop: UDS + SO_PEERCRED auth. Mobile: One-Time Streaming Token (OTST 256-bit, TTL=30s). Tham chiếu: TERA-CLIENT §12.1. |
 | **TD-012** | `TERA-CLIENT` | **Hard Wipe PIN là Asymmetric DoS** <br> *Mô tả:* 5 lần sai PIN → Crypto-shred. Kẻ địch chỉ cần cầm thiết bị chỉ huy, nhập sai 5 lần. Toàn bộ Mesh tactical data mất không thể phục hồi. Không có defense. | 🟠 HIGH | Tồn đọng | Gov/Military launch | Thay bằng Exponential Backoff Tarpit + Duress PIN. Tham chiếu: TERA-CLIENT §12.2. Remote wipe do Admin trigger, không tự động sau N lần. |
 | **TD-013** | `TERA-SYNC` | **CAS Global Dedup — Proof-of-Existence Side-Channel** <br> *Mô tả:* `cas_hash = BLAKE3(chunk)` global → User B upload cùng file → 0ms → biết file đã tồn tại trong hệ thống. Thông tin tình báo rò rỉ không cần decrypt nội dung. | 🟠 HIGH | Tồn đọng | Gov/Military launch | Tenant-salted CAS: `BLAKE3(workspace_id || salt || chunk)`. Dedup chỉ trong cùng Workspace. Tham chiếu: TERA-SYNC §9.1. |
-| **TD-014** | `TERA-SYNC` | **BLAKE3 Single-Algorithm Blob Identity** <br> *Mô tả:* Blob identity dùng duy nhất BLAKE3. NSA Suite B extended cho Gov/Military yêu cầu dual-algorithm identity để loại trừ Chosen-Prefix Collision attack về mặt toán học. | 🟡 MEDIUM | Tồn đọng | Gov/Military compliance | Dual-Hash: `cas_hash = BLAKE3(data) || SHA-512(data)[0:32]`. Tham chiếu: TERA-SYNC §9.2. |
+| **TD-014** | `TERA-SYNC` | **BLAKE3 Single-Algorithm Blob Identity** <br> *Mô tả:* Blob identity dùng duy nhất BLAKE3. NSA Suite B extended cho Gov/Military yêu cầu dual-algorithm identity để loại trừ Chosen-Prefix Collision attack về mặt toán học. | 🟡 MEDIUM | Tồn đọng | Gov/Military compliance | Dual-Hash: `cas_hash = BLAKE3(data) || SHA-512[data](0:32)`. Tham chiếu: TERA-SYNC §9.2. |
 
 ---
 
@@ -66,7 +66,6 @@ Một "Tech Debt" trong TeraChat không chỉ là "code bẩn", mà bao gồm:
 | **XPLAT-08** | Android OEM | ColorOS/MIUI/OriginOS mặc định kill Background Task không có callback. `TERA-RUNTIME` phụ thuộc vào OS Background Task 30s tick cho `.tapp`. Không thể đảm bảo Mesh Survival trên >40% Android Asia market. | Background Sync và Survival Mesh tê liệt khi user không bật "Autostart" | Must use Android ForegroundService — Tham chiếu: TERA-CORE §12.6 |
 | **XPLAT-09** | All Platforms | Build Non-determinism: Rust + C/Assembly (SQLCipher, `ring` crate) cross-compiled qua môi trướng khác nhau (macOS/Xcode, Linux/NDK, MSVC) tạo ra Non-deterministic binaries. Không thể verify hệ thống giống nhau giữa `.ipa` và `.apk`. Vi phạm ISO 27001 A.8.4. | Không thể xuất trình Hermetic Build proof cho Gov/Military audit | Nix Flakes + YubiKey HSM on-premise CI — Tham chiếu Tech_Debt §5.6 |
 | **XPLAT-10** | iOS | AWDL được disable khi iOS làm Personal Hotspot. Chỉ BLE (~4.75kbps) available. EMDP Mesh Coordinator role trở nên vô nghĩa. | EMDP Mesh degraded khi iOS device chia sẻ mạng | No workaround — document in EMDP user guide; exclude from Gov-tier SLA |
-
 
 ---
 
@@ -92,6 +91,7 @@ Một "Tech Debt" trong TeraChat không chỉ là "code bẩn", mà bao gồm:
 ### 5.1 Rust-Core + Headless Daemon (CRIT-01, TD-003)
 
 Tách hoàn toàn khối Mạng (Mesh/MLS) và Lưu trữ (SQLite) ra khỏi ứng dụng UI:
+
 - **Android/Oppo/Xiaomi:** Chạy Rust Core dưới dạng **Foreground Service** native (kèm persistent notification) để OEM battery management KHÔNG THỂ kill. Flutter App kết nối via gRPC cục bộ (Local UDS/Sockets).
 - **Desktop:** Chạy Rust Core dưới dạng Windows Service / systemd daemon. Tauri App là pure Client.
 - **Kết quả:** UI có thể crash, bị kill, cập nhật — tiến trình mật mã và Mesh BLE vẫn sống sót độc lập.
@@ -109,6 +109,7 @@ Thay vì timeout theo giây (thiên vị phần cứng mạnh), cấp `instructi
 ### 5.4 CoreBootSequence Protocol (GAP-A, GAP-B, GAP-C)
 
 Mỗi Rust Core startup, trước khi mở IPC channels, chạy tuần tự:
+
 1. `SagaRecoveryGuard` — scan orphaned `CrdtCommitted` Sagas.
 2. `NseRingBufferDrain` — drain nse ring buffer via flock-protected drain.
 3. `WalIntegrityCheck` — `PRAGMA integrity_check` trên cả 2 databases.
@@ -118,6 +119,7 @@ Mỗi guard < 100ms, tổng overhead < 300ms — chấp nhận được cho ente
 ### 5.5 Aegis FFI Boundary Protocol (TD-006, TD-007)
 
 Triển khai các biện pháp bảo vệ FFI boundary theo hướng:
+
 1. **GlobalKeyArena + Panic Hook:** `std::panic::set_hook` cài đặt khi startup, wipe Arena trước abort.
 2. **`ffi_boundary!` macro:** Wrap mọi `extern "C"` function trong `catch_unwind`. Trả error code an toàn thay vì propagate panic.
 3. **iOS XOR Masking:** Background task 100ms rotate XOR nonce trên key material. Tách nonce và masked bytes vào 2 `mmap` tại địa chỉ cách xa nhau.
@@ -159,4 +161,4 @@ Khi phát hiện hoặc quyết định trade-off một vấn đề kỹ thuật
 
 ---
 
-_TERA-DEBT v1.0.0 · 2026-04-11 · Khởi tạo từ Deep Technical Audit Report_
+*TERA-DEBT v1.0.0 · 2026-04-11 · Khởi tạo từ Deep Technical Audit Report*
