@@ -29,7 +29,7 @@ ehthumbs_vista.db
 .agents/
 config/
 lessons/
-phase/
+
 *.swp
 *.swo
 *~
@@ -43,4 +43,3 @@ phase/
 # Công cụ, scripts phát triển nội bộ
 Tools/
 tests/
-docs/MCP/
