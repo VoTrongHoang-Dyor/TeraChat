@@ -444,17 +444,19 @@ extern "C" {
 | Border Node (Starlink) mất điện đột ngột, không có Desktop | `CoreSignal::BorderNodeLost` sau T=30s | EMDP_FORCED kích hoạt; text-only mode; iOS pin cao nhất nhận EmdpKeyEscrow; UI hiển thị "Offline secure mode" |
 | Key Escrow chưa kịp transfer khi Border Node mất (<5s window) | Escrow transfer timeout; ACK không nhận được | `EMDP_STALE_KEY_RECOVERY` signal emit; session suspended; UI cảnh báo; Desktop re-derive từ Company_Key khi reconnect; ZeroizeOnDrop được gọi ngay |
 
-
 ## §11 — ARCHITECTURAL INVARIANTS & AUDIT RESOLUTIONS (CRYPTOGRAPHY & MESH)
 
 ### 11.1 MLS Epoch Rotation vs. Long-Running WASM Sessions
+
 **Constraint:** Stateful Tapps preserving older epoch parameters will catastrophically fail decryption following a scheduled member rotation or timeout epoch boundary.
 **Resolution:** Rust Core broadcasts a explicit `CoreSignal::EpochRotated { session_ids_affected }`. Tapps holding active cross-epoch multi-message state must checkpoint, discard keys (`ZeroizedOnDrop`), and request re-hydration to receive the superseding `Epoch_Key`.
 
 ### 11.2 Strict Engineering Guardrails (Mesh Degradation Limits)
+
 - **Rule 4 (No Silent Security Degradation):** P2P WebRTC fallback (e.g., TLS-via-WebSocket) authorizes routing latency compromises, but strictly rejects any downgrades to the MLS cryptographic protocol. If a secure session verification fails in Mesh Mode, Rust Core generates a `CoreSignal::FeatureDegradedInMesh` error instead of quietly dropping parameters. Fallback logic is fully managed by the Host and never delegated to the Tapp space.
 
 ### 11.3 NSE Serial Queue — Concurrent Push Flood Protection (CRIT-02 / CRIT-C Audit Fix)
+
 **Constraint:** iOS NSE với ~5MB peak RAM per invocation có thể bị forked thành nhiều instances khi nhận burst notifications từ nhiều MLS group đồng thời (10 groups × 5MB = 50MB > iOS 20MB ceiling → Jetsam kill toàn bộ → zero notification rendered).
 
 **Previous approach (REJECTED — TOCTOU race):** Shared Keychain semaphore có fundamental race condition: iOS có thể launch nhiều NSE process đồng thời TRƯỚC KHI process A có thời gian write lock vào Keychain. Process B launch và check Keychain — không thấy lock — proceed in parallel. Đây là TOCTOU (Time-of-Check-Time-of-Use) vulnerability. Ngoài ra, `nse_staging.db` là SQLite bị concurrent multi-process write — reintroduce vấn đề Saga pattern đang giải quyết.
@@ -486,10 +488,12 @@ pub fn handle_notification(payload: &EncryptedPayload) -> NotificationContent {
 ```
 
 ### 11.4 EMDP Epoch Freeze Protocol (CRIT-04)
+
 **Constraint:** Khi EMDP session active, nếu một member khác rời MLS group và trigger epoch rotation, `EmdpKeyEscrow` đang giữ session key của epoch cũ đã bị invalidate. Desktop reconnect cố merge sẽ dẫn đến decryption failure trên toàn bộ messages được buffer bởi iOS Tactical Relay → permanent message loss.
 **Resolution:** Khi EMDP session active, Rust Core set `emdp_epoch_freeze = true` trên server relay. MLS `Update_Path` vẫn được prepared nhưng **Epoch_Ratchet không advance** cho các messages trong Tactical Relay buffer. Epoch chỉ advance sau khi Desktop reconnect và emit `EmdpSessionTerminated` signal, tại đó Tactical Relay buffer được re-encrypted với new epoch key trước khi delivery ("deferred epoch commit").
 
 ### 11.5 mlock() Hard Requirement on Linux (XPLAT-04)
+
 **Constraint:** TERA-CORE §7 nêu `mlock()` available trên Linux. Nếu `mlock()` bị denied, key material có thể bị swap ra disk — đây không phải "degradation," đây là **security violation**.
 **Resolution:** Rust Core phải refuse to start nếu `mlock()` không khả dụng, không silent degrade:
 
@@ -509,13 +513,16 @@ fn check_memory_security() -> Result<(), StartupError> {
 ```
 
 ### 11.6 PENDING_SECURE_CHANNEL — SC-35 Key Escrow Race (CRIT-05 extension)
+
 **Constraint:** Khi Key Escrow chưa kịp transfer (SC-35 race condition), cần balance giữa bảo mật tuyệt đối và UX không gây hoang mang.
 **Resolution:** Tầng Network bị suspend hoàn toàn (không byte nào rời thiết bị). Tầng UI: user tiếp tục gõ bình thường, tin nhắn mã hóa bằng ephemeral key (RAM/HSM) và đưa vào `Outbox Queue`. UI hiển thị "Securing channel..." indicator thay vì error. Khi Escrow hoàn tất: Core re-key, mã hóa lại payload trong queue và flush lên Mesh. Giới hạn bắt buộc:
+
 - `Max-Queue-Size`: chặn nhập liệu nếu đầy để tránh OOM.
 - `TTL = 24h`: nếu Key Escrow không complete sau 24h, messages expire và UI hiển thị "Messages could not be sent securely — please reconnect to a secure channel."
 - Nếu app crash khi Queue chưa flush: dữ liệu mất — UI phải cảnh báo user không tắt app khi đang "Securing channel...".
 
 ### 11.7 Composite Key Derivation — Defense in Depth (Hardware Zero-Day)
+
 **Constraint:** `DeviceIdentityKey` phụ thuộc hoàn toàn vào Secure Enclave/TPM vi phạm Zero-Trust (trust 100% vào một vendor). Nếu hardware bị compromise, toàn bộ key material bị exposed.
 **Resolution:** Áp dụng Defense in Depth — Key thực sự được sinh qua KDF kết hợp 3 yếu tố:
 
@@ -530,6 +537,7 @@ Session_Key = KDF(Hardware_Secret || License_JWT_Entropy || User_PIN_or_Biometri
 Nếu attacker crack được TPM, họ thu được `Hardware_Secret` nhưng vẫn cần License entropy và user PIN để reconstruct key. Dữ liệu mã hóa offline vẫn an toàn tuyệt đối dù phần cứng bị bẻ gãy.
 
 ### 11.8 CoreBootSequence Protocol — Startup Safety Guards (GAP-A, GAP-B, GAP-C)
+
 **Constraint:** Nhiều critical invariants (Saga orphans, NSE ring buffer, WAL integrity) chỉ có thể được detected và recovered tại startup — không thể detect real-time mà không có significant overhead.
 **Resolution:** Mỗi Rust Core startup, trước khi mở bất kỳ IPC channel nào, phải chạy tuần tự (< 300ms tổng):
 
@@ -550,6 +558,7 @@ pub async fn core_boot_sequence() -> Result<(), BootError> {
 ```
 
 ### 11.9 Binary Transparency Gossip Authentication (HIGH-7)
+
 **Constraint:** TERA-CORE §4.5 định nghĩa Binary Transparency via BLAKE3 hash gossip qua Mesh. Gossip message KHÔNG yêu cầu sender authentication — chỉ original binary được signed. Malicious insider có thể broadcast fake `Global_Update_Log` entry với BLAKE3 hash giả, gây DoS (peers block legitimate module).
 **Resolution:** Gossip message mang Binary Transparency hash phải được signed bằng TeraChat Root CA key:
 
@@ -569,9 +578,11 @@ pub struct BinaryTransparencyGossip {
 ## §12 — DEEP AUDIT RESOLUTIONS (WAVE 2 — FFI / NETWORK PHYSICS / BUILD)
 
 ### 12.1 FFI Panic Abort Bypass ZeroizeOnDrop — "Aegis Boundary" (CRIT-FFI-01)
+
 **Constraint:** Rust Core sử dụng `panic = "abort"` tại mọi `extern "C"` boundary (bắt buộc để tránh Undefined Behavior khi Rust panic vượt C-ABI). Khi một `.tapp` độc hại hoặc bị lỗi truyền null/garbage pointer vào `host_aes256gcm_encrypt`, Rust Core sẽ `abort()` ngay lập tức — **hàm `Drop()` CỦA MỌI STRUCT SẼ KHÔNG BAO GIỜ ĐƯỢC GỌI**. `Session_Key`, `Company_Key` nằm nguyên dạng (plaintext) trong RAM cho đến khi OS ghi đè hoặc bị dump ra coredump/swap. ZeroizeOnDrop trở nên vô dụng trong path này. Vi phạm ISO 27001 A.8.24.
 
 **Resolution — Panic Hook + Global Key Arena:**
+
 1. **Global Panic Hook:** Ngay khi Rust Core khởi động, cài đặt `std::panic::set_hook` toàn cục. Hook này giữ một raw pointer tới `GlobalKeyArena` (pre-allocated, ephemeral). Khi panic xảy ra từ bất kỳ source nào, hook chạy TRƯỚC khi process abort và ghi đè `0x00` lên toàn bộ Arena.
 2. **Catch Unwind Barrier:** Mọi `extern "C"` function phải bọc toàn bộ logic trong `std::panic::catch_unwind`. Nếu unwinding xảy ra, gọi thủ công `GlobalKeyArena::wipe()`, sau đó return error code an toàn về Host (Flutter/Tauri). **Không để panic propagate qua C-ABI.**
 3. **Pre-allocated Secure Arena:** Không cấp phát key material rải rác trên heap. Toàn bộ key vật liệu (`Session_Key`, `MLS_Epoch_Secret`, v.v.) phải nằm trong một vùng nhớ tập trung (Pre-allocated Arena) sử dụng anonymous `mmap` với `MAP_ANONYMOUS | MAP_PRIVATE`. Arena này là ephemeral — OS không nén và không swap (xem §12.2 cho iOS caveat).
@@ -607,9 +618,11 @@ macro_rules! ffi_boundary {
 **Invariant cứng:** Không một byte key material nào được tồn tại ngoài `GlobalKeyArena`. CI gate: `cargo miri test --test ffi_boundary_zeroize` phải pass 100% trước mọi release.
 
 ### 12.2 iOS Memory Compression Bypass — Continuous XOR RAM Masking (XPLAT-IOS-01)
+
 **Constraint:** iOS XNU kernel không cho phép `mlock()`. Khi iPhone RAM pressure cao, XNU compress các memory pages. `ZeroizeOnDrop` chỉ xóa được bản copy đã được decompress trên RAM, nhưng **bản copy đã nén trong Compressed Memory segment vẫn tồn tại** dưới dạng ciphertext-like bytes hoàn toàn có thể reconstruct nếu có kernel exploit.
 
 **Resolution — Continuous XOR RAM Masking:**
+
 - Thay vì lưu key material dưới dạng plaintext trong RAM, Rust Core chạy một background task (100ms tick cycle) liên tục XOR key với random nonce mới:
 
 ```rust
@@ -640,6 +653,7 @@ impl MaskedKey {
 - **Limitation:** Nonce và masked bytes có thể cùng nằm trên một page — XNU có thể nén cả hai. Mitigation: tách nonce và masked bytes vào hai `mmap` allocation riêng biệt ở địa chỉ cách xa nhau.
 
 ### 12.3 BLE Mesh QoS — Spectrum Multiplexer (CRIT-MESH-01)
+
 **Constraint:** BLE 5.0 MTU thực tế ~512 bytes, throughput thực tế ~100-200kbps shared. `TERA-SYNC` cho phép đồng bộ `CRDT_Event` text **và** File blob chunks (2MB) qua cùng một BLE channel. Khi Data Plane (file chunks) bão hòa kênh, Control Plane packets (`EmdpSessionTerminated`, `DataGrantRevoked`, `KillDirective`) bị drop hoặc kẹt queue — gây Split-brain hoàn toàn. Vi phạm EMDP survival contract.
 
 **Resolution — Priority Multiplexer tại Data-link Layer:**
@@ -682,9 +696,11 @@ impl MeshMultiplexer {
 **CI test requirement (SC-38):** Inject BLE congestion (100kbps cap + 250ms RTT) trong chaos test. Assert: `EmdpSessionTerminated` phải được delivered trong < 2s ngay cả khi có concurrent 2MB file transfer.
 
 ### 12.4 EMDP Key Escrow — Quantum Harvest Gap (PQ-EMDP-01)
+
 **Constraint:** Hệ thống chính (MLS) dùng **Hybrid PQ-KEM (Kyber768 + X25519)** — đúng chuẩn chống lượng tử. Nhưng `EmdpKeyEscrow` (gói dự phòng Session Key truyền qua BLE khi Border Node mất điện) được mã hóa chỉ bằng **ECIES với Curve25519 thuần túy** (`relay_device_pubkey`). Đây là "Store-Now-Decrypt-Later" vulnerability: cơ quan tình báo đối địch có thể thu thập `EmdpKeyEscrow` blobs ngay hôm nay và giải mã trong 5-10 năm khi có quantum computer.
 
 **Resolution — Hybrid PQ-KEM cho EmdpKeyEscrow:**
+
 - Nâng cấp `EmdpKeyEscrow` encryption: thay `ECIES(Curve25519)` bằng **Hybrid ECIES + ML-KEM-768** (chuẩn NIST FIPS 203).
 - BLE MTU constraint: Kyber768 ciphertext ~1100 bytes. Giải pháp: dùng **RaptorQ FEC (Forward Error Correction)** để phân mảnh gói Escrow thành 3 beacon frames phát trong 3 BLE advertisement intervals liên tiếp.
 
@@ -706,9 +722,11 @@ pub struct EmdpKeyEscrow {
 **Invariant:** `EmdpKeyEscrow` với `session_key_ciphertext` non-hybrid (Curve25519 only) phải bị reject tại ingress sau upgrade. CI gate: kiểm tra schema version của Escrow struct.
 
 ### 12.5 Offline TTL — Hardware Monotonic Tick-Clock (SECURITY-TIME-01)
+
 **Constraint:** `DataGrantRevoked` TTL, EMDP Session TTL (60min), Burner Agent TTL đều phụ thuộc vào `SystemTime::now()`. Khi thiết bị Offline hoàn toàn (Mesh mode), không có NTP sync. User hoặc malware có thể **chỉnh lùi OS clock về quá khứ** để bypass TTL expiry — kéo dài quyền truy cập bất hợp pháp vĩnh viễn trong chế độ Offline.
 
 **Resolution — Monotonic Sealed Timer:**
+
 - Rust Core **NEVER** dùng `SystemTime::now()` cho TTL calculations trong Offline mode.
 - Khi network available: Rust Core sync NTP và lưu `AnchorTime { ntp_unix_sec, monotonic_ticks_at_sync }`.
 - Khi Offline: TTL elapsed được tính bằng: `elapsed = (current_monotonic_ticks - anchor_ticks) / tick_freq`. Monotonic counter không thể rollback — nó đếm CPU cycles.
@@ -728,7 +746,9 @@ pub fn is_ttl_expired(anchor: &AnchorTime, ttl_ms: u64) -> bool {
 ```
 
 ### 12.6 Headless Rust Daemon — Kiến trúc tách biệt Core khỏi UI Process (ARCH-HEADLESS-01)
+
 **Constraint (Multi-source):**
+
 - Windows NTFS: Tauri multi-process architecture (main + WebView) cùng mở `cold_state.db` gây `SQLITE_BUSY` / WAL lock conflicts (TD-002 mới).
 - Android OEM (MIUI/ColorOS/OriginOS): Khi user swipe-close UI, hệ điều hành kill toàn bộ process group kể cả Rust Core — Mesh BLE/Wi-Fi Direct chết hoàn toàn (XPLAT-OEM-01).
 - iOS NSE race: NSE process và Main App cùng truy cập ring buffer (CRIT-NSE-01 / GAP-C).
@@ -736,22 +756,26 @@ pub fn is_ttl_expired(anchor: &AnchorTime, ttl_ms: u64) -> bool {
 **Resolution — Headless Daemon Architecture:**
 
 **Platform: Android (Priority 1):**
+
 - Rust Core chạy trong một `Android ForegroundService` độc lập với persistent notification ("Secure Mesh Active").
 - Flutter UI kết nối vào Core qua `gRPC over Local Unix Domain Socket (UDS)`.
 - Khi user swipe-close Flutter UI: UI process chết, nhưng ForegroundService (Rust Core) tiếp tục chạy, duy trì BLE/Wi-Fi Direct Mesh. OEM battery managers không thể kill ForegroundService đang có visible notification.
 
 **Platform: Desktop (Windows/macOS/Linux):**
+
 - Rust Core chạy dưới dạng `Windows Service` (Windows), `systemd service` (Linux), hoặc `launchd daemon` (macOS) — auto-start at system boot.
 - Tauri App là pure "dumb client" — chỉ render, zero business logic.
 - IPC: `gRPC over Named Pipes` (Windows) hoặc `gRPC over UDS` (Unix). Không còn `SharedArrayBuffer` hay `localhost HTTP`.
 - Lợi ích: chỉ DUY NHẤT 1 process (Daemon) chạm vào SQLite — loại bỏ hoàn toàn `SQLITE_BUSY` trên Windows NTFS.
 
 **IPC Unification:**
+
 - Tất cả UI-to-Core communication đi qua `TeraCore gRPC Service` với Protobuf schema duy nhất.
 - Thay thế `dart:ffi + SharedArrayBuffer (Mobile)` và `Tauri Command + localhost HTTP (Desktop)` bằng một `gRPC client` duy nhất.
 - Lợi ích: Xóa sổ TD-001 (IPC fragmentation) và TD-002 (WidgetDataState double-computation).
 
 **OEM Foreground Service Detection:**
+
 ```kotlin
 // Android: detect OEM OS for ForegroundService upgrade
 val isResrictedOEM = Build.MANUFACTURER.lowercase() in listOf("xiaomi", "oppo", "vivo", "realme")
