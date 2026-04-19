@@ -80,7 +80,12 @@ File này **KHÔNG chịu trách nhiệm** cho:
 - **Oblivious CAS Routing:** Batch 4–10 `Fake_CAS_Hashes` khi gửi hash query (Chaffing). Tra qua Mixnet Proxy Endpoint, không đính `User_ID`.
 - **MinIO Blind Storage:** Lưu file theo `cas_hash` path — không biết tên file thực.
 
-### 2.3 Deployment Topologies
+### 2.3 Thermal State Monitor and Throttling Protocol
+Mobile hardware limits continuous execution. The `ThermalStateMonitor` observes device thermal states:
+- **Nominal/Fair:** Background tasks and MLS E2EE proceed.
+- **Serious/Critical:** Core emits `CoreSignal::ThermalThrottling`. CPU-intensive tasks (sync, WASM execution, deep scanning) are immediately suspended.
+
+### 2.4 Deployment Topologies
 
 ```text
 [Global Edge / GeoDNS Routing]
@@ -243,7 +248,7 @@ Tuân thủ chuẩn CNSA 2.0 và NSA SNDL/HNDL requirements.
 **Bandwidth Optimization:**
 
 - **Quantum Checkpoints:** ML-KEM payload (~1.18KB) chỉ đính kèm vào `KeyPackage` MLS Handshake hoặc mỗi 10.000 tin nhắn.
-- **Survival Mesh Fragmentation:** BLE 5.0 MTU ~512 bytes → băm nhỏ Kyber blob 1.18KB thành mảnh 400 bytes + Sequence ID + FEC (RaptorQ RFC 6330).
+- **Survival Mesh Fragmentation:** BLE 5.0 MTU ~512 bytes → băm nhỏ Kyber blob 1.18KB thành mảnh 400 bytes + Sequence ID. (RaptorQ FEC is omitted in favor of BLE GATT streaming with sequence counters).
 
 ### 4.5 ALPN & Protocol Fallback (F-08)
 
@@ -702,7 +707,7 @@ impl MeshMultiplexer {
 **Resolution — Hybrid PQ-KEM cho EmdpKeyEscrow:**
 
 - Nâng cấp `EmdpKeyEscrow` encryption: thay `ECIES(Curve25519)` bằng **Hybrid ECIES + ML-KEM-768** (chuẩn NIST FIPS 203).
-- BLE MTU constraint: Kyber768 ciphertext ~1100 bytes. Giải pháp: dùng **RaptorQ FEC (Forward Error Correction)** để phân mảnh gói Escrow thành 3 beacon frames phát trong 3 BLE advertisement intervals liên tiếp.
+- BLE MTU constraint: Kyber768 ciphertext ~1100 bytes. Giải pháp: dùng **BLE GATT streaming** với simple sequence counter để phân mảnh gói Escrow.
 
 ```rust
 pub struct EmdpKeyEscrow {
@@ -712,10 +717,9 @@ pub struct EmdpKeyEscrow {
     hlc: HLCTimestamp,
     issuer_sig: Ed25519Sig, // Signed by Border Node
     
-    // RaptorQ fragmentation metadata
-    fragment_index: u8,    // 0, 1, 2
-    fragment_total: u8,    // 3
-    raptor_repair_symbols: Vec<u8>,
+    // BLE GATT Streaming metadata
+    fragment_index: u8,    
+    fragment_total: u8,    
 }
 ```
 

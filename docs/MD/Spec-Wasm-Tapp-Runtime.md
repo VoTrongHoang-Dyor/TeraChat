@@ -157,6 +157,12 @@ arithmetic_mode: "fixed_point"    # Requires i64, blocks f32/f64 usage in core l
 ui_schema: "react-schema"  # Compiled to TeraChat UI schema, not raw HTML
 ```
 
+### 3.1.2 Three-Tier .tapp Governance Model
+
+- **TeraChat Native Apps:** Developed by TeraChat Inc. (e.g., HR, Finance tools). Signed by TeraChat Root CA. Exempt from ABI negotiation (can use `"first_party": true`). Pre-installed globally.
+- **Community/ISV Apps:** Developed by third parties. Submitted to TeraChat App Directory. Scanned & reviewed. Signed by Marketplace CA. IT Admin must explicitly enable.
+- **Enterprise Private Apps:** Custom apps built by customer IT. Signed by Enterprise CA. No Marketplace review. Operates strictly within the customer's workspace boundary.
+
 ### 3.2 SQLite Virtual Tables (Encrypted App Storage)
 
 **Host-Provided SQLite Virtual Tables — thay thế `sled` KV-store:**
@@ -265,6 +271,14 @@ extern "C" {
     fn host_egress_write(payload_ptr: *const u8, payload_len: usize) -> i32;
 }
 ```
+
+### 4.1.2 Slash Command Routing Protocol
+
+To emulate Slack/Teams functionality securely on-device:
+
+- Users typing `/command` directly trigger the Rust Core syntax parser.
+- The Core looks up the `.tapp` registered to the command prefix in `cold_state.db`.
+- Command execution resolves through the Local Event Bus (or direct IPC `__tera_on_slash_command(...)`). Output is rendered natively as an ephemeral or permanent UI element without leaving the device. NO external webhooks are called directly by the client.
 
 ### 4.2 I/O Delegation (Control Plane vs. Data Plane)
 
@@ -384,6 +398,14 @@ Instead of the `.tapp` pulling a 10MB PDF over the network into memory to decryp
      ▼
 [RUNNING]
 ```
+
+### 5.1.2 Thermal-Aware Execution State
+
+Mobile hardware strictly constrains continuous loads during background WASM execution, E2EE, and Mesh operations.
+System operates a `ThermalStateMonitor`:
+
+- `thermalState < .serious`: Operations continue normally (nominal/fair states may throttle tick frequencies).
+- `thermalState >= .serious`: WASM sandbox is **immediately suspended**, background ticks are halted, and `CoreSignal::ThermalThrottling { level: Critical }` is emitted. Only Rust Core text messaging and BLE control plane stay active to prevent device shutdown.
 
 ### 5.2 OOM Prevention & Memory Lifecycle (Tombstoning vs. Hydration)
 
