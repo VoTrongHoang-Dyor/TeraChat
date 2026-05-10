@@ -43,3 +43,12 @@ lessons/
 # Công cụ, scripts phát triển nội bộ
 Tools/
 tests/
+
+# Environment
+.env
+
+# Obsidian
+**/.obsidian/workspace.json
+**/.obsidian/workspace-mobile.json
+**/.obsidian/graph.json
+**/.obsidian/cache/

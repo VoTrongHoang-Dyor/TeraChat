@@ -27,10 +27,12 @@ TeraChat-Project/
 │   │   ├── Pricing_Packages.html            # Là tài liệu kinh doanh chiến lược nhằm cấu trúc các mức giá khác nhau của sản phẩm
 │   │   ├── Spec-Client-IPC-And-UI-Bridge.html # UI/Native Domain: Đặc tả giao tiếp IPC và cầu nối FFI giữa UI và Core Rust.
 │   │   ├── Spec-Core-Cryptography-And-Mesh.html # Crypto/Core Domain: Đặc tả E2EE, Zero-knowledge proof và mạng P2P Mesh.
+│   │   ├── Spec-Data-Export-And-Sovereignty.html # Data Sovereignty: Đặc tả kiến trúc xuất dữ liệu an toàn, giải mã Streaming và định dạng SPF.
 │   │   ├── Spec-Dual-Sync-And-Local-Storage.html # Sync/Data Domain: Đặc tả cơ chế Offline-first, CRDT và mã hóa SQLite local.
 │   │   ├── Spec-Ecosystem-And-Trust-Chain.html # Ecosystem Domain: Đặc tả vòng đời .tapp WASM Sandbox, Structured DataGrant và xác thực chữ ký Ed25519 từ Marketplace.
 │   │   ├── Spec-Enterprise-Secure-Enclave.html # Infrastructure Domain: Cơ sở hạ tầng phần cứng, tích hợp HSM và RBAC doanh nghiệp.
 │   │   ├── Spec-Identity-And-Governance.html # Identity Domain: Quản trị định danh DID, SCIM 2.0 sync và phân quyền tuyệt đối qua OPA Policy Engine.
+│   │   ├── Spec-Third-Party-Migration-And-Sync.html # Migration Domain: Đặc tả kỹ thuật đồng bộ dữ liệu, chuyển đổi phân quyền và map cấu trúc từ Slack/Teams/Google Chat.
 │   │   ├── Spec-Wasm-Tapp-Runtime.html      # WASM Runtime Domain: Môi trường Sandbox thực thi Mini-App (Tapp) an toàn.
 │   │   ├── TeraChat.html                    # Là bản tóm tắt về sản phẩm TeraChat
 │   │   └── Web_Marketplace.html             # Là trang web chứa thông tin về TeraChat và là cửa hàng ứng dụng tiện ích .tapp
@@ -43,10 +45,12 @@ TeraChat-Project/
 │   │   ├── Note.md                          # Là tài liệu chứa các ghi chú kỹ thuật, trade-off và nợ kỹ thuật (Tech Debt),...của team kĩ thuật.
 │   │   ├── Spec-Client-IPC-And-UI-Bridge.md # UI/Native Domain: Đặc tả giao tiếp IPC và cầu nối FFI giữa UI và Core Rust.
 │   │   ├── Spec-Core-Cryptography-And-Mesh.md # Crypto/Core Domain: Đặc tả E2EE, Zero-knowledge proof và mạng P2P Mesh.
+│   │   ├── Spec-Data-Export-And-Sovereignty.md # Data Sovereignty: Đặc tả kiến trúc xuất dữ liệu an toàn, giải mã Streaming và định dạng SPF.
 │   │   ├── Spec-Dual-Sync-And-Local-Storage.md # Sync/Data Domain: Đặc tả cơ chế Offline-first, CRDT và mã hóa SQLite local.
 │   │   ├── Spec-Ecosystem-And-Trust-Chain.md # Ecosystem Domain: Đặc tả vòng đời .tapp WASM Sandbox, Structured DataGrant và xác thực chữ ký Ed25519 từ Marketplace.
 │   │   ├── Spec-Enterprise-Secure-Enclave.md # Infrastructure Domain: Cơ sở hạ tầng phần cứng, tích hợp HSM và RBAC doanh nghiệp.
 │   │   ├── Spec-Identity-And-Governance.md  # Identity Domain: Quản trị định danh DID, SCIM 2.0 sync và phân quyền tuyệt đối qua OPA Policy Engine.
+│   │   ├── Spec-Third-Party-Migration-And-Sync.md # Migration Domain: Đặc tả kỹ thuật đồng bộ dữ liệu, chuyển đổi phân quyền và map cấu trúc từ Slack/Teams/Google Chat.
 │   │   ├── Spec-Wasm-Tapp-Runtime.md        # WASM Runtime Domain: Môi trường Sandbox thực thi Mini-App (Tapp) an toàn.
 │   │   ├── Tech_Debt.md                     # Là tài liệu chứa các ghi chú kỹ thuật, trade-off và nợ kỹ thuật (Tech Debt),...của team kĩ thuật.
 │   │   └── TestMatrix.md                    # Ma trận kiểm thử bao phủ các ca kiểm thử (Edge cases & Failure states).
