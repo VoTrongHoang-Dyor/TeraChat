@@ -24,13 +24,13 @@ The UI explicitly visualizes cryptographic state at all times:
 
 | Mode | Background | Indicator |
 |------|-----------|-----------|
-| Online | Glass Light | Blue #24A1DE |
+| Online | Glass Light | Blue `#24A1DE` |
 | Encrypted Session | Glass blue + lock badge | MLS active |
-| Mesh Mode | Dark Navy #0F172A | Radar Pulse HUD |
+| Mesh Mode | Dark Navy `#0F172A` | Radar Pulse HUD |
 | Emergency Mesh | Dark + amber warning | EMDP active |
 | License Warning (T-30) | Glass + amber banner | Admin only |
 | License Degraded (T-0) | Amber tint + lock icon | Contact IT prompt |
-| License Invalid | Charcoal #1A1A2E | Full screen lockout |
+| License Invalid | Charcoal `#1A1A2E` | Full screen lockout |
 
 ## IPC Signal → UI State Machine
 
