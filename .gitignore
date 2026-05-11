@@ -48,7 +48,5 @@ tests/
 .env
 
 # Obsidian
-**/.obsidian/workspace.json
-**/.obsidian/workspace-mobile.json
-**/.obsidian/graph.json
-**/.obsidian/cache/
+.obsidian/
+.context/
