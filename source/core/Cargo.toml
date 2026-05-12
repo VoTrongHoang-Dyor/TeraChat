@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = [
+    "tc-crypto",
+    "tc-mesh",
+    "tc-crdt-sync",
+    "tc-store",
+    "tc-tapp",
+    "tc-proto",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75.0"
+license = "AGPL-3.0-only"
+repository = "https://github.com/terachat/terachat-core"
+
+[workspace.dependencies]
+# Crypto — MUST use ring, no other crypto crate allowed (SEC-01)
+ring = "0.17"
+zeroize = { version = "1.7", features = ["zeroize_derive"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Storage
+rusqlite = { version = "0.31", features = ["bundled", "modern_sqlite"] }
+sled = "0.34"
+
+# Hashing
+blake3 = "1.5"
+
+# IDs
+uuid = { version = "1.7", features = ["v7"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rmp-serde = "1.1"
+
+# gRPC / Protobuf
+prost = "0.12"
+prost-types = "0.12"
+tonic = "0.11"
+tonic-build = "0.11"
+
+# TLS
+rustls = "0.22"
+
+# Parallelism
+rayon = "1.8"
+
+# Constant-time comparison (side-channel safe)
+subtle = "2.5"
+
+# Structured logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "1.0"
+
+# Property-based testing
+proptest = "1.4"
+
+# Byte manipulation
+bytes = "1.5"

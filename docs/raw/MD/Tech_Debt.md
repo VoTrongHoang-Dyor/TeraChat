@@ -4,8 +4,8 @@
 # DOCUMENT IDENTITY
 id: "TERA-DEBT"
 title: "TeraChat — Technical Debt & Known Limitations Registry"
-version: "1.0.0"
-status: "ACTIVE"
+version: "1.1.0"
+status: "ACTIVE — All items have resolution protocols"
 audience: "Engineering Team, System Architect, QA"
 purpose: "Theo dõi, đánh giá và lên kế hoạch xử lý các khoản nợ kỹ thuật (Tech Debt), những giới hạn kiến trúc chưa được giải quyết và các điểm không nhất quán trong hệ thống TeraChat."
 ```
@@ -140,6 +140,51 @@ Triển khai các biện pháp bảo vệ FFI boundary theo hướng:
 - CI chaos test SC-38: Inject 100kbps cap + 250ms RTT. Assert `EmdpSessionTerminated` delivered < 2s cùng lúc transfer file 2MB.
 - P0 packets: không bao giờ bị suspend, không bao giờ queue sau P2.
 
+### 5.8 EMDP Hybrid PQ-KEM Escrow (TD-009)
+
+- **EMDP Key Escrow dùng Hybrid ECIES + ML-KEM-768:** Encapsulation key = ECIES(Curve25519) || ML-KEM-768 ciphertext. Key wrap = AES-256-GCM với combined shared secret từ cả hai cơ chế.
+- **RaptorQ FEC fragmentation:** ~1KB Kyber ciphertext được fragment qua 3-5 BLE beacon frames. Mỗi frame mang 1 symbol, cần ≥ 3 symbols để reconstruct.
+- **Backward compatibility:** Receiver check version byte. Nếu peer chỉ hỗ trợ Curve25519 → fallback với warning trong audit log (không block communication trong Phase 1-2).
+- **Migration timeline:** Phase 2A bắt buộc Hybrid cho tất cả EMDP participants. Phase 1 MVP dùng Curve25519 thuần (chấp nhận rủi ro quantum harvest cho pilot).
+
+### 5.9 Hardware Monotonic Clock (TD-010)
+
+- **Monotonic Tick-Clock:** Dùng `mach_absolute_time()` (iOS/macOS), `clock_gettime(CLOCK_MONOTONIC_RAW)` (Linux), `QueryPerformanceCounter` (Windows). KHÔNG dùng `SystemTime::now()` cho bất kỳ TTL logic nào.
+- **Clock Rollback Detection:** Lưu `last_monotonic_tick` + `last_wall_clock` vào `cold_state.db`. Nếu monotonic tick giảm (không thể về mặt phần cứng) → kernel tampering detected → force-expire tất cả TTL + audit log CRITICAL.
+- **Wall-Clock Jump Detection:** Nếu wall clock nhảy > 60s so với monotonic delta → coi là clock manipulation → force-expire TTL.
+- **Implementation:** Wrap trong `TimeSource` trait với hai implementation: `MonotonicTimeSource` (production) + `MockTimeSource` (testing).
+
+### 5.10 Secure Streaming Protocol (TD-011)
+
+- **Desktop (macOS/Linux/Windows):** Unix Domain Socket (UDS) + `SO_PEERCRED` (Linux/macOS) hoặc `getsockopt(SO_PEERCRED)` để verify PID của process kết nối. Chỉ process có cùng UID được phép kết nối.
+- **Mobile (iOS/Android):** One-Time Streaming Token (OTST): 256-bit random, TTL=30s, single-use. Token được generate bởi Rust Core, truyền qua Control Plane (gRPC) đã mã hóa. UI client dùng token này để authenticate với local streaming endpoint.
+- **Stream encryption:** Dù là local, stream vẫn được encrypt bằng symmetric session key (AES-256-GCM) từ Control Plane handshake.
+- **Windows fallback:** Named Pipe với ACL restrict chỉ current user.
+
+### 5.11 Duress PIN + Exponential Backoff Tarpit (TD-012)
+
+- **Exponential Backoff:** 1st failed: 1s, 2nd: 2s, 3rd: 4s, 4th: 8s, 5th: 16s, 6th+: 30s. Mỗi lần fail gấp đôi thời gian chờ. Sau 10 lần: lock 30 phút.
+- **Duress PIN:** User có thể set PIN phụ. Khi nhập Duress PIN, app mở khóa bình thường NHƯNG: (a) key material bị wipe ngầm sau 5 phút, (b) gửi "Duress Alert" tới Admin Console qua control plane, (c) hiển thị giao diện giả (không có dữ liệu thật).
+- **Remote Wipe:** Admin có thể trigger remote wipe qua TeraRelay → tất cả devices trong workspace nhận `KillDirective` signed bằng Admin key. Không tự động wipe sau N lần sai PIN.
+- **Gov/Military tier:** Thêm yêu cầu 2-factor (biometric + PIN) để tránh single point of failure.
+
+### 5.12 Tenant-Salted CAS Dedup (TD-013 + TD-014)
+
+- **TD-013 — Tenant-Salted CAS:** `cas_hash = BLAKE3(workspace_id || salt || chunk)` thay vì global hash. Dedup chỉ trong cùng workspace, không cross-workspace. Salt được generate khi workspace được tạo, lưu trong workspace root key (encrypted bằng workspace admin public key).
+- **TD-014 — Dual-Algorithm Blob Identity:** Cho Gov/Military tier: `cas_hash = BLAKE3(data) || SHA-512(data)[0:32]`. Cả hai hash phải match để blob được chấp nhận — loại trừ chosen-prefix collision attack. Standard tier chỉ dùng BLAKE3.
+- **Migration:** Workspace migration từ Standard lên Gov tier → re-hash tất cả blob với dual-algorithm (background job, không block hoạt động).
+
+### 5.13 Thermal Budget Management Protocol (TD-016)
+
+- **`ThermalStateMonitor` struct:** Poll `ProcessInfo.thermalState` (iOS), `PowerManager` (Android), `/sys/class/thermal/` (Linux) mỗi 5s.
+- **Throttling Levels:**
+  - `.nominal` — mọi thứ chạy bình thường.
+  - `.fair` — giảm WASM fuel 30%, giảm BLE scan interval xuống 500ms.
+  - `.serious` — suspend tất cả WASM execution, BLE chỉ nhận P0 packets, sync interval tăng lên 5 phút.
+  - `.critical` — suspend tất cả non-essential operations, chỉ MLS E2EE messaging được phép. UI force GPU Tier C. Hiển thị "Device Cooling Down" overlay.
+- **`CoreSignal::ThermalThrottling`:** Broadcast thermal state đến tất cả subsystems. Mỗi subsystem tự implement throttling action tương ứng.
+- **Recovery:** Khi thermal state giảm 2 level (critical → fair, serious → nominal) → resume operations với exponential backoff (không resume tất cả cùng lúc).
+
 ---
 
 ## 6. Tech Debt Template (Dành cho Kỹ sư)
@@ -163,4 +208,4 @@ Khi phát hiện hoặc quyết định trade-off một vấn đề kỹ thuật
 
 ---
 
-*TERA-DEBT v1.0.0 · 2026-04-11 · Khởi tạo từ Deep Technical Audit Report*
+*TERA-DEBT v1.1.0 · 2026-05-12 · Updated with detailed resolution protocols (§5.8-§5.13) from Technical Audit*

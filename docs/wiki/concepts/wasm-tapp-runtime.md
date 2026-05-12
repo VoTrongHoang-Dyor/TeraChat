@@ -8,7 +8,7 @@ sources: [tera-runtime-spec, tera-eco-spec, tera-core-spec]
 
 # WASM Tapp Runtime & Work OS Marketplace
 
-The dual-engine WebAssembly sandbox for executing enterprise mini-applications (.tapp) within TeraChat. T-apps transform TeraChat from a messaging platform into a **Work OS** — employees run business tasks directly inside the application. T-apps are distributed through the TeraChat Web Marketplace with a self-service model: businesses browse vetted t-apps, download them, and set them up following simple instructions.
+The dual-engine WebAssembly sandbox for executing enterprise mini-applications (.tapp) within TeraChat. T-apps transform TeraChat from a messaging platform into a **Work OS** — employees run business tasks directly inside the application. T-apps are distributed through the TeraChat Web Marketplace with a self-service model: businesses browse vetted t-apps, **purchase them on the web**, download them, and set them up following simple instructions. **All .tapp payment processing happens on terachat.io — the app only downloads, verifies, and runs .tapps.**
 
 ## Work OS Vision
 
@@ -38,13 +38,14 @@ The dual-engine WebAssembly sandbox for executing enterprise mini-applications (
 ### Lifecycle
 
 ```
-1. IT Admin browses TeraChat Web Marketplace
+1. IT Admin visits terachat.io → browses Web Marketplace
 2. Selects t-apps relevant to their business
-3. Downloads t-app package (.tapp bundle, signed)
-4. Follows simple setup instructions (no DevOps needed)
-5. Deploys to specific REGIONS or DEPARTMENTS
-6. Employees in scope see the t-app in their workspace
-7. T-app runs in WASM sandbox with Host ABI access
+3. Purchases t-app on website (payment via web, not app)
+4. Downloads t-app package (.tapp bundle, signed)
+5. Follows simple setup instructions (no DevOps needed)
+6. Deploys to specific REGIONS or DEPARTMENTS via Admin Console
+7. Employees in scope see the t-app in their workspace
+8. T-app runs in WASM sandbox with Host ABI access
 ```
 
 ### Deployment Scoping
@@ -88,7 +89,7 @@ Before a t-app appears on the TeraChat Web Marketplace, TeraChat:
 5. **Publishes with setup instructions** — step-by-step, no DevOps assumed
 6. **Records in transparency log** — Merkle leaf for every published version
 
-Third-party t-app publishers follow the same pipeline. The 30% publisher revenue share applies.
+Third-party t-app publishers follow the same pipeline. The 30% publisher revenue share applies — all revenue collection and publisher payouts are processed on terachat.io, never in the app.
 
 ## Host ABI
 
@@ -102,7 +103,7 @@ The set of functions Rust Core exposes to .tapp WASM modules:
 
 ## 🧠 Design Decisions (Q&A)
 
-- **Why self-service instead of IT-managed deployment?** → The original model assumed IT Admin does everything. But for SME adoption, the bottleneck is IT capacity. Self-service with simple instructions means a department head can set up a t-app without opening a ticket. Trade-off: requires t-apps to be foolproof in setup.
+- **Why self-service from Web Marketplace instead of in-app purchase?** → The original model assumed IT Admin manages everything including procurement. Self-service on web means a department head can browse, purchase, and set up a t-app without opening a ticket — but payment still goes through the organization's procurement cycle on terachat.io. Trade-off: requires t-apps to be foolproof in setup. App never handles payment.
 
 - **Why regional/departmental scoping?** → A finance t-app shouldn't appear on a factory worker's screen. Scoping reduces cognitive load and enforces need-to-know. Trade-off: more complex deployment UI in Admin Console.
 

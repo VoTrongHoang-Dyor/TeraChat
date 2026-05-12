@@ -1,0 +1,33 @@
+[server]
+# IPC socket path — UDS for desktop clients
+ipc_socket = "/var/run/terachat/core.sock"
+# gRPC listen address for local clients
+grpc_listen = "127.0.0.1:50051"
+
+[database]
+hot_dag_path = "/var/lib/terachat/data/hot_dag.db"
+cold_state_path = "/var/lib/terachat/data/cold_state.db"
+wal_mode = true
+
+[relay]
+listen = "0.0.0.0:443"
+tls_cert = "/etc/terachat/certs/relay.crt"
+tls_key = "/etc/terachat/certs/relay.key"
+
+[mesh]
+ble_enabled = true
+wifi_direct_enabled = true
+emdp_ttl = 3600
+
+[ai]
+endpoint = "http://localhost:11434/v1/chat/completions"
+pii_redaction_enabled = true
+
+[telemetry]
+otel_endpoint = ""
+otel_sample_rate = 0.1
+metrics_listen = "127.0.0.1:9100"
+
+[security]
+enclave_key_tag = "com.terachat.device-identity"
+mtls_enabled = false

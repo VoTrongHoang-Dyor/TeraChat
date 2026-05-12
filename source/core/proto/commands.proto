@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package terachat.commands;
+
+option java_package = "io.terachat.proto.commands";
+option swift_prefix = "TCCmd";
+
+// =============================================================================
+// UICommand — all pull-based requests from UI → Rust Core
+//
+// UI sends commands; Core processes and pushes back CoreSignals.
+// UI NEVER holds business or security logic.
+// =============================================================================
+
+/// UI command sent from client to Rust Core.
+message UICommand {
+  /// Unique command ID for response correlation
+  bytes command_id = 1;
+  /// Command type discriminator
+  UICommandType command_type = 2;
+  /// Workspace scope
+  bytes workspace_id = 3;
+  /// Command-specific payload (MessagePack encoded)
+  bytes payload = 4;
+  /// Monotonic timestamp
+  uint64 timestamp = 5;
+}
+
+enum UICommandType {
+  UI_COMMAND_UNSPECIFIED = 0;
+
+  // --- Messaging ---
+  SEND_MESSAGE = 1;
+  EDIT_MESSAGE = 2;
+  DELETE_MESSAGE = 3;
+  MARK_READ = 4;
+
+  // --- Session Management ---
+  CREATE_GROUP = 10;
+  JOIN_GROUP = 11;
+  LEAVE_GROUP = 12;
+  INVITE_MEMBER = 13;
+
+  // --- Security ---
+  VERIFY_IDENTITY = 20;
+  INITIATE_FCP = 21;
+  REQUEST_KEY_BACKUP = 22;
+
+  // --- .tapp ---
+  INSTALL_TAPP = 30;
+  UNINSTALL_TAPP = 31;
+  INVOKE_TAPP = 32;
+
+  // --- AI ---
+  REQUEST_AI_COMPLETION = 40;
+  CANCEL_AI_REQUEST = 41;
+
+  // --- Storage ---
+  UPLOAD_FILE = 50;
+  DOWNLOAD_FILE = 51;
+  SEARCH_MESSAGES = 52;
+
+  // --- Settings ---
+  UPDATE_NOTIFICATION_PREFS = 60;
+  UPDATE_SECURITY_PREFS = 61;
+
+  // --- Admin ---
+  GRANT_PERMISSION = 70;
+  REVOKE_PERMISSION = 71;
+  ACTIVATE_DATAGRANT = 72;
+  DEPLOY_TAPP_TO_SCOPE = 73;
+}

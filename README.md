@@ -5,6 +5,7 @@
 [![License: AGPLv3](https://img.shields.io/badge/Core-AGPLv3-blue.svg)](LICENSE)
 [![License: BSL](https://img.shields.io/badge/License_Guard-BSL-orange.svg)](LICENSE-BSL)
 [![Rust](https://img.shields.io/badge/Rust-1.75.0-orange.svg)](https://www.rust-lang.org)
+[![WorkOS](https://img.shields.io/badge/Powered%20by-WorkOS-6363F1.svg?logo=workos&logoColor=white)](https://workos.com)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-green.svg)](#platform-support)
 [![Enterprise Only](https://img.shields.io/badge/Access-Enterprise%20Only-red.svg)](#access-model)
 
@@ -39,15 +40,15 @@ TeraChat phục vụ giao tiếp nội bộ doanh nghiệp và giữa các chi n
 - Federation mTLS giữa các chi nhánh với Sealed Sender Protocol
 - Audit trail bất biến ký bằng Ed25519, không thể xóa hoặc sửa đổi
 
-### Work OS qua `.tapp` Marketplace
+### WorkOS qua `.tapp` Marketplace
 
 Doanh nghiệp mở rộng TeraChat bằng mini-app (`.tapp`) chạy trong WASM sandbox — cô lập hoàn toàn, không thể truy cập dữ liệu ngoài phạm vi được cấp phép.
 
-- IT Admin phê duyệt và phân phối `.tapp` theo phòng ban hoặc khu vực
+- IT Admin duyệt và mua `.tapp` trên **trang chủ web terachat.io/marketplace**
+- Phân phối `.tapp` theo phòng ban hoặc khu vực qua Admin Console
 - WASM sandbox với Host ABI — `.tapp` không bao giờ tự chạy crypto
 - Web Marketplace với quy trình kiểm duyệt bảo mật (static analysis + manual review)
-- Publisher Trust Tiers: Community → Verified → Enterprise → TeraChat Native
-- Emergency Kill-switch: revoke trên toàn bộ fleet trong < 60 giây
+- Tất cả thanh toán .tapp xử lý trên web — app chỉ download, xác thực, và chạy
 
 ### AI local — Bring Your Own Model (BYOM)
 
@@ -198,7 +199,7 @@ Hỗ trợ: Ollama, vLLM, LM Studio, và bất kỳ LLM nội bộ nào đã exp
 ## Mô hình truy cập doanh nghiệp
 
 ```
-Tổ chức ký hợp đồng với TeraChat
+Tổ chức truy cập terachat.io → chọn tier → thanh toán qua web
          ↓
 TeraChat cấp License JWT (HSM FIPS 140-3 signed)
   { tenant_id, domain, max_seats, tier, valid_until, features }
@@ -212,10 +213,12 @@ Nhân viên cài đặt app → app xác thực License JWT
 Không có license hợp lệ → "Liên hệ IT Admin"
 ```
 
+**Thanh toán, gia hạn, và nâng cấp license đều thực hiện trên trang chủ terachat.io — không qua app.**
+
 | Thành phần | Vai trò |
 |---|---|
 | TeraChat Inc. | Cấp license, duy trì binary, hỗ trợ kỹ thuật |
-| IT Admin | Triển khai relay, quản lý thiết bị, phê duyệt `.tapp` |
+| IT Admin | Triển khai relay, quản lý thiết bị, phê duyệt `.tapp`, quản lý license trên web |
 | Nhân viên | Sử dụng trong phạm vi chính sách tổ chức |
 | TeraRelay | Blind router — chỉ thấy `destination_device_id`, `blob_size`, `timestamp` |
 

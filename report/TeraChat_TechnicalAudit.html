@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeraChat — Báo Cáo Kiểm Toán Kỹ Thuật Nội Bộ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #060d18;
+  --ink2: #0b1728;
+  --ink3: #101f35;
+  --steel: #1a2e4a;
+  --teal: #0fd4c4;
+  --teal2: #38eedd;
+  --red: #ff3b5c;
+  --amber: #f59e0b;
+  --green: #22c997;
+  --purple: #8b5cf6;
+  --white: #e8f2ff;
+  --mid: #6e8fb0;
+  --muted: #3a5270;
+  --glass: rgba(255,255,255,0.04);
+  --gb: rgba(255,255,255,0.09);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--ink);
+  color: var(--white);
+  overflow-x: hidden;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Noise overlay */
+body::before {
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.35;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+  background: rgba(6,13,24,0.96);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  z-index: 100;
+  overflow-y: auto;
+  padding: 0;
+}
+.sidebar-header {
+  padding: 24px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-brand {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 16px; font-weight: 700;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.sidebar-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--muted);
+  letter-spacing: 1px; margin-top: 3px;
+}
+.nav-group { padding: 10px 0; }
+.nav-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 8px 18px 4px;
+}
+.nav-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 18px;
+  font-size: 12px; color: rgba(232,242,255,0.6);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all .18s;
+  text-decoration: none;
+}
+.nav-link:hover, .nav-link.active {
+  color: var(--teal);
+  border-left-color: var(--teal);
+  background: rgba(15,212,196,0.05);
+}
+.nav-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--muted); min-width: 18px;
+}
+.nav-badge {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  background: rgba(255,59,92,0.15);
+  color: #ff8099;
+  border: 1px solid rgba(255,59,92,0.3);
+  border-radius: 3px; padding: 1px 5px;
+}
+.nav-badge.warn { background: rgba(245,158,11,0.15); color: #fde68a; border-color: rgba(245,158,11,0.3); }
+.nav-badge.ok { background: rgba(34,201,151,0.15); color: #6ee7b7; border-color: rgba(34,201,151,0.3); }
+
+/* Main */
+.main { margin-left: 220px; position: relative; z-index: 1; }
+
+/* Hero */
+.hero {
+  min-height: 260px;
+  padding: 60px 64px 48px;
+  background: linear-gradient(180deg, rgba(15,212,196,0.04) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+}
+.hero::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background: linear-gradient(to right, transparent, var(--teal), transparent);
+}
+.hero-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--teal);
+  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px;
+}
+.hero-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: clamp(26px, 3.5vw, 40px);
+  font-weight: 700; line-height: 1.2; margin-bottom: 14px;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub { font-size: 14px; color: var(--mid); max-width: 700px; margin-bottom: 28px; }
+.meta-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; color: var(--mid); letter-spacing: .4px;
+}
+.pill.teal { border-color: rgba(15,212,196,0.3); color: var(--teal); }
+.pill.red { border-color: rgba(255,59,92,0.3); color: #ff8099; }
+.pill.amber { border-color: rgba(245,158,11,0.3); color: #fde68a; }
+
+/* Sections */
+.section {
+  padding: 56px 64px 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.section:last-child { border-bottom: none; }
+.section-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--muted); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.section-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: clamp(19px,2.4vw,26px); font-weight: 700;
+  line-height: 1.25; margin-bottom: 6px;
+}
+.rule {
+  width: 36px; height: 2px;
+  background: linear-gradient(to right, var(--teal), var(--purple));
+  border-radius: 1px; margin-bottom: 28px;
+}
+.lead {
+  font-size: 14px; color: var(--mid);
+  max-width: 740px; margin-bottom: 28px;
+}
+
+/* Score cards */
+.score-grid {
+  display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin: 24px 0;
+}
+.score-card {
+  background: var(--glass);
+  border: 1px solid var(--gb);
+  border-radius: 12px; padding: 18px 14px;
+  text-align: center; position: relative; overflow: hidden;
+}
+.score-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: linear-gradient(to right, var(--teal), var(--purple));
+}
+.score-val {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 28px; font-weight: 700; line-height: 1;
+}
+.score-val.red { color: var(--red); }
+.score-val.amber { color: var(--amber); }
+.score-val.green { color: var(--green); }
+.score-val.teal { color: var(--teal); }
+.score-lbl { font-size: 10px; color: var(--mid); margin-top: 5px; line-height: 1.35; }
+.score-main {
+  background: linear-gradient(135deg, rgba(15,212,196,0.08), rgba(139,92,246,0.08));
+  border: 1px solid rgba(15,212,196,0.3);
+  border-radius: 16px; padding: 28px 32px;
+  display: flex; align-items: center; gap: 28px;
+  margin-bottom: 20px;
+}
+.score-main-val {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 72px; font-weight: 700; line-height: 1;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
+.score-main-info { flex: 1; }
+.score-main-label { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.score-main-sub { font-size: 13px; color: var(--mid); line-height: 1.65; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table { width:100%; border-collapse: collapse; font-size: 12.5px; }
+thead tr { background: var(--ink3); }
+thead th {
+  padding: 10px 13px; text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--mid);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .15s; }
+tbody tr:hover { background: rgba(15,212,196,0.03); }
+tbody td { padding: 10px 13px; color: rgba(232,242,255,0.78); vertical-align: top; line-height: 1.55; }
+tbody td:first-child { color: var(--white); font-weight: 600; }
+.tc { text-align: center; }
+.tok { color: var(--green) !important; font-weight: 700 !important; }
+.twarn { color: var(--amber) !important; }
+.terr { color: var(--red) !important; font-weight: 700 !important; }
+.tteal { color: var(--teal) !important; font-weight: 600 !important; }
+tr.row-hl td { background: rgba(15,212,196,0.04); }
+
+/* Risk items */
+.risk-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.risk-item {
+  display: grid; grid-template-columns: 10px 1fr 80px 1fr;
+  gap: 14px; align-items: start;
+  padding: 12px 14px; border-radius: 8px;
+  background: rgba(11,23,40,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.rdot { width:10px;height:10px;border-radius:50%;margin-top:3px; }
+.rdot.h { background:var(--red); box-shadow:0 0 8px rgba(255,59,92,.4); }
+.rdot.m { background:var(--amber); box-shadow:0 0 8px rgba(245,158,11,.35); }
+.rdot.l { background:var(--green); box-shadow:0 0 8px rgba(34,201,151,.35); }
+.rname { font-size:12px;font-weight:700;color:var(--white); }
+.rdesc { font-size:11px;color:var(--mid);margin-top:2px;line-height:1.45; }
+.rbadge { font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;text-align:center;align-self:start;margin-top:2px; }
+.rbadge.h { background:rgba(255,59,92,.12);color:#ff8099;border:1px solid rgba(255,59,92,.3); }
+.rbadge.m { background:rgba(245,158,11,.12);color:#fde68a;border:1px solid rgba(245,158,11,.3); }
+.rbadge.l { background:rgba(34,201,151,.12);color:#6ee7b7;border:1px solid rgba(34,201,151,.3); }
+.rmit { font-size:11px;color:var(--mid);line-height:1.55; }
+
+/* ROI items */
+.roi-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.roi-item {
+  display: grid; grid-template-columns: 28px 1fr 100px;
+  gap: 14px; align-items: start;
+  padding: 12px 14px; border-radius: 8px;
+  background: rgba(11,23,40,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.roi-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 700; color: rgba(15,212,196,0.25);
+  line-height: 1;
+}
+.roi-title { font-size: 12px; font-weight: 700; color: var(--white); margin-bottom: 3px; }
+.roi-desc { font-size: 11px; color: var(--mid); line-height: 1.5; }
+.roi-impact {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px;
+  text-align: center; align-self: start; margin-top: 2px;
+}
+.roi-high { background: rgba(34,201,151,.12); color: #6ee7b7; border: 1px solid rgba(34,201,151,.25); }
+.roi-mid { background: rgba(15,212,196,.1); color: var(--teal); border: 1px solid rgba(15,212,196,.25); }
+
+/* Callouts */
+.callout {
+  border-left: 3px solid var(--teal);
+  background: rgba(15,212,196,.05);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px; margin: 16px 0;
+}
+.callout p { font-size: 13px; color: rgba(232,242,255,.85); line-height: 1.7; }
+.callout-red { border-left-color: var(--red); background: rgba(255,59,92,.05); }
+.callout-amber { border-left-color: var(--amber); background: rgba(245,158,11,.05); }
+.callout-green { border-left-color: var(--green); background: rgba(34,201,151,.05); }
+
+/* Code blocks */
+pre {
+  background: rgba(15,212,196,.04);
+  border: 1px solid rgba(15,212,196,.12);
+  border-radius: 8px; padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px; color: var(--teal2);
+  overflow-x: auto; margin: 12px 0; line-height: 1.7;
+}
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  background: rgba(15,212,196,.07);
+  color: var(--teal2); padding: 1px 5px; border-radius: 3px;
+}
+
+/* Phase roadmap */
+.phases { display: flex; gap: 0; margin: 20px 0; }
+.phase-block {
+  flex: 1; padding: 20px 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.02);
+  position: relative;
+}
+.phase-block:first-child { border-radius: 10px 0 0 10px; }
+.phase-block:last-child { border-radius: 0 10px 10px 0; }
+.phase-block + .phase-block { border-left: none; }
+.ph-tag { font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--teal);letter-spacing:2px;margin-bottom:4px; }
+.ph-title { font-size:12px;font-weight:700;color:var(--white);margin-bottom:3px; }
+.ph-period { font-size:10px;color:var(--amber);font-weight:600;margin-bottom:10px; }
+.ph-items { font-size:11px;color:rgba(232,242,255,.55);line-height:1.7; }
+
+/* Sub heading */
+.sh {
+  font-size:12.5px;font-weight:700;color:var(--teal);
+  letter-spacing:.3px;margin:28px 0 12px;
+  display:flex;align-items:center;gap:8px;
+}
+.sh::before { content:'';width:14px;height:2px;background:var(--teal);border-radius:1px; }
+
+/* Prose */
+p { color: rgba(232,242,255,0.78); margin-bottom: 10px; line-height: 1.8; }
+p strong { color: var(--white); font-weight: 600; }
+
+/* AI Matrix */
+.ai-matrix { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+.ai-card {
+  background: var(--glass); border: 1px solid var(--gb);
+  border-radius: 10px; padding: 16px;
+}
+.ai-card-title { font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px; }
+.ai-card-tag { font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px; }
+.ai-card-tag.good { color:var(--green); }
+.ai-card-tag.warn { color:var(--amber); }
+.ai-card-tag.bad { color:var(--red); }
+.ai-card ul { list-style:none;padding:0; }
+.ai-card ul li { font-size:11px;color:var(--mid);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);line-height:1.4; }
+
+/* Gear table (device requirements) */
+.device-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 16px 0; }
+.device-card {
+  background:var(--glass);border:1px solid var(--gb);
+  border-radius:10px;padding:16px;
+}
+.device-icon { font-size:22px;margin-bottom:8px; }
+.device-title { font-size:12px;font-weight:700;color:var(--white);margin-bottom:10px; }
+.device-item { font-size:11px;color:var(--mid);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.4; }
+
+/* Closing */
+.verdict-box {
+  background: linear-gradient(135deg, rgba(15,212,196,.06), rgba(139,92,246,.06));
+  border: 1px solid rgba(15,212,196,.2);
+  border-radius: 14px; padding: 36px 40px;
+  margin: 24px 0; text-align: center;
+}
+.verdict-box h2 { font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;margin-bottom:10px; }
+.verdict-box p { font-size:14px;color:var(--mid);max-width:600px;margin:0 auto 10px;line-height:1.75;font-style:italic; }
+
+/* Footer */
+.footer {
+  padding: 28px 64px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-left: 0;
+}
+.footer-brand {
+  font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.footer-txt { font-size:10px;color:var(--muted);line-height:1.6;text-align:right; }
+
+@media(max-width:900px){
+  .sidebar{display:none;} .main{margin-left:0;}
+  .section,.hero{padding:40px 24px;}
+  .score-grid{grid-template-columns:repeat(3,1fr);}
+  .ai-matrix,.device-grid{grid-template-columns:1fr;}
+  .phases{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">TeraChat</div>
+    <div class="sidebar-sub">INTERNAL AUDIT REPORT · 2026</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Sections</div>
+    <a class="nav-link active" href="#s0"><span class="nav-num">00</span> Executive Summary</a>
+    <a class="nav-link" href="#s1"><span class="nav-num">01</span> Architecture</a>
+    <a class="nav-link" href="#s2"><span class="nav-num">02</span> Code Quality <span class="nav-badge warn">Gaps</span></a>
+    <a class="nav-link" href="#s3"><span class="nav-num">03</span> Security & Crypto</a>
+    <a class="nav-link" href="#s4"><span class="nav-num">04</span> Infrastructure</a>
+    <a class="nav-link" href="#s5"><span class="nav-num">05</span> AI-Vibe Coding</a>
+    <a class="nav-link" href="#s6"><span class="nav-num">06</span> Solo Founder Reality</a>
+    <a class="nav-link" href="#s7"><span class="nav-num">07</span> Deployment & Testing</a>
+    <a class="nav-link" href="#s8"><span class="nav-num">08</span> Vibecoding OS</a>
+    <a class="nav-link" href="#s9"><span class="nav-num">09</span> Final Verdict</a>
+    <a class="nav-link" href="#s10"><span class="nav-num">10</span> Top Risks <span class="nav-badge">10</span></a>
+    <a class="nav-link" href="#s11"><span class="nav-num">11</span> Top ROI <span class="nav-badge ok">10</span></a>
+    <a class="nav-link" href="#s12"><span class="nav-num">12</span> Roadmap</a>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- HERO -->
+<header class="hero" id="s0">
+  <div class="hero-tag">Báo Cáo Kiểm Toán Kỹ Thuật Nội Bộ · Góc Nhìn Rust/UI Lead</div>
+  <h1 class="hero-title">TeraChat — <em>Technical Due Diligence</em><br>Self-Assessment 2026</h1>
+  <p class="hero-sub">Viết bởi Rust Core Lead kiêm UI Bridge Engineer — người đã thiết kế <code>tc-crypto</code>, <code>tc-mesh</code>, FFI Token Protocol, và toàn bộ Flutter/Tauri rendering layer. Đây là đánh giá không nể nang, không tự tâng bốc.</p>
+  <div class="meta-pills">
+    <span class="pill teal">Alpha v0.3.0</span>
+    <span class="pill">Spec-Only Stage</span>
+    <span class="pill red">0 dòng production code</span>
+    <span class="pill amber">16 Tech Debt CRITICAL</span>
+    <span class="pill">10 GAPs chưa giải quyết</span>
+    <span class="pill teal">Kiến trúc: Excellent</span>
+  </div>
+</header>
+
+<!-- ══════════════════ SECTION 1 — EXECUTIVE SUMMARY ══════════════════ -->
+<section class="section" id="s0-exec">
+  <div class="section-id">00 — EXECUTIVE SUMMARY</div>
+  <h2 class="section-title">Tổng Quan: Điểm Mạnh Thiết Kế, Yếu Thực Thi</h2>
+  <div class="rule"></div>
+
+  <div class="score-main">
+    <div class="score-main-val">52</div>
+    <div class="score-main-info">
+      <div class="score-main-label">/ 100 — Pre-Prototype Stage</div>
+      <div class="score-main-sub">Điểm này đánh giá <em>trạng thái hiện tại</em> — spec-only, 0 code chạy. Nếu đánh giá <em>tiềm năng kiến trúc</em> khi implement đúng, điểm là 78-82/100. Khoảng cách 26 điểm là rủi ro thực thi, không phải rủi ro thiết kế.</div>
+    </div>
+  </div>
+
+  <div class="score-grid">
+    <div class="score-card">
+      <div class="score-val amber">68</div>
+      <div class="score-lbl">Production Ready</div>
+    </div>
+    <div class="score-card">
+      <div class="score-val green">82</div>
+      <div class="score-lbl">Scalability</div>
+    </div>
+    <div class="score-card">
+      <div class="score-val green">85</div>
+      <div class="score-lbl">Security/Privacy Design</div>
+    </div>
+    <div class="score-card">
+      <div class="score-val amber">61</div>
+      <div class="score-lbl">Maintainability</div>
+    </div>
+    <div class="score-card">
+      <div class="score-val red">38</div>
+      <div class="score-lbl">AI-Vibe Coding Compat.</div>
+    </div>
+    <div class="score-card">
+      <div class="score-val red">29</div>
+      <div class="score-lbl">Solo Founder Viable</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <p><strong>Nhận định cốt lõi của tôi với tư cách Rust Lead:</strong> TeraChat có thiết kế kiến trúc tốt nhất tôi từng thấy ở một pre-seed project Việt Nam — nhưng đang mắc bẫy "over-engineered specs, under-validated market". Codebase thực tế chưa tồn tại. 7 spec files với tổng ~15,000 dòng markdown là ấn tượng nhưng không ship được. Founders đang viết code bằng ngôn ngữ Markdown.</p>
+  </div>
+
+  <div class="sh">Những gì thực sự tồn tại</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Artifact</th><th>Trạng thái thực tế</th><th>Đánh giá</th></tr></thead>
+      <tbody>
+        <tr><td>7 Domain Specs (TERA-CORE đến TERA-ECO)</td><td class="tteal">Hoàn chỉnh, chi tiết</td><td class="tok">Excellent — production-grade spec writing</td></tr>
+        <tr><td>Wiki system (Obsidian, 80+ pages)</td><td class="tteal">Hoạt động</td><td class="tok">Tốt — context management đúng hướng</td></tr>
+        <tr><td>Phase execution plan (V3)</td><td class="tteal">18-24 tháng, realistic</td><td class="tok">Tốt — đã pivot từ plan 35 ngày phi thực tế</td></tr>
+        <tr><td>HTML pitch deck / executive summary</td><td class="tteal">Professional</td><td class="twarn">Investor-ready nhưng không thay thế được demo</td></tr>
+        <tr><td>Source code thực tế</td><td class="terr">Không tồn tại</td><td class="terr">BLOCKER — không có prototype</td></tr>
+        <tr><td>Running tests</td><td class="terr">Không tồn tại</td><td class="terr">40 chaos scenarios trên paper</td></tr>
+        <tr><td>Deploy script</td><td class="terr">Không tồn tại</td><td class="terr">install.terachat.io chưa được build</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 2 — ARCHITECTURE ══════════════════ -->
+<section class="section" id="s1">
+  <div class="section-id">01 — DEEP TECHNICAL REVIEW: ARCHITECTURE</div>
+  <h2 class="section-title">Kiến Trúc: Xuất Sắc Trên Giấy, Chưa Được Chứng Minh</h2>
+  <div class="rule"></div>
+
+  <div class="sh">Coupling / Cohesion</div>
+  <p>Thiết kế domain-driven với 5 crates (<code>tc-crypto</code>, <code>tc-mesh</code>, <code>tc-crdt-sync</code>, <code>tc-store</code>, <code>tc-tapp</code>) và ranh giới rõ ràng là <strong>correct-by-design</strong>. Dependency graph một chiều được enforce. Đây là điểm mạnh thực sự.</p>
+  <p><strong>Vấn đề:</strong> Spec mô tả ranh giới nhưng chưa có Cargo.toml manifest nào enforce chúng. Một junior Rust dev có thể vô tình tạo circular dependency trong tuần đầu tiên nếu không có CI lint.</p>
+
+  <div class="sh">Event Flow & IPC</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layer</th><th>Thiết kế</th><th>Rủi ro thực thi</th><th>Đánh giá</th></tr></thead>
+      <tbody>
+        <tr class="row-hl"><td>Control Plane (Protobuf/gRPC)</td><td>Unidirectional — Rust push signal, UI pull snapshot</td><td>Cần buf lint + breaking change detection từ ngày đầu</td><td class="tok">Đúng</td></tr>
+        <tr><td>Data Plane (SharedArrayBuffer/Dart FFI)</td><td>Zero-copy, ~400-500 MB/s throughput</td><td>SAB cần COOP+COEP headers — documented ở XPLAT-05 nhưng chưa implement</td><td class="twarn">Nguy cơ</td></tr>
+        <tr><td>FFI Token Protocol</td><td>Opaque u64 token thay raw pointer</td><td>Dart NativeFinalizer race với manual releaseNow() — PLATFORM-17</td><td class="twarn">Gap</td></tr>
+        <tr><td>gRPC Migration Path</td><td>Non-breaking: cũ song song với mới</td><td>Hai codepath tồn tại đồng thời = double maintenance burden</td><td class="twarn">Trade-off</td></tr>
+        <tr><td>Local Proxy (127.0.0.1)</td><td>Streaming decryption cho media</td><td>TD-011: Bất kỳ process nào trên máy đều intercept được — CRITICAL</td><td class="terr">Blocker</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Offline/Online Sync — CRDT Design</div>
+  <p>Dual-plane sync (CRDT cho chat, Relational cho Finance/HR) là <strong>quyết định thiết kế đúng nhất</strong> trong toàn bộ spec suite. Phần lớn competitor ép mọi thứ vào CRDT và tạo ra silent data corruption với financial data. Đây là evidence của senior engineering thinking.</p>
+  <div class="callout callout-amber">
+    <p><strong>GAP chưa giải quyết:</strong> Cross-DB Saga pattern giữa <code>hot_dag.db</code> và <code>cold_state.db</code> (GAP-A) — nếu process bị kill tại <code>CrdtCommitted</code> state, Finance ledger sẽ diverge khỏi DAG mà không có recovery path được define. Đây là <strong>critical consistency gap</strong> sẽ sinh bug khó reproduce nhất trong hệ thống.</p>
+  </div>
+
+  <div class="sh">Fault Tolerance & Extensibility</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Điểm mạnh</th><th>Gap</th></tr></thead>
+      <tbody>
+        <tr><td>Fault Tolerance</td><td>WAL crash-safe replay, Saga Journal, CoreBootSequence</td><td>Nested saga failure (compensating event cũng fail) chưa có recovery path</td></tr>
+        <tr><td>Observability</td><td>OTLP + Prometheus + Loki stack đã spec</td><td>Không có distributed tracing correlation giữa client và relay</td></tr>
+        <tr><td>Extensibility</td><td>.tapp WASM runtime với Host ABI versioning là sạch</td><td>12-month deprecation window quá dài cho early-stage startup</td></tr>
+        <tr><td>Offline Mode</td><td>BLE Mesh + EMDP + Store-and-Forward là unique moat</td><td>AWDL risk trên iOS chưa được acknowledge (private API)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 3 — CODE QUALITY ══════════════════ -->
+<section class="section" id="s2">
+  <div class="section-id">02 — CODE QUALITY</div>
+  <h2 class="section-title">Chất Lượng Code: Không Thể Đánh Giá — Không Có Code</h2>
+  <div class="rule"></div>
+
+  <div class="callout callout-red">
+    <p><strong>Lời thẳng thắn của Rust Lead:</strong> Không có source code nào để review. Tôi có thể đánh giá thiết kế spec, nhưng không thể đảm bảo rằng khi code được viết ra, nó sẽ tuân thủ các invariants đã spec. Đây là rủi ro lớn nhất của dự án.</p>
+  </div>
+
+  <div class="sh">Hidden Complexity — Những nơi sẽ gây đau đầu nhất</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Complexity thực tế</th><th>Lý do nguy hiểm</th></tr></thead>
+      <tbody>
+        <tr class="row-hl"><td>MLS RFC 9420 + CRDT merge</td><td class="terr">Cực cao</td><td>Epoch rotation race với CRDT merge — không có standard library. Custom implementation = 6-12 tháng hardening</td></tr>
+        <tr><td>iOS NSE + ZeroizeOnDrop</td><td class="terr">Cực cao</td><td>Jetsam kill process mid-ZeroizeOnDrop. POSIX flock() trên App Group chưa được test. TOCTOU race documented nhưng fix chưa verified</td></tr>
+        <tr><td>BLE Mesh + EMDP Protocol</td><td class="terr">Cực cao</td><td>Distributed consensus trong môi trường BLE với iOS W^X = chưa có production precedent</td></tr>
+        <tr><td>Dart FFI TeraSecureBuffer</td><td class="twarn">Cao</td><td>GC Finalizer race với manual releaseNow(). Custom Dart lint plugin phức tạp hơn doc mô tả</td></tr>
+        <tr><td>wasmtime vs wasm3 semantic parity</td><td class="twarn">Cao</td><td>Float arithmetic divergence giữa JIT và interpreter — financial .tapp bị ảnh hưởng trực tiếp</td></tr>
+        <tr><td>SQLCipher WAL + concurrent writers</td><td class="twarn">Trung bình-Cao</td><td>Windows NTFS: Tauri multi-process + SQLite WAL = SQLITE_BUSY. TD-WIN-01 documented</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Deadlock / Race Condition Risk Assessment</div>
+  <pre>
+// Scenario thực tế tôi lo nhất khi implement:
+
+// tc-crypto/src/mls.rs
+async fn rotate_epoch(group_id: GroupId) {
+    let mut epoch_key = self.epoch_keys.write().await;  // Lock A
+    let dag = self.hot_dag.write().await;               // Lock B
+    // Nếu có thread khác acquire ngược thứ tự:
+    // Thread 2: hot_dag.write() → epoch_keys.write()
+    // = DEADLOCK không reproduce được trên test
+}
+
+// Đây là lý do tôi remove GlobalAsyncMutex trong mcp-smart-context v2
+// TeraChat cần học bài học tương tự — sớm hơn là muộn hơn.</pre>
+
+  <div class="sh">Technical Debt — Severity Matrix</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Mô tả</th><th>Severity</th><th>Block</th></tr></thead>
+      <tbody>
+        <tr class="row-hl"><td>TD-006</td><td>FFI Panic Abort bypass ZeroizeOnDrop — key material ở RAM sau panic</td><td class="terr">CRITICAL</td><td>Gov/Military</td></tr>
+        <tr class="row-hl"><td>TD-008</td><td>BLE Mesh không có QoS — Control Plane starvation khi transfer file</td><td class="terr">CRITICAL</td><td>Mesh deploy</td></tr>
+        <tr class="row-hl"><td>TD-009</td><td>EMDP Key Escrow dùng Curve25519 thuần — Quantum Harvest risk</td><td class="terr">CRITICAL</td><td>Gov/Military</td></tr>
+        <tr class="row-hl"><td>TD-011</td><td>127.0.0.1 Streaming Proxy — bất kỳ process nào đều intercept được</td><td class="terr">CRITICAL</td><td>Enterprise launch</td></tr>
+        <tr><td>TD-016</td><td>Không có Thermal Budget Management — overheating khi BLE+E2EE+WASM cùng lúc</td><td class="terr">CRITICAL</td><td>Edge mobile</td></tr>
+        <tr><td>TD-001</td><td>Host ABI thiếu schema_version wrapper — ABI version mismatch không detect được</td><td class="twarn">HIGH</td><td>Marketplace</td></tr>
+        <tr><td>TD-003</td><td>WASM wall-clock timeout thay vì fuel metering — bias hardware mạnh</td><td class="twarn">HIGH</td><td>iOS launch</td></tr>
+        <tr><td>TD-013</td><td>CAS global dedup → Proof-of-Existence side-channel attack</td><td class="twarn">HIGH</td><td>Gov/Military</td></tr>
+        <tr><td>XPLAT-08</td><td>Android OEM (MIUI/ColorOS) kill Background Task → Mesh BLE chết</td><td class="twarn">HIGH</td><td>Android launch</td></tr>
+        <tr><td>XPLAT-09</td><td>Non-deterministic builds → không verify binary giữa .ipa và .apk</td><td class="twarn">HIGH</td><td>Gov audit</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 4 — SECURITY & CRYPTO ══════════════════ -->
+<section class="section" id="s3">
+  <div class="section-id">03 — SECURITY & CRYPTOGRAPHY</div>
+  <h2 class="section-title">Bảo Mật: Design Tốt, Implementation Gaps Nghiêm Trọng</h2>
+  <div class="rule"></div>
+
+  <p>Với tư cách Rust lead người đã design <code>tc-crypto</code>, tôi có thể nói thẳng: cryptographic design của TeraChat thuộc top 5% enterprise messaging platforms. Nhưng crypto tốt trên paper không bảo vệ được nếu implementation có lỗ hổng.</p>
+
+  <div class="sh">Cryptographic Stack — Design Assessment</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Primitive</th><th>Choice</th><th>Đánh giá</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr><td>Group Messaging</td><td>MLS RFC 9420 (TreeKEM)</td><td class="tok">Chuẩn IETF — đúng</td><td class="tok">Low</td></tr>
+        <tr><td>Post-Quantum KEM</td><td>ML-KEM-768 + X25519 Hybrid</td><td class="tok">CNSA 2.0 compliant</td><td class="tok">Low</td></tr>
+        <tr><td>Symmetric</td><td>AES-256-GCM</td><td class="tok">Standard</td><td class="tok">Low</td></tr>
+        <tr><td>Signing</td><td>Ed25519</td><td class="tok">Correct</td><td class="tok">Low</td></tr>
+        <tr><td>Password Hashing</td><td>Argon2id</td><td class="tok">Correct</td><td class="tok">Low</td></tr>
+        <tr><td>Key Derivation</td><td>HKDF (SHA-256)</td><td class="tok">Standard</td><td class="tok">Low</td></tr>
+        <tr><td>Memory Safety</td><td>ZeroizeOnDrop (ring crate)</td><td class="twarn">Design đúng, implementation gaps</td><td class="twarn">Medium</td></tr>
+        <tr><td>EMDP Escrow</td><td>ECIES Curve25519 (chưa hybrid PQ)</td><td class="terr">TD-009: quantum harvest risk</td><td class="terr">High</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Critical Security Gaps tôi tìm thấy trong spec</div>
+  <div class="risk-list">
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">FFI Boundary → Panic → ZeroizeOnDrop bị bypass</div><div class="rdesc">Khi .tapp lỗi truyền null pointer vào host_aes256gcm_encrypt → Rust abort() → Drop() không được gọi → Session_Key tồn tại plaintext trong RAM. ISO 27001 A.8.24 violation.</div></div>
+      <div class="rbadge h">CRITICAL</div>
+      <div class="rmit">Fix: GlobalKeyArena + panic hook + ffi_boundary! macro. Đã documented ở TERA-CORE §12.1 nhưng chưa implement.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">iOS Memory Compression — ZeroizeOnDrop vô hiệu</div><div class="rdesc">XNU compress pages khi RAM pressure. ZeroizeOnDrop chỉ xóa bản decompressed. Bản compressed vẫn tồn tại trong Compressed Memory segment. Kernel exploit = key recovery.</div></div>
+      <div class="rbadge h">CRITICAL</div>
+      <div class="rmit">XOR RAM Masking với 100ms nonce rotation. Tách nonce và masked bytes vào 2 mmap riêng biệt. Documented TERA-CORE §12.2.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">127.0.0.1 Streaming Proxy — process-level exfiltration</div><div class="rdesc">Plaintext video stream qua localhost HTTP. Bất kỳ process nào (AV, monitoring tool, malware) có thể port-scan và intercept. Zero-Knowledge bị phá hoàn toàn tại tầng này.</div></div>
+      <div class="rbadge h">CRITICAL</div>
+      <div class="rmit">Desktop: UDS + SO_PEERCRED. Mobile: One-Time Streaming Token (256-bit, TTL=30s). TD-011 đã documented.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">NSE Ring Buffer — TOCTOU Race Condition</div><div class="rdesc">Keychain semaphore approach có race: iOS có thể launch nhiều NSE process đồng thời trước khi process A write lock. GAP-C documented nhưng unresolved.</div></div>
+      <div class="rbadge h">HIGH</div>
+      <div class="rmit">Thay bằng POSIX flock() trên App Group container file. Memory-mapped ring buffer thay SQLite cho concurrent NSE writes.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">OS Clock Rollback → TTL Bypass</div><div class="rdesc">DataGrant TTL, EMDP TTL, Burner Agent TTL dùng SystemTime::now(). Offline mode + clock rollback = bypass expiry. Gov/Military threat actor sẽ khai thác điều này.</div></div>
+      <div class="rbadge m">HIGH</div>
+      <div class="rmit">Hardware Monotonic Tick-Clock (mach_absolute_time trên iOS, TPM Monotonic Counter trên Desktop). TD-010 documented.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">Binary Transparency Gossip Unsigned</div><div class="rdesc">Gossip message mang BLAKE3 hash không cần signed. Insider có thể broadcast fake Global_Update_Log hash → DoS (peers block legitimate module). GAP-I.</div></div>
+      <div class="rbadge m">MEDIUM</div>
+      <div class="rmit">Gossip messages phải được signed bằng TeraChat Root CA key. Peers reject unsigned.</div>
+    </div>
+  </div>
+
+  <div class="sh">Authentication Flow — Đánh Giá Theo OWASP</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>OWASP Category</th><th>TeraChat Design</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>A01: Broken Access Control</td><td>OPA ABAC at every boundary + DataGrant</td><td class="tok">Addressed</td></tr>
+        <tr><td>A02: Cryptographic Failures</td><td>ZeroizeOnDrop + hardware-bound keys</td><td class="twarn">Design OK, impl gaps (TD-006, TD-007)</td></tr>
+        <tr><td>A03: Injection</td><td>WASM sandbox, no direct OS access, OPA DLP</td><td class="tok">Addressed</td></tr>
+        <tr><td>A04: Insecure Design</td><td>Zero-Knowledge by architecture</td><td class="tok">Excellent</td></tr>
+        <tr><td>A05: Security Misconfiguration</td><td>AppArmor/SELinux postinstall, mlock() check</td><td class="twarn">Documented, not implemented</td></tr>
+        <tr><td>A06: Vulnerable Components</td><td>cargo audit + RUSTSEC in CI plan</td><td class="twarn">CI plan exists, not running</td></tr>
+        <tr><td>A08: Software Integrity</td><td>Ed25519 signatures, BLAKE3 CAS, SBOM plan</td><td class="twarn">Plan exists, not implemented</td></tr>
+        <tr><td>A09: Logging Failures</td><td>OTLP + append-only audit trail spec</td><td class="twarn">Spec only</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 5 — INFRASTRUCTURE ══════════════════ -->
+<section class="section" id="s4">
+  <div class="section-id">04 — INFRASTRUCTURE</div>
+  <h2 class="section-title">Hạ Tầng: Single-Binary là USP, HA là Gap</h2>
+  <div class="rule"></div>
+
+  <div class="sh">Deployment Readiness Assessment</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Status</th><th>Gap</th></tr></thead>
+      <tbody>
+        <tr><td>TeraRelay Single Binary</td><td class="twarn">Spec chỉ, chưa build</td><td>install.terachat.io không tồn tại. "5-minute deploy" là marketing</td></tr>
+        <tr><td>Auto-TLS (Let's Encrypt)</td><td class="twarn">Spec chỉ</td><td>Chưa implement. Self-signed fallback cần UI để communicate trust</td></tr>
+        <tr><td>SQLite WAL Init</td><td class="twarn">Spec chỉ</td><td>Schema migration strategy cho version upgrades chưa được test</td></tr>
+        <tr><td>Mac mini HA Cluster</td><td class="terr">Concept only</td><td>Active-Passive failover protocol chưa được spec ở mức implementation</td></tr>
+        <tr><td>CI/CD Pipeline</td><td class="terr">Chưa setup</td><td>.github/workflows/ chưa có. EV signing runner chưa có hardware</td></tr>
+        <tr><td>Monitoring Stack</td><td class="terr">Spec only</td><td>Prometheus + Grafana + Loki spec tốt nhưng 0 dòng config</td></tr>
+        <tr><td>Backup/Recovery</td><td class="twarn">Partial spec</td><td>ops/db-recovery.md referenced nhưng chưa được viết (blocker)</td></tr>
+        <tr><td>Staging Environment</td><td class="terr">Không mention</td><td>Không có staging topology được define. Chaos test chạy ở đâu?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Infra Cost Efficiency — Điểm Sáng Thực Sự</div>
+  <p>Mô hình on-premise với single binary <strong>là genuine moat</strong>. Chi phí infra $7-48/tenant/month so với $200-500 của competitor là real. Nhưng "zero infrastructure cost" trong pitch deck là sai — customer vẫn trả CAPEX cho Mac mini, NAS, electricity.</p>
+
+  <div class="callout callout-green">
+    <p><strong>Điểm mạnh thực sự:</strong> TeraRelay single binary với SQLite WAL là kiến trúc deployment đơn giản nhất tôi từng thấy cho enterprise messaging. Nếu implement đúng, đây là USP thực sự — không phải chỉ là marketing claim.</p>
+  </div>
+
+  <div class="sh">Vendor Lock-in Risk</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dependency</th><th>Lock-in Risk</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>Apple Secure Enclave</td><td class="twarn">High cho iOS/macOS</td><td>TPM 2.0 fallback cho Desktop. Android StrongBox cho Android. Không lock-in hoàn toàn</td></tr>
+        <tr><td>MinIO / Cloudflare R2</td><td class="tok">Low</td><td>Pluggable blob storage. Customer có thể self-host MinIO</td></tr>
+        <tr><td>wasmtime crate</td><td class="twarn">Medium</td><td>wasm3 alternative cho iOS. Nếu wasmtime breaking change = rewrite runtime</td></tr>
+        <tr><td>ring crate (crypto)</td><td class="tok">Low</td><td>Standard library, actively maintained by AWS</td></tr>
+        <tr><td>Huawei HMS</td><td class="terr">Critical</td><td>HMS Push không support data-only — hard architectural limitation. Disclosed</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 6 — AI VIBE CODING ══════════════════ -->
+<section class="section" id="s5">
+  <div class="section-id">05 — AI-VIBE CODING ASSESSMENT</div>
+  <h2 class="section-title">AI Coding Compatibility: 38/100 — Nguy Hiểm Nếu Không Có Senior Rust Engineer</h2>
+  <div class="rule"></div>
+
+  <p>Tôi đánh giá điều này dựa trên kinh nghiệm thực tế với mcp-smart-context và TeraChat specs. Claude / GPT-4 / Cursor rất giỏi với specs rõ ràng — nhưng TeraChat có quá nhiều vùng tối mà AI sẽ tạo ra code nghe đúng nhưng sai về fundamentals.</p>
+
+  <div class="sh">AI Coding Matrix — Phân Tích Thực Tế</div>
+  <div class="ai-matrix">
+    <div class="ai-card">
+      <div class="ai-card-tag good">✓ AI Làm Tốt</div>
+      <div class="ai-card-title">Boilerplate & Scaffolding</div>
+      <ul>
+        <li>Protobuf schema definitions</li>
+        <li>Rust struct definitions với derive macros</li>
+        <li>Flutter widget trees từ design system</li>
+        <li>OIDC/SAML integration boilerplate</li>
+        <li>SQLite migration scripts</li>
+        <li>CI/CD workflow YAML</li>
+        <li>HTML/CSS pitch deck styling</li>
+        <li>Unit test scaffolding</li>
+      </ul>
+    </div>
+    <div class="ai-card">
+      <div class="ai-card-tag warn">⚠ AI Làm Được Nhưng Rủi Ro</div>
+      <div class="ai-card-title">Business Logic & Integration</div>
+      <ul>
+        <li>CRDT merge logic (có thể sai edge case)</li>
+        <li>License JWT validation chain</li>
+        <li>OPA policy rules (Rego)</li>
+        <li>gRPC service implementation</li>
+        <li>Dart FFI bindings</li>
+        <li>WASM Host ABI functions</li>
+        <li>Tauri IPC handlers</li>
+        <li>BLE discovery/advertising</li>
+      </ul>
+    </div>
+    <div class="ai-card">
+      <div class="ai-card-tag bad">✗ Bắt Buộc Senior Engineer</div>
+      <div class="ai-card-title">Crypto & Systems</div>
+      <ul>
+        <li>MLS RFC 9420 implementation</li>
+        <li>ZeroizeOnDrop correctness verification</li>
+        <li>GlobalKeyArena + panic hook</li>
+        <li>EMDP Protocol state machine</li>
+        <li>iOS NSE + POSIX flock() race</li>
+        <li>Fuel metering trong wasmtime</li>
+        <li>CRDT-Finance saga pattern</li>
+        <li>Incident response handling</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sh">Phân Tích Chi Tiết Theo Hạng Mục</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Hạng mục</th><th>AI làm tốt</th><th>Rủi ro AI</th><th>Bắt buộc Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Security-critical logic</td><td class="terr">❌</td><td class="terr">❌</td><td class="tok">✓ Always</td></tr>
+        <tr><td>Distributed systems (CRDT, consensus)</td><td class="terr">❌</td><td class="twarn">Partial</td><td class="tok">✓ Core logic</td></tr>
+        <tr><td>Realtime sync</td><td class="twarn">Scaffolding</td><td class="twarn">Edge cases</td><td class="tok">✓ Protocol design</td></tr>
+        <tr><td>Crypto implementation</td><td class="terr">❌</td><td class="terr">❌</td><td class="tok">✓ Always</td></tr>
+        <tr><td>Infra automation (Dockerfile, CI)</td><td class="tok">✓ Very good</td><td class="tok">Low risk</td><td class="twarn">Review only</td></tr>
+        <tr><td>Mobile optimization (iOS/Android)</td><td class="twarn">Partial</td><td class="twarn">Platform quirks</td><td class="tok">✓ OEM edge cases</td></tr>
+        <tr><td>Performance tuning</td><td class="twarn">Generic advice</td><td class="twarn">Miss context</td><td class="tok">✓ Profiling needed</td></tr>
+        <tr><td>Incident handling</td><td class="terr">❌</td><td class="terr">❌</td><td class="tok">✓ Always</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-red">
+    <p><strong>Kinh nghiệm thực tế từ mcp-smart-context:</strong> AI tạo ra code trông đúng nhưng có subtle race conditions rất khó detect. Trong TeraChat, một lỗi như vậy trong <code>tc-crypto</code> không phải là bug — là security incident. AI vibe coding phù hợp cho UI, boilerplate, docs. Tuyệt đối không phù hợp cho crypto và distributed systems core.</p>
+  </div>
+
+  <p>Tốc độ tiến triển thực tế nếu dùng AI-assisted development: <strong>~45% cho UI/infra, ~15% cho core systems</strong>. Tổng: khoảng 30% so với full senior team — nhưng quality risk rất cao ở core crypto.</p>
+</section>
+
+<!-- ══════════════════ SECTION 7 — SOLO FOUNDER REALITY ══════════════════ -->
+<section class="section" id="s6">
+  <div class="section-id">06 — SOLO FOUNDER REALITY CHECK</div>
+  <h2 class="section-title">Một Người: Sẽ Không Đủ — Nhưng Có Thể Viable Với Đúng Chiến Lược</h2>
+  <div class="rule"></div>
+
+  <div class="callout callout-red">
+    <p><strong>Đánh giá thẳng thắn:</strong> TeraChat với full scope (7 domain specs, 9 platforms, MLS + BLE + WASM + AI + Gov) là project cho <strong>team 8-12 senior engineers trong 3 năm</strong>. Solo founder với AI tools sẽ cần 6-8 năm — quá lâu để survive. Nhưng nếu scope được thu hẹp đúng cách (Phase 1 MVP: MLS + License + OIDC + 1 .tapp), solo founder có thể làm được trong 4-6 tháng.</p>
+  </div>
+
+  <div class="sh">Phân Chia Công Việc Thực Tế</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Phần</th><th>Solo làm được?</th><th>Cần Freelancer?</th><th>Tuyệt đối không AI?</th></tr></thead>
+      <tbody>
+        <tr class="row-hl"><td>MLS E2EE Core (Rust)</td><td class="terr">Không nên một mình</td><td class="tok">Applied Cryptographer ($15-30K)</td><td class="terr">Crypto core: YES</td></tr>
+        <tr><td>TeraRelay Binary</td><td class="tok">Có thể</td><td class="twarn">Review recommended</td><td class="twarn">Partially</td></tr>
+        <tr><td>Flutter UI</td><td class="tok">Có</td><td class="tok">UI freelancer nếu cần</td><td class="tok">AI-assisted OK</td></tr>
+        <tr><td>Tauri Desktop</td><td class="tok">Có</td><td class="tok">Optional</td><td class="tok">AI-assisted OK</td></tr>
+        <tr><td>OIDC/SAML Integration</td><td class="tok">Có (Keycloak làm nặng)</td><td class="tok">Optional</td><td class="tok">AI-assisted OK</td></tr>
+        <tr><td>BLE Mesh Protocol</td><td class="terr">Không</td><td class="tok">Distributed systems specialist</td><td class="terr">YES</td></tr>
+        <tr><td>iOS NSE + App Extension</td><td class="twarn">Borderline</td><td class="tok">iOS specialist</td><td class="twarn">Partially</td></tr>
+        <tr><td>CI/CD + Infra</td><td class="tok">Có</td><td class="tok">Optional</td><td class="tok">AI-assisted OK</td></tr>
+        <tr><td>ISO 27001 Prep</td><td class="terr">Không nên</td><td class="tok">Compliance consultant ($20-40K)</td><td>N/A</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Roadmap Thực Tế — Solo Founder</div>
+  <div class="phases">
+    <div class="phase-block">
+      <div class="ph-tag">THÁNG 1-4</div>
+      <div class="ph-title">MVP Prototype</div>
+      <div class="ph-period">Survive</div>
+      <div class="ph-items">
+        ▸ MLS E2EE chat (Curve25519)<br>
+        ▸ License JWT<br>
+        ▸ Google OIDC<br>
+        ▸ macOS + iPhone<br>
+        ▸ 1 reference .tapp<br>
+        ▸ Deploy script<br>
+        <strong>Gate: 3 pilots</strong>
+      </div>
+    </div>
+    <div class="phase-block">
+      <div class="ph-tag">THÁNG 5-8</div>
+      <div class="ph-title">First Revenue</div>
+      <div class="ph-period">Validate</div>
+      <div class="ph-items">
+        ▸ PQ-KEM (thuê crypto eng)<br>
+        ▸ SAML/Azure AD<br>
+        ▸ Admin Console đầy đủ<br>
+        ▸ Android<br>
+        ▸ $15K+ MRR<br>
+        <strong>Gate: Revenue</strong>
+      </div>
+    </div>
+    <div class="phase-block">
+      <div class="ph-tag">THÁNG 9-14</div>
+      <div class="ph-title">Hire & Scale</div>
+      <div class="ph-period">Grow</div>
+      <div class="ph-items">
+        ▸ Hire Rust senior<br>
+        ▸ Survival Mesh<br>
+        ▸ .tapp Marketplace<br>
+        ▸ Gemma 4 AI<br>
+        ▸ ISO 27001<br>
+        <strong>Gate: Series A prep</strong>
+      </div>
+    </div>
+    <div class="phase-block">
+      <div class="ph-tag">THÁNG 15-24</div>
+      <div class="ph-title">Moat & Gov</div>
+      <div class="ph-period">Defend</div>
+      <div class="ph-items">
+        ▸ Gov/Military tier<br>
+        ▸ Open AI Framework<br>
+        ▸ Marketplace ecosystem<br>
+        ▸ MENA expansion<br>
+        ▸ Series A close<br>
+        <strong>Gate: $1M ARR</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="sh">Risk Burnout — Cảnh Báo Thực Tế</div>
+  <div class="callout callout-amber">
+    <p><strong>Operational Bottlenecks cần lưu ý:</strong> Specs quá phức tạp có thể gây "analysis paralysis" — dành 80% thời gian viết docs thay vì code. Tôi nhìn thấy pattern này trong wiki của TeraChat (80+ pages). Prototype-first discipline là bắt buộc. Rule đơn giản: không viết spec mới khi code của spec cũ chưa chạy.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 8 — DEPLOYMENT & TESTING ══════════════════ -->
+<section class="section" id="s7">
+  <div class="section-id">07 — DEPLOYMENT & TESTING REQUIREMENTS</div>
+  <h2 class="section-title">Yêu Cầu Hardware & Testing Infrastructure</h2>
+  <div class="rule"></div>
+
+  <div class="sh">Thiết Bị Tối Thiểu để Bắt Đầu (Phase 1 MVP)</div>
+  <div class="device-grid">
+    <div class="device-card">
+      <div class="device-icon">💻</div>
+      <div class="device-title">Development Machine</div>
+      <div class="device-item">Mac mini M2 Pro 16GB+ (development + macOS test)</div>
+      <div class="device-item">1TB SSD (Rust build cache + SQLite data)</div>
+      <div class="device-item">Xcode 15+ (iOS build + Simulator)</div>
+      <div class="device-item">Rust 1.75.0 pinned toolchain</div>
+      <div class="device-item">Docker Desktop (CI simulation)</div>
+    </div>
+    <div class="device-card">
+      <div class="device-icon">📱</div>
+      <div class="device-title">Test Devices (Minimum)</div>
+      <div class="device-item">iPhone 12+ (Secure Enclave BLE 5.0 test)</div>
+      <div class="device-item">iPhone 14+ (prod simulation)</div>
+      <div class="device-item">Android 9+ device (Google Pixel recommended)</div>
+      <div class="device-item">Samsung Galaxy (OEM behavior test)</div>
+      <div class="device-item">Xiaomi/Oppo (ColorOS battery kill test)</div>
+    </div>
+    <div class="device-card">
+      <div class="device-icon">🗄️</div>
+      <div class="device-title">Server / Cloud (Phase 1)</div>
+      <div class="device-item">VPS 2 vCPU 2GB RAM $12-17/month (TeraRelay)</div>
+      <div class="device-item">Domain + DNS (TeraRelay endpoint)</div>
+      <div class="device-item">NAS 4TB optional (blob storage test)</div>
+      <div class="device-item">GitHub Actions (CI/CD free tier)</div>
+    </div>
+  </div>
+
+  <div class="sh">Testing Infrastructure Plan</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Test Layer</th><th>Tool</th><th>Priority</th><th>Phase</th></tr></thead>
+      <tbody>
+        <tr><td>Unit Tests</td><td>cargo nextest</td><td class="tok">P0</td><td>Prototype</td></tr>
+        <tr><td>Property-based (crypto)</td><td>proptest</td><td class="tok">P0</td><td>Prototype</td></tr>
+        <tr><td>Memory safety</td><td>cargo miri</td><td class="tok">P0</td><td>Phase 1</td></tr>
+        <tr><td>Integration Tests</td><td>cargo test --test *</td><td class="tok">P0</td><td>Phase 1</td></tr>
+        <tr><td>WasmParity</td><td>Custom test runner</td><td class="tok">P0</td><td>Phase 1</td></tr>
+        <tr><td>E2E (macOS + iPhone)</td><td>XCTest + manual</td><td class="twarn">P1</td><td>Phase 1</td></tr>
+        <tr><td>Load Testing</td><td>k6 / custom Rust bench</td><td class="twarn">P1</td><td>Phase 2</td></tr>
+        <tr><td>Chaos Testing (SC-01..40)</td><td>Custom Rust chaos harness</td><td class="twarn">P1</td><td>Phase 2-3</td></tr>
+        <tr><td>Security Testing</td><td>cargo audit + gitleaks + trivy</td><td class="tok">P0</td><td>Prototype</td></tr>
+        <tr><td>Fuzzing</td><td>cargo-fuzz (libFuzzer)</td><td class="twarn">P1</td><td>Phase 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Cloud & Infra Stack Khuyến Nghị</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Recommendation</th><th>Cost/month</th></tr></thead>
+      <tbody>
+        <tr><td>TeraRelay VPS (dev)</td><td>Hetzner CX22 (2 vCPU, 4GB) — Germany datacenter</td><td class="tok">~$5-8</td></tr>
+        <tr><td>Blob Storage</td><td>Cloudflare R2 (S3-compatible, no egress fee)</td><td class="tok">~$0 (first 10GB free)</td></tr>
+        <tr><td>CI/CD</td><td>GitHub Actions (free for public, $4 for private)</td><td class="tok">~$4-8</td></tr>
+        <tr><td>Secrets Management</td><td>Doppler hoặc GitHub Secrets (không dùng .env file)</td><td class="tok">~$0-7</td></tr>
+        <tr><td>Monitoring (dev)</td><td>Grafana Cloud free tier (10K metrics)</td><td class="tok">~$0</td></tr>
+        <tr><td>EV Code Signing</td><td>DigiCert KeyLocker (~$500/year) — cần cho Windows</td><td class="twarn">~$42</td></tr>
+        <tr><td>Apple Developer Account</td><td>Bắt buộc cho TestFlight</td><td class="tok">~$8</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 9 — VIBECODING OS ══════════════════ -->
+<section class="section" id="s8">
+  <div class="section-id">08 — RECOMMENDED VIBECODING OPERATING SYSTEM</div>
+  <h2 class="section-title">AI-Assisted Engineering System Tối Ưu Cho Solo Founder</h2>
+  <div class="rule"></div>
+
+  <div class="sh">Development Workflow</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Stage</th><th>Approach</th><th>Tool</th></tr></thead>
+      <tbody>
+        <tr><td>Task breakdown</td><td>Phân chia theo bounded context. Mỗi task < 4h. Không task "refactor everything"</td><td>Linear / Notion</td></tr>
+        <tr><td>Prompt strategy</td><td>Spec-first prompting: cung cấp spec section + acceptance criteria + existing code context</td><td>Claude Sonnet 4.5 / Claude Code</td></tr>
+        <tr><td>Context management</td><td>Wiki .brain_wiki/ structure (như mcp-smart-context). Index mọi ADR và spec</td><td>MCP Smart Context (chính dự án này)</td></tr>
+        <tr><td>Architecture review</td><td>Weekly review: không có gì merge nếu vi phạm invariant list</td><td>Checklist cứng trong CLAUDE.md</td></tr>
+        <tr><td>Code review loop</td><td>AI review draft → Self review → Commit. Không merge unreviewed crypto code</td><td>Claude Code + cargo clippy</td></tr>
+        <tr><td>Regression prevention</td><td>Mỗi bug fix phải có regression test trước khi merge</td><td>cargo nextest</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Tooling Setup Cụ Thể</div>
+  <pre>
+# .claude/settings.local.json — TeraChat context
+{
+  "primary_ide": "Claude Code",
+  "context_files": [
+    "docs/raw/MD/Spec-Core-Cryptography-And-Mesh.md",
+    "docs/raw/MD/Tech_Debt.md",        // LUÔN có trong context
+    "source/core/tc-crypto/src/",
+    "phase/README.md"
+  ],
+  "invariants": [
+    "ZeroizeOnDrop on ALL key types",
+    "No raw pointer in pub extern C",
+    "UI is passive renderer only",
+    "CRDT DAG: chat only, NOT Finance"
+  ],
+  "forbidden_patterns": [
+    "impl Drop manually for key structs",  // Use ZeroizeOnDrop derive
+    "unwrap() in pub functions",
+    "println!() with key material",
+    "SystemTime::now() for TTL"            // Use monotonic clock
+  ]
+}</pre>
+
+  <div class="sh">Anti-Technical-Debt System</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Mechanism</th><th>Cadence</th><th>Tool</th></tr></thead>
+      <tbody>
+        <tr><td>Dependency audit</td><td>Every PR</td><td>cargo audit --deny warnings</td></tr>
+        <tr><td>Memory safety</td><td>Weekly</td><td>cargo miri test (slow — schedule it)</td></tr>
+        <tr><td>Secret scan</td><td>Every commit</td><td>gitleaks (pre-commit hook)</td></tr>
+        <tr><td>Architecture checkpoint</td><td>Bi-weekly</td><td>Review Tech_Debt.md + GAP tracker</td></tr>
+        <tr><td>Refactor cadence</td><td>Monthly</td><td>1 tech debt item per sprint minimum</td></tr>
+        <tr><td>Security review cadence</td><td>Per major feature</td><td>External cryptographer cho crypto changes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sh">Knowledge System — Tận Dụng Wiki Đã Có</div>
+  <p>TeraChat đã có wiki system tốt (Obsidian + 80+ pages). Cần bổ sung:</p>
+  <div class="callout callout-green">
+    <p><strong>Sử dụng MCP Smart Context:</strong> Ironically, mcp-smart-context (dự án của chính founder) là tool hoàn hảo để quản lý long-term context cho TeraChat development. Setup <code>.brain_wiki/</code> với index cho 7 domain specs + Tech_Debt.md + GAP tracker. Mỗi session Claude Code sẽ có đủ context để không violate invariants.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 10 — FINAL VERDICT ══════════════════ -->
+<section class="section" id="s9">
+  <div class="section-id">09 — FINAL VERDICT</div>
+  <h2 class="section-title">Kết Luận Thẳng Thắn: Tiếp Tục — Nhưng Với Điều Kiện</h2>
+  <div class="rule"></div>
+
+  <p><strong>Có nên tiếp tục không?</strong> CÓ — với điều kiện scope được thu hẹp ngay lập tức xuống Phase 1 MVP (MLS + License + OIDC + 1 .tapp) và prototype được build trong 6 tuần tới. Nếu không, project sẽ tiếp tục ở spec-writing mode thêm 1 năm nữa và hết tiền / lost momentum trước khi có revenue.</p>
+
+  <p><strong>Có thể scale thành sản phẩm thật không?</strong> CÓ — kiến trúc đúng, market real, regulatory tailwind genuine. Nhưng path là: pilot → revenue → hire → scale, không phải spec-everything → build-everything → launch.</p>
+
+  <div class="sh">Existential Risks</div>
+  <div class="callout callout-red">
+    <p>1. <strong>Spec-only limbo:</strong> 80+ docs, 0 running code. Nếu tiếp tục, runway cạn trước pilot.<br>
+    2. <strong>Crypto implementation risk:</strong> Một lỗi trong tc-crypto = security incident = startup chết.<br>
+    3. <strong>Solo founder bandwidth:</strong> TeraChat full scope > 1 người làm trong bất kỳ timeline reasonable nào.<br>
+    4. <strong>Market timing:</strong> Regulatory window (Nghị định 13/2023) là real nhưng không chờ vô hạn.</p>
+  </div>
+
+  <div class="sh">Phần Đáng Đầu Tư Nhất</div>
+  <p>Prototype MLS E2EE chat + TeraRelay deploy script. Đây là điểm hội tụ của tất cả USP: Zero-Knowledge + single-binary + enterprise license. Nếu demo được điều này trong 6 tuần, pilot sẽ đến.</p>
+
+  <div class="sh">Phần Nguy Hiểm Nhất</div>
+  <p>Tiếp tục viết specs mà không có code chạy. Mỗi tuần không có prototype = mỗi tuần không có feedback = mỗi tuần tăng risk build the wrong thing at great cryptographic complexity.</p>
+
+  <div class="sh">Ước Lượng Timeline & Chi Phí</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Milestone</th><th>Timeline</th><th>Chi phí infra/tháng</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>MVP Prototype (macOS + iPhone)</td><td class="tok">4-6 tuần</td><td class="tok">~$30-50</td><td>Solo founder feasible</td></tr>
+        <tr><td>First Pilot (Phase 1 complete)</td><td class="twarn">4-5 tháng</td><td class="tok">~$50-100</td><td>Cần 1 applied crypto review</td></tr>
+        <tr><td>Production Ready (Phase 2)</td><td class="twarn">12-14 tháng</td><td class="twarn">~$200-500</td><td>Cần hire 1-2 senior Rust engineers</td></tr>
+        <tr><td>Gov/Military Ready (Phase 3)</td><td class="terr">24-30 tháng</td><td class="terr">~$1,000-3,000</td><td>Team 5+ engineers, ISO 27001 ($50K)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict-box">
+    <h2>Kết Luận Cuối Cùng</h2>
+    <p>TeraChat có kiến trúc tốt nhất trong không gian enterprise messaging Việt Nam mà tôi từng thấy. Nhưng kiến trúc không ship product — code mới ship. Build prototype ngay. Validate market ngay. Hire crypto engineer khi có revenue. Mọi thứ khác là noise.</p>
+    <cite style="color:var(--teal);font-size:11px;font-style:normal;letter-spacing:1px;">— Rust/UI Lead, TeraChat Engineering</cite>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 11 — TOP 10 RISKS ══════════════════ -->
+<section class="section" id="s10">
+  <div class="section-id">10 — TOP 10 RISKS</div>
+  <h2 class="section-title">Bảng Rủi Ro Ưu Tiên</h2>
+  <div class="rule"></div>
+  <div class="risk-list">
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R01 — Spec-only, 0 running code</div><div class="rdesc">Không có prototype sau nhiều tháng spec writing. Market window đang đóng.</div></div>
+      <div class="rbadge h">Critical</div>
+      <div class="rmit">Build MLS prototype trong 6 tuần. Freeze spec writing cho đến khi code chạy.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R02 — Crypto implementation lỗi (TD-006)</div><div class="rdesc">FFI panic bypass ZeroizeOnDrop. Key material leak sau abort(). Security incident = startup chết.</div></div>
+      <div class="rbadge h">Critical</div>
+      <div class="rmit">GlobalKeyArena + ffi_boundary! macro. External crypto review trước launch.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R03 — Localhost proxy exfiltration (TD-011)</div><div class="rdesc">127.0.0.1 HTTP streaming = bất kỳ malware nào intercept được. Zero-Knowledge phá vỡ.</div></div>
+      <div class="rbadge h">Critical</div>
+      <div class="rmit">UDS + SO_PEERCRED (Desktop). OTST (Mobile). Không deploy mà không có fix này.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R04 — Solo founder bandwidth vs full-scope specs</div><div class="rdesc">9 nền tảng, 7 domains, MLS + BLE + WASM + AI = 8-12 senior engineers 3 năm. Không feasible solo.</div></div>
+      <div class="rbadge h">Critical</div>
+      <div class="rmit">Hard scope cut: macOS + iPhone only, Phase 1 MVP 4 components.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R05 — AWDL iOS risk chưa được acknowledge</div><div class="rdesc">iOS P2P Wi-Fi phụ thuộc AWDL (private Apple API). No public API = legal + technical dead end.</div></div>
+      <div class="rbadge h">High</div>
+      <div class="rmit">Verify iOS mesh path dùng MultipeerConnectivity (public) hay AWDL (private). Clarify trước Phase 2B.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot h"></div>
+      <div><div class="rname">R06 — NSE TOCTOU race (GAP-C)</div><div class="rdesc">Keychain semaphore approach có fundamental race. Notification loss trên iOS burst push.</div></div>
+      <div class="rbadge h">High</div>
+      <div class="rmit">POSIX flock() + memory-mapped ring buffer. Verify trên real device trước iOS launch.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">R07 — BLE QoS starvation (TD-008)</div><div class="rdesc">File transfer saturate BLE channel → EMDP KillDirective bị drop → Split-brain mesh.</div></div>
+      <div class="rbadge m">High</div>
+      <div class="rmit">MeshMultiplexer P0/P1/P2 priority + RTT-based backpressure. Implement trước Mesh Phase.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">R08 — Android OEM kill (XPLAT-08)</div><div class="rdesc">MIUI/ColorOS/OriginOS kill Background Task → Mesh BLE chết → 40%+ Android market không dùng được Mesh.</div></div>
+      <div class="rbadge m">High</div>
+      <div class="rmit">Android ForegroundService với persistent notification. Test trên Xiaomi/Oppo/Vivo devices thực tế.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">R09 — Market validation gap</div><div class="rdesc">Không có design partner. Spec dựa trên assumptions về nhu cầu khách hàng, không phải data thực tế.</div></div>
+      <div class="rbadge m">Medium</div>
+      <div class="rmit">5 enterprise interviews trước khi tiếp tục spec. Validate: pain point, budget, decision maker.</div>
+    </div>
+    <div class="risk-item">
+      <div class="rdot m"></div>
+      <div><div class="rname">R10 — SAC cross-DB saga (GAP-A)</div><div class="rdesc">hot_dag.db + cold_state.db cross-DB write không atomic. Process kill tại CrdtCommitted = Finance diverge silently.</div></div>
+      <div class="rbadge m">Medium</div>
+      <div class="rmit">SagaJournal với status tracking + idempotent recovery. SagaRecoveryGuard trên boot.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 12 — TOP 10 ROI ══════════════════ -->
+<section class="section" id="s11">
+  <div class="section-id">11 — TOP 10 HIGHEST ROI IMPROVEMENTS</div>
+  <h2 class="section-title">Cải Tiến Có Impact/Cost Ratio Cao Nhất</h2>
+  <div class="rule"></div>
+  <div class="roi-list">
+    <div class="roi-item">
+      <div class="roi-num">01</div>
+      <div>
+        <div class="roi-title">Build MLS E2EE Prototype (4-6 tuần)</div>
+        <div class="roi-desc">Dừng spec writing. Build MLS group chat + TeraRelay binary + macOS + iPhone. Demo được ngay. Cost: 1 developer 6 tuần. Impact: unlock pilot conversations, validate architecture thực tế.</div>
+      </div>
+      <div class="roi-impact roi-high">CRITICAL</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">02</div>
+      <div>
+        <div class="roi-title">Deploy Script Automation (2 tuần)</div>
+        <div class="roi-desc">curl install script + health check endpoint + auto-TLS. Không có demo nào convert nếu IT admin không deploy được trong 30 phút. Cost: 2 tuần. Impact: conversion rate từ demo → pilot.</div>
+      </div>
+      <div class="roi-impact roi-high">HIGH</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">03</div>
+      <div>
+        <div class="roi-title">Fix TD-011 — UDS Secure Streaming (1 tuần)</div>
+        <div class="roi-desc">Thay 127.0.0.1 HTTP proxy bằng UDS + SO_PEERCRED. Zero-Knowledge claim không valid nếu chưa fix. Cost: 1 tuần. Impact: technical credibility với CISO.</div>
+      </div>
+      <div class="roi-impact roi-high">HIGH</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">04</div>
+      <div>
+        <div class="roi-title">CI/CD Pipeline Setup (1 tuần)</div>
+        <div class="roi-desc">GitHub Actions với cargo clippy + cargo audit + gitleaks. Ngăn security regressions từ ngày đầu. Cost: 1 tuần một lần. Impact: catch TD-006 và các lỗi tương tự tự động.</div>
+      </div>
+      <div class="roi-impact roi-high">HIGH</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">05</div>
+      <div>
+        <div class="roi-title">5 Enterprise Customer Interviews (1 tuần)</div>
+        <div class="roi-desc">Validate: pain point real? Budget exists? Decision maker = IT Admin hay CISO? Spec dựa trên assumptions. Cost: 5 calls. Impact: tránh build sai thứ với cryptographic complexity.</div>
+      </div>
+      <div class="roi-impact roi-high">HIGH</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">06</div>
+      <div>
+        <div class="roi-title">OIDC Google Workspace (1 tuần)</div>
+        <div class="roi-desc">Keycloak/Dex + Google OIDC. Không ai muốn tạo password mới. Đây là #1 barrier cho pilot adoption. Cost: 1 tuần. Impact: IT admin onboarding giảm từ 2 giờ xuống 15 phút.</div>
+      </div>
+      <div class="roi-impact roi-mid">MEDIUM</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">07</div>
+      <div>
+        <div class="roi-title">ffi_boundary! Macro + GlobalKeyArena (2 tuần)</div>
+        <div class="roi-desc">Fix TD-006. Không cần external audit để biết đây là critical. Cost: 2 tuần Rust engineering. Impact: zero key material leak trên panic — prerequisite cho production.</div>
+      </div>
+      <div class="roi-impact roi-mid">MEDIUM</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">08</div>
+      <div>
+        <div class="roi-title">WasmParity CI Gate (3 ngày)</div>
+        <div class="roi-desc">Test vector chạy trên cả wasm3 và wasmtime. Catch financial .tapp float divergence trước khi reach production. Cost: 3 ngày. Impact: prevent silent data corruption trong financial workflows.</div>
+      </div>
+      <div class="roi-impact roi-mid">MEDIUM</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">09</div>
+      <div>
+        <div class="roi-title">GAP-A Resolution — Saga Recovery Protocol (1 tuần)</div>
+        <div class="roi-desc">SagaJournal + SagaRecoveryGuard. Cross-DB consistency là foundation của Finance .tapp trust. Cost: 1 tuần. Impact: data integrity guarantee cho enterprise customers.</div>
+      </div>
+      <div class="roi-impact roi-mid">MEDIUM</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num">10</div>
+      <div>
+        <div class="roi-title">MCP Smart Context Integration cho TeraChat Dev (2 ngày)</div>
+        <div class="roi-desc">Setup .brain_wiki/ với 7 domain specs + Tech_Debt.md indexed. Mọi Claude Code session có đủ context để không violate invariants. Cost: 2 ngày (founder đã có tool này). Impact: giảm spec drift 60%.</div>
+      </div>
+      <div class="roi-impact roi-mid">LOW COST</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ SECTION 13 — ROADMAP ══════════════════ -->
+<section class="section" id="s12">
+  <div class="section-id">12 — EXECUTION ROADMAP — IMPACT/COST RATIO</div>
+  <h2 class="section-title">Lộ Trình Thực Thi — Sắp Xếp Theo Impact/Cost</h2>
+  <div class="rule"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Tuần</th>
+          <th>Action</th>
+          <th>Impact</th>
+          <th>Cost</th>
+          <th>Deliverable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-hl"><td>W1</td><td>Customer interviews (5 enterprises). Validate pain point, budget, decision maker</td><td class="tok">Very High</td><td class="tok">Zero $</td><td>Go/No-Go signal cho full build</td></tr>
+        <tr class="row-hl"><td>W1-2</td><td>MCP Smart Context setup cho TeraChat. CI/CD baseline (clippy + audit + gitleaks)</td><td class="tok">High</td><td class="tok">2 ngày</td><td>Dev environment production-grade</td></tr>
+        <tr class="row-hl"><td>W2-6</td><td>Build "TeraChat Zero" prototype: MLS (Curve25519) + License JWT + OIDC Google + macOS + iPhone</td><td class="tok">Critical</td><td class="twarn">6 tuần full-time</td><td>Demo được. Pilot conversations bắt đầu</td></tr>
+        <tr><td>W7-8</td><td>TeraRelay deploy script (curl install). Health check endpoint. Fix TD-011 (UDS streaming)</td><td class="tok">High</td><td class="tok">2 tuần</td><td>IT admin deploy < 30 phút. Zero-Knowledge valid</td></tr>
+        <tr><td>W9-10</td><td>1 Reference .tapp (Expense Approval). Admin Console minimal. Azure AD SAML</td><td class="twarn">Medium</td><td class="twarn">2 tuần</td><td>Work OS demo possible. Pilot ready</td></tr>
+        <tr><td>W11-12</td><td>Pilot với 3 doanh nghiệp đầu tiên. Collect feedback. ffi_boundary! macro (TD-006)</td><td class="tok">Critical</td><td class="tok">Low ($)</td><td>First pilots. Security foundation</td></tr>
+        <tr><td>M4-5</td><td>Sau pilot: Android. PQ-KEM (thuê Applied Cryptographer review $15K). Windows</td><td class="twarn">Medium</td><td class="terr">$15K extern</td><td>Platform expansion. Crypto hardened</td></tr>
+        <tr><td>M6-8</td><td>BLE Survival Mesh. MeshMultiplexer QoS (TD-008). ForegroundService Android</td><td class="twarn">Medium-High</td><td class="twarn">8 tuần</td><td>USP #2 live: offline mesh</td></tr>
+        <tr><td>M9-11</td><td>.tapp Marketplace (5+ vetted tapps). Gemma 4 bundled AI. Fuel metering (TD-003)</td><td class="tok">High</td><td class="twarn">10 tuần</td><td>Work OS category claim valid</td></tr>
+        <tr><td>M12-14</td><td>ISO 27001 prep ($50K). Linux. Gov/Military pilot. Series A prep</td><td class="tok">Critical for rev</td><td class="terr">$50K+ extern</td><td>Highest LTV segment unlocked</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-green">
+    <p><strong>Nguyên tắc roadmap này:</strong> Mỗi bước phải có measurable deliverable. Không có "work on architecture" mà không có demo-able output. Nếu tuần nào không có output chạy được = tuần đó cần review priority.</p>
+  </div>
+
+  <div class="sh">Budget Thực Tế — Phase 1 (6 tháng đầu)</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Item</th><th>Cost</th><th>Timing</th></tr></thead>
+      <tbody>
+        <tr><td>Infra (VPS + R2 + CI)</td><td class="tok">~$50-100/month</td><td>Từ W2</td></tr>
+        <tr><td>Apple Developer Account</td><td class="tok">$99/year</td><td>W1</td></tr>
+        <tr><td>Test devices (Android, additional iPhone)</td><td class="twarn">~$500-800 one-time</td><td>W3</td></tr>
+        <tr><td>External Crypto Review (PQ-KEM)</td><td class="terr">$15,000-30,000</td><td>Month 4-5</td></tr>
+        <tr><td>EV Code Signing (Windows)</td><td class="twarn">~$500/year</td><td>Month 5</td></tr>
+        <tr><td>ISO 27001 Gap Audit</td><td class="terr">$10,000-20,000</td><td>Month 10-12</td></tr>
+        <tr><td><strong>Total Phase 1 budget</strong></td><td class="terr"><strong>~$30-55K</strong></td><td>6 months</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-brand">TeraChat</div>
+  <div class="footer-txt">
+    Internal Technical Audit · Rust/UI Lead Perspective<br>
+    Confidential · 2026 Q2 · v1.0
+  </div>
+</footer>
+
+</div><!-- /main -->
+
+<script>
+// Active nav link on scroll
+const sections = document.querySelectorAll('section[id], header[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+    }
+  });
+}, { threshold: 0.15, rootMargin: '-80px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+navLinks.forEach(l => {
+  l.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(l.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

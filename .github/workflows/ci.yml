@@ -1,0 +1,106 @@
+name: CI — Rust Core
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**"]
+    paths:
+      - "source/core/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "source/core/**"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  # WHY: Reproducible builds require fixed epoch (INFRA-05)
+  SOURCE_DATE_EPOCH: 1700000000
+
+jobs:
+  check:
+    name: Format + Clippy + Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: source/core
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+          components: rustfmt, clippy
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            source/core/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('source/core/Cargo.lock') }}
+
+      # Gate 1: Format check (blocker)
+      - name: cargo fmt --check
+        run: cargo fmt --all --check
+
+      # Gate 2: Clippy (blocker — deny all warnings)
+      - name: cargo clippy --all-features
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+      # Gate 3: Build
+      - name: cargo build
+        run: cargo build --all-features
+
+      # Gate 4: Tests
+      - name: cargo test
+        run: cargo test --all-features --workspace
+
+  # Dependency direction lint — no reverse deps
+  dep-lint:
+    name: Dependency Direction Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/core
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      - name: Check dependency direction
+        run: |
+          # DECISION: Enforce CORE → SYNC → RUNTIME → CLIENT → ECO
+          # tc-crypto must have ZERO internal workspace dependencies
+          CRYPTO_DEPS=$(cargo metadata --format-version=1 --no-deps | \
+            python3 -c "import json,sys; d=json.load(sys.stdin); \
+            pkgs=[p for p in d['packages'] if p['name']=='tc-crypto']; \
+            ws_deps=[dep['name'] for dep in pkgs[0]['dependencies'] if dep['name'].startswith('tc-')]; \
+            print(len(ws_deps))")
+          
+          if [ "$CRYPTO_DEPS" != "0" ]; then
+            echo "❌ tc-crypto must not depend on other tc-* crates"
+            exit 1
+          fi
+          
+          echo "✅ Dependency direction check passed"
