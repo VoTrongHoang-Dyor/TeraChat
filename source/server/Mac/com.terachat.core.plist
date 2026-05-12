@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.terachat.core</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/terachat-core</string>
+        <string>--config</string>
+        <string>/etc/terachat/config.toml</string>
+    </array>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <key>StandardOutPath</key>
+    <string>/var/log/terachat/core.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/var/log/terachat/core.error.log</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>RUST_LOG</key>
+        <string>info</string>
+        <key>TERA_DB_PATH</key>
+        <string>/var/lib/terachat/data</string>
+    </dict>
+    
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>4096</integer>
+    </dict>
+</dict>
+</plist>

@@ -1,0 +1,70 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  security:
+    name: Security Gates
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/core
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks needs full history
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+
+      # Gate 1: cargo audit — RUSTSEC advisory check (blocker)
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: cargo audit
+        run: cargo audit --deny warnings
+
+      # Gate 2: gitleaks — secret detection (blocker)
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Gate 3: trivy — container CVE scan (blocker)
+      # Only runs if Dockerfile exists
+      - name: Run trivy
+        if: hashFiles('**/Dockerfile') != ''
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          severity: "CRITICAL"
+          exit-code: "1"
+
+  # WHY: cargo audit runs on every push, not just PR (security scan spec requirement)
+  audit-on-push:
+    name: Continuous Audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: source/core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      - name: cargo audit (push)
+        run: cargo audit --deny warnings

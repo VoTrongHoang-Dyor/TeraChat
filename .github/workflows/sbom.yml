@@ -1,0 +1,43 @@
+name: SBOM Generation
+
+on:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  sbom:
+    name: Generate CycloneDX SBOM
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/core
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+
+      - name: Install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx
+
+      - name: Generate SBOM (CycloneDX 1.5)
+        run: cargo cyclonedx --format json --output-file terachat-sbom.json
+
+      # NOTE: cosign sign-blob requires HSM/signing key — SKIPPED until hardware available
+      # See report/phase-0-hardware-gaps.md for details
+      #
+      # - name: Sign SBOM with cosign
+      #   run: cosign sign-blob --key ${{ secrets.COSIGN_KEY }} terachat-sbom.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: source/core/terachat-sbom.json
+          retention-days: 90

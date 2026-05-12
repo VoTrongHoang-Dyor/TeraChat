@@ -1,0 +1,176 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "version": "1.0.0",
+    "description": "TeraChat Glassmorphism Design System — Security-Visible, Information-Dense, Zero-Noise",
+    "platforms": ["iOS", "macOS"],
+    "gpu_tiers": ["A", "B", "C"]
+  },
+  "color": {
+    "brand": {
+      "primary": { "value": "#24A1DE", "description": "Online/Connected indicator" },
+      "secondary": { "value": "#1E293B", "description": "Dark mode primary background" },
+      "accent": { "value": "#22D3EE", "description": "Interactive element highlight" }
+    },
+    "security": {
+      "online": { "value": "#24A1DE", "description": "Blue — normal online mode" },
+      "encrypted": { "value": "#3B82F6", "description": "Blue + lock badge — MLS active" },
+      "mesh_dark_navy": { "value": "#0F172A", "description": "Mesh mode background" },
+      "emergency_amber": { "value": "#F59E0B", "description": "EMDP active warning" },
+      "license_warning": { "value": "#F59E0B", "description": "License T-30 amber banner" },
+      "license_degraded": { "value": "#D97706", "description": "License T-0 amber tint" },
+      "license_invalid": { "value": "#1A1A2E", "description": "Charcoal — full lockout" }
+    },
+    "background": {
+      "light": { "value": "rgba(255, 255, 255, 0.08)" },
+      "dark": { "value": "rgba(15, 23, 42, 0.95)" },
+      "glass_light": { "value": "rgba(255, 255, 255, 0.08)" },
+      "glass_dark": { "value": "rgba(15, 23, 42, 0.75)" }
+    },
+    "text": {
+      "primary_light": { "value": "#0F172A" },
+      "primary_dark": { "value": "#F8FAFC" },
+      "secondary_light": { "value": "#475569" },
+      "secondary_dark": { "value": "#94A3B8" },
+      "security_badge": { "value": "#FFFFFF" }
+    }
+  },
+  "glassmorphism": {
+    "tier_a": {
+      "blur": { "value": "20px", "description": "Full GPU — hardware compositing" },
+      "background": { "value": "rgba(255, 255, 255, 0.08)" },
+      "border": { "value": "1px solid rgba(255, 255, 255, 0.12)" },
+      "shadow": { "value": "0 20px 60px rgba(0, 0, 0, 0.25)" }
+    },
+    "tier_b": {
+      "blur": { "value": "10px", "description": "Reduced GPU — lighter compositing" },
+      "background": { "value": "rgba(255, 255, 255, 0.12)" },
+      "border": { "value": "1px solid rgba(255, 255, 255, 0.15)" },
+      "shadow": { "value": "0 10px 30px rgba(0, 0, 0, 0.20)" }
+    },
+    "tier_c": {
+      "blur": { "value": "0px", "description": "Fallback — solid background, no blur" },
+      "background": { "value": "#1E293B" },
+      "border": { "value": "1px solid #334155" },
+      "shadow": { "value": "none" }
+    }
+  },
+  "visual_modes": {
+    "light": {
+      "background": "#FFFFFF",
+      "surface": "rgba(255, 255, 255, 0.08)",
+      "text_primary": "#0F172A",
+      "text_secondary": "#475569",
+      "description": "Default daytime mode"
+    },
+    "dark": {
+      "background": "#0F172A",
+      "surface": "rgba(15, 23, 42, 0.75)",
+      "text_primary": "#F8FAFC",
+      "text_secondary": "#94A3B8",
+      "description": "Default dark mode"
+    },
+    "high_contrast": {
+      "background": "#000000",
+      "surface": "#1A1A1A",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#E2E8F0",
+      "description": "Accessibility — maximum contrast, no glass effect"
+    },
+    "security_overlay": {
+      "background": "rgba(0, 0, 0, 0.85)",
+      "surface": "rgba(239, 68, 68, 0.15)",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#FCA5A5",
+      "description": "Security event overlay — non-spoofable, data from Rust Core only"
+    }
+  },
+  "signal_to_widget_state": {
+    "ONLINE_CONNECTED": {
+      "visual_mode": "light_or_dark",
+      "indicator_color": "#24A1DE",
+      "indicator_icon": "wifi",
+      "description": "Blue indicator — normal connected state"
+    },
+    "MESH_MODE_ACTIVE": {
+      "visual_mode": "dark",
+      "background_override": "#0F172A",
+      "indicator_color": "#22D3EE",
+      "indicator_icon": "radar_pulse_hud",
+      "description": "Dark Navy + Radar Pulse HUD"
+    },
+    "EMDP_ACTIVATED": {
+      "visual_mode": "dark",
+      "background_override": "#0F172A",
+      "indicator_color": "#F59E0B",
+      "indicator_icon": "warning_triangle",
+      "description": "Dark + amber warning — EMDP active"
+    },
+    "E2EE_SESSION_ESTABLISHED": {
+      "visual_mode": "light_or_dark",
+      "indicator_color": "#3B82F6",
+      "indicator_icon": "lock_badge",
+      "description": "Blue glass + lock badge — MLS active"
+    },
+    "PENDING_SECURE_CHANNEL": {
+      "visual_mode": "light_or_dark",
+      "indicator_color": "#F59E0B",
+      "indicator_icon": "hourglass",
+      "description": "Amber indicator — waiting for secure channel"
+    },
+    "MEMORY_PURGE_INITIATED": {
+      "visual_mode": "security_overlay",
+      "force_gpu_tier": "C",
+      "indicator_color": "#EF4444",
+      "indicator_icon": "shield_alert",
+      "description": "SECURE MEMORY PURGE — force GPU Tier C before overlay render (GAP-D)"
+    },
+    "LICENSE_WARNING_T30": {
+      "visual_mode": "light_or_dark",
+      "banner_color": "#F59E0B",
+      "banner_visible": true,
+      "admin_only": true,
+      "description": "Amber banner — license expires in 30 days"
+    },
+    "LICENSE_DEGRADED_T0": {
+      "visual_mode": "light_or_dark",
+      "background_tint": "#D97706",
+      "indicator_icon": "lock",
+      "description": "Amber tint + lock — contact IT prompt"
+    },
+    "LICENSE_INVALID": {
+      "visual_mode": "security_overlay",
+      "background_override": "#1A1A2E",
+      "indicator_icon": "full_lockout",
+      "description": "Charcoal — full screen lockout"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "primary": "SF Pro Display",
+      "secondary": "SF Pro Text",
+      "monospace": "SF Mono",
+      "fallback": "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    "heading_1": { "size": "28px", "weight": 700, "line_height": 1.2 },
+    "heading_2": { "size": "22px", "weight": 600, "line_height": 1.3 },
+    "body": { "size": "16px", "weight": 400, "line_height": 1.5 },
+    "caption": { "size": "13px", "weight": 400, "line_height": 1.4 },
+    "badge": { "size": "11px", "weight": 600, "line_height": 1.0 }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "xxl": "48px"
+  },
+  "border_radius": {
+    "sm": "6px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "24px",
+    "full": "9999px"
+  }
+}

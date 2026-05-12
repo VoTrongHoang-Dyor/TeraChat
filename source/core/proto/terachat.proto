@@ -1,0 +1,360 @@
+syntax = "proto3";
+
+package terachat;
+
+option java_package = "io.terachat.proto";
+option swift_prefix = "TC";
+
+// =============================================================================
+// Core Services — mapped to 7 TERA domains
+// =============================================================================
+
+/// Cryptography and mesh networking operations.
+service CoreService {
+  /// Initiate MLS group session
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse);
+  /// Rotate MLS epoch (key update)
+  rpc RotateEpoch (RotateEpochRequest) returns (RotateEpochResponse);
+  /// Get device identity key fingerprint
+  rpc GetDeviceIdentity (GetDeviceIdentityRequest) returns (GetDeviceIdentityResponse);
+}
+
+/// CRDT DAG and relational data synchronization.
+service SyncService {
+  /// Push DAG nodes to peer
+  rpc PushDagNodes (PushDagNodesRequest) returns (PushDagNodesResponse);
+  /// Pull missing DAG nodes from peer
+  rpc PullDagNodes (PullDagNodesRequest) returns (PullDagNodesResponse);
+  /// Sync relational state (cold_state.db)
+  rpc SyncRelationalState (SyncRelationalRequest) returns (SyncRelationalResponse);
+}
+
+/// Mesh networking and EMDP emergency protocol.
+service MeshService {
+  /// Discover peers on local network
+  rpc DiscoverPeers (DiscoverPeersRequest) returns (DiscoverPeersResponse);
+  /// Activate EMDP emergency mode
+  rpc ActivateEmdp (ActivateEmdpRequest) returns (ActivateEmdpResponse);
+  /// Send mesh priority packet
+  rpc SendMeshPacket (SendMeshPacketRequest) returns (SendMeshPacketResponse);
+}
+
+/// WASM .tapp runtime operations.
+service RuntimeService {
+  /// Load and instantiate a .tapp module
+  rpc LoadTapp (LoadTappRequest) returns (LoadTappResponse);
+  /// Invoke Host ABI function from .tapp
+  rpc InvokeHostAbi (InvokeHostAbiRequest) returns (InvokeHostAbiResponse);
+  /// Get .tapp resource usage metrics
+  rpc GetTappMetrics (GetTappMetricsRequest) returns (GetTappMetricsResponse);
+}
+
+/// Identity, governance, and policy enforcement.
+service GovService {
+  /// Validate license JWT
+  rpc ValidateLicense (ValidateLicenseRequest) returns (ValidateLicenseResponse);
+  /// Evaluate OPA policy
+  rpc EvaluatePolicy (EvaluatePolicyRequest) returns (EvaluatePolicyResponse);
+  /// Record audit trail entry
+  rpc RecordAuditEntry (RecordAuditEntryRequest) returns (RecordAuditEntryResponse);
+}
+
+/// Ecosystem, marketplace, and trust chain.
+service EcoService {
+  /// Verify .tapp signature
+  rpc VerifyTappSignature (VerifyTappSignatureRequest) returns (VerifyTappSignatureResponse);
+  /// Activate DataGrant with quorum
+  rpc ActivateDataGrant (ActivateDataGrantRequest) returns (ActivateDataGrantResponse);
+  /// Emergency kill-switch for .tapp
+  rpc KillTapp (KillTappRequest) returns (KillTappResponse);
+}
+
+/// AI enclave operations — PII redaction, BYOM inference.
+service EnclaveService {
+  /// Invoke AI completion with mandatory PII redaction
+  rpc AiComplete (AiCompleteRequest) returns (AiCompleteResponse);
+  /// Check AI endpoint health
+  rpc AiHealthCheck (AiHealthCheckRequest) returns (AiHealthCheckResponse);
+}
+
+// =============================================================================
+// Common types
+// =============================================================================
+
+/// Request metadata — carried by ALL RPCs.
+message RequestMetadata {
+  /// Distributed trace ID (128-bit, OTEL compatible)
+  bytes trace_id = 1;
+  /// Workspace scope
+  bytes workspace_id = 2;
+  /// Device identity fingerprint
+  bytes device_fingerprint = 3;
+}
+
+// =============================================================================
+// CoreService messages
+// =============================================================================
+
+message CreateSessionRequest {
+  RequestMetadata metadata = 1;
+  bytes group_id = 2;
+  repeated bytes member_identity_keys = 3;
+}
+
+message CreateSessionResponse {
+  bytes session_id = 1;
+  uint64 epoch = 2;
+}
+
+message RotateEpochRequest {
+  RequestMetadata metadata = 1;
+  bytes session_id = 2;
+}
+
+message RotateEpochResponse {
+  uint64 new_epoch = 1;
+}
+
+message GetDeviceIdentityRequest {
+  RequestMetadata metadata = 1;
+}
+
+message GetDeviceIdentityResponse {
+  bytes device_identity_key = 1;
+  string platform = 2;
+}
+
+// =============================================================================
+// SyncService messages
+// =============================================================================
+
+message DagNode {
+  bytes id = 1;
+  repeated bytes parent_ids = 2;
+  bytes content_hash = 3;
+  bytes workspace_id = 4;
+  string node_type = 5;
+  bytes encrypted_payload = 6;
+  uint64 monotonic_tick = 7;
+}
+
+message PushDagNodesRequest {
+  RequestMetadata metadata = 1;
+  repeated DagNode nodes = 2;
+}
+
+message PushDagNodesResponse {
+  uint32 accepted_count = 1;
+  uint32 duplicate_count = 2;
+}
+
+message PullDagNodesRequest {
+  RequestMetadata metadata = 1;
+  /// Hash frontier — the set of DAG tips the requester knows about
+  repeated bytes known_tips = 2;
+}
+
+message PullDagNodesResponse {
+  repeated DagNode missing_nodes = 1;
+}
+
+message SyncRelationalRequest {
+  RequestMetadata metadata = 1;
+  /// Vector clock state for conflict detection
+  map<string, uint64> vector_clock = 2;
+}
+
+message SyncRelationalResponse {
+  map<string, uint64> updated_clock = 1;
+  repeated bytes changed_records = 2;
+}
+
+// =============================================================================
+// MeshService messages
+// =============================================================================
+
+message DiscoverPeersRequest {
+  RequestMetadata metadata = 1;
+}
+
+message DiscoverPeersResponse {
+  repeated MeshPeerInfo peers = 1;
+}
+
+message MeshPeerInfo {
+  bytes device_fingerprint = 1;
+  string role = 2;
+  uint32 election_weight = 3;
+  bool ble_reachable = 4;
+  bool wifi_direct_reachable = 5;
+}
+
+message ActivateEmdpRequest {
+  RequestMetadata metadata = 1;
+  uint32 ttl_seconds = 2;
+}
+
+message ActivateEmdpResponse {
+  bool activated = 1;
+  bytes emdp_session_id = 2;
+}
+
+message SendMeshPacketRequest {
+  RequestMetadata metadata = 1;
+  bytes destination_device_id = 2;
+  bytes payload = 3;
+  uint32 priority = 4;  // 0=Critical, 1=Standard, 2=Bulk
+}
+
+message SendMeshPacketResponse {
+  bool delivered = 1;
+  bool queued = 2;
+}
+
+// =============================================================================
+// RuntimeService messages
+// =============================================================================
+
+message LoadTappRequest {
+  RequestMetadata metadata = 1;
+  bytes tapp_bundle = 2;
+  bytes manifest_signature = 3;
+}
+
+message LoadTappResponse {
+  string tapp_id = 1;
+  uint32 schema_version_major = 2;
+  uint32 schema_version_minor = 3;
+}
+
+message InvokeHostAbiRequest {
+  RequestMetadata metadata = 1;
+  string tapp_id = 2;
+  string function_name = 3;
+  bytes msgpack_payload = 4;
+}
+
+message InvokeHostAbiResponse {
+  bytes msgpack_result = 1;
+  uint64 fuel_consumed = 2;
+}
+
+message GetTappMetricsRequest {
+  RequestMetadata metadata = 1;
+  string tapp_id = 2;
+}
+
+message GetTappMetricsResponse {
+  uint64 memory_bytes = 1;
+  uint64 fuel_consumed = 2;
+  uint64 egress_bytes = 3;
+}
+
+// =============================================================================
+// GovService messages
+// =============================================================================
+
+message ValidateLicenseRequest {
+  RequestMetadata metadata = 1;
+  bytes license_jwt = 2;
+}
+
+message ValidateLicenseResponse {
+  bool valid = 1;
+  string tenant_id = 2;
+  uint32 max_seats = 3;
+  string tier = 4;
+  uint64 valid_until_epoch = 5;
+}
+
+message EvaluatePolicyRequest {
+  RequestMetadata metadata = 1;
+  string policy_name = 2;
+  bytes input_json = 3;
+}
+
+message EvaluatePolicyResponse {
+  bool allowed = 1;
+  string reason = 2;
+}
+
+message RecordAuditEntryRequest {
+  RequestMetadata metadata = 1;
+  string event_type = 2;
+  bytes event_data = 3;
+  /// Ed25519 signature over event_data
+  bytes signature = 4;
+}
+
+message RecordAuditEntryResponse {
+  bytes entry_id = 1;
+  uint64 sequence_number = 2;
+}
+
+// =============================================================================
+// EcoService messages
+// =============================================================================
+
+message VerifyTappSignatureRequest {
+  RequestMetadata metadata = 1;
+  bytes tapp_bundle_hash = 2;
+  bytes signature = 3;
+  bytes publisher_public_key = 4;
+}
+
+message VerifyTappSignatureResponse {
+  bool valid = 1;
+  string trust_tier = 2;  // Community, Verified, Enterprise, Native
+}
+
+message ActivateDataGrantRequest {
+  RequestMetadata metadata = 1;
+  bytes grant_id = 2;
+  uint32 generation = 3;
+  /// Quorum votes from nodes with election_weight > 0
+  repeated bytes quorum_votes = 4;
+}
+
+message ActivateDataGrantResponse {
+  bool activated = 1;
+  string status = 2;  // ACTIVE, PENDING_QUORUM, REVOKED
+}
+
+message KillTappRequest {
+  RequestMetadata metadata = 1;
+  string tapp_id = 2;
+  string reason = 3;
+}
+
+message KillTappResponse {
+  bool killed = 1;
+  uint32 affected_devices = 2;
+}
+
+// =============================================================================
+// EnclaveService messages
+// =============================================================================
+
+message AiCompleteRequest {
+  RequestMetadata metadata = 1;
+  /// Raw prompt — PII redaction is MANDATORY at the gateway, not here
+  string prompt = 2;
+  string model_id = 3;
+  uint32 max_tokens = 4;
+}
+
+message AiCompleteResponse {
+  string completion = 1;
+  uint32 tokens_used = 2;
+  bytes audit_entry_id = 3;
+}
+
+message AiHealthCheckRequest {
+  RequestMetadata metadata = 1;
+}
+
+message AiHealthCheckResponse {
+  bool healthy = 1;
+  string endpoint_url = 2;
+  string model_name = 3;
+}

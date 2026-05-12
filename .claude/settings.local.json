@@ -1,0 +1,44 @@
+{
+  "primary_ide": "Claude Code",
+  "context_files": [
+    "docs/raw/MD/Tech_Debt.md",
+    "docs/raw/MD/Spec-Core-Cryptography-And-Mesh.md",
+    "docs/raw/MD/Spec-Dual-Sync-And-Local-Storage.md",
+    "docs/raw/MD/Spec-Wasm-Tapp-Runtime.md",
+    "docs/wiki/syntheses/gap-resolution-tracker.md",
+    "phase/README.md",
+    "CLAUDE.md"
+  ],
+  "invariants": [
+    "Rust Core is domain owner — UI is passive renderer only",
+    "ZeroizeOnDrop on ALL key material types — no manual Drop impl",
+    "No raw pointer in pub extern C — use Token Protocol (opaque u64)",
+    "Dual-plane sync: CRDT DAG for chat only, NOT for Finance/HR data",
+    "AI only after SanitizedPrompt — PII redaction, no embedding egress",
+    "Headless daemon + gRPC before any UI expansion",
+    "Test never trails — SC-34 to SC-40 are deployment blockers",
+    "1 subsystem per phase — progressive complexity, no parallel subsystems"
+  ],
+  "forbidden_patterns": [
+    "impl Drop manually for key structs — use ZeroizeOnDrop derive",
+    "unwrap() in pub functions — use Result propagation",
+    "println!() with key material — never log sensitive data",
+    "SystemTime::now() for TTL — use Hardware Monotonic Tick-Clock",
+    "Raw pointer (*const u8, *mut u8) in pub extern C — use Token Protocol",
+    "Global CAS hash (BLAKE3 without workspace_id || salt) — tenant-salted only",
+    "Wall-clock timeout for WASM — use instruction fuel metering",
+    "f32/f64 in financial .tapp code — block by CI float-detection gate"
+  ],
+  "security_critical_paths": [
+    "tc-crypto/src/**/*.rs",
+    "tc-mesh/src/**/*.rs",
+    "source/core/tc-crypto/src/"
+  ],
+  "hooks": {
+    "pre_commit": [
+      "cargo fmt --all -- --check",
+      "cargo clippy --all-targets -- -D warnings",
+      "gitleaks detect --source ."
+    ]
+  }
+}

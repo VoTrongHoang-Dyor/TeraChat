@@ -1,0 +1,22 @@
+[package]
+name = "tc-store"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "TeraChat storage — SQLite WAL, TeraVault VFS, SQLCipher encryption"
+
+[dependencies]
+tc-crypto = { path = "../tc-crypto" }
+rusqlite = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+blake3 = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }

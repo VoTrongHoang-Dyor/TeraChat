@@ -199,7 +199,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <div class="cover-notice">
       <span class="cover-notice-icon">🔒</span>
-      <div><strong>Enterprise-Only Product</strong> — Không có tài khoản cá nhân. Mọi người dùng đều bị ràng buộc bởi License JWT, OPA Policies và công cụ quản trị thiết bị (MDM) của tổ chức.</div>
+      <div><strong>Enterprise-Only Product — Payment on Web Only</strong> — Không có tài khoản cá nhân. Mọi giao dịch (mua license, gia hạn, nâng cấp, mua .tapp) được xử lý trên <strong>terachat.io</strong>. App chỉ xác thực license — không có payment flow trong app.</div>
     </div>
 
     <div class="kpi-row">
@@ -414,6 +414,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <ul class="blist">
         <li>Cung cấp License JWT (HSM FIPS 140-3 signed) cho tổ chức.</li>
         <li>Hỗ trợ đa nền tảng (iOS, Android, macOS, Windows, Linux, Huawei).</li>
+        <li><strong style="color:var(--amber);">Lưu ý thiết bị Huawei:</strong> Do hạn chế của HMS Push (không hỗ trợ data-only message), thời gian phản hồi SCIM trên thiết bị Huawei có thể lên đến 4 giờ. Huawei chỉ khả dụng ở gói Standard (SLA 4h), không khả dụng ở gói Enterprise và Gov/Military (yêu cầu SCIM < 30s). Vui lòng sử dụng Android (Google Mobile Services) hoặc iOS cho Enterprise deployment.</li>
         <li>Price lock: Cố định giá trong toàn bộ thời hạn hợp đồng đã ký.</li>
         <li>Hỗ trợ qua Email trong giờ hành chính (Gói Business) và Dedicated 24/7 (Gói Enterprise+).</li>
         <li>Bảo vệ chống Jailbreak & System Prompt leak tuyệt đối.</li>

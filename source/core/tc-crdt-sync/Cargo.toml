@@ -1,0 +1,22 @@
+[package]
+name = "tc-crdt-sync"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "TeraChat CRDT DAG sync — offline-first dual-plane synchronization"
+
+[dependencies]
+tc-crypto = { path = "../tc-crypto" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+blake3 = { workspace = true }
+uuid = { workspace = true }
+bytes = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }

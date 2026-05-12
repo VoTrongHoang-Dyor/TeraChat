@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package terachat.errors;
+
+option java_package = "io.terachat.proto.errors";
+option swift_prefix = "TCErr";
+
+// =============================================================================
+// Standard Error Codes — covering all 7 TERA domains
+//
+// Error responses MUST NOT include key material paths (security invariant).
+// Numeric codes are unique across domains — no duplicates allowed.
+// =============================================================================
+
+/// Error domain prefix ranges:
+///   CRYPTO_*   : 1000–1099
+///   SYNC_*     : 2000–2099
+///   RUNTIME_*  : 3000–3099
+///   GOV_*      : 4000–4099
+///   ENCLAVE_*  : 5000–5099
+///   ECO_*      : 6000–6099
+///   CLIENT_*   : 7000–7099
+enum ErrorCode {
+  // Reserved
+  ERROR_CODE_UNSPECIFIED = 0;
+
+  // --- CRYPTO domain (1000–1099) ---
+  CRYPTO_KEY_GENERATION_FAILED = 1000;
+  CRYPTO_ENCRYPTION_FAILED = 1001;
+  CRYPTO_DECRYPTION_FAILED = 1002;
+  CRYPTO_SIGNATURE_VERIFICATION_FAILED = 1003;
+  CRYPTO_KEY_DERIVATION_FAILED = 1004;
+  CRYPTO_ENCLAVE_UNAVAILABLE = 1005;
+  CRYPTO_KEY_NOT_FOUND = 1006;
+  CRYPTO_ARENA_EXHAUSTED = 1007;
+  CRYPTO_FFI_BOUNDARY_VIOLATION = 1008;
+  CRYPTO_ZEROIZATION_FAILED = 1009;
+  CRYPTO_HARDWARE_ROOT_UNAVAILABLE = 1010;
+  CRYPTO_MLS_EPOCH_MISMATCH = 1011;
+
+  // --- SYNC domain (2000–2099) ---
+  SYNC_DAG_MERGE_CONFLICT = 2000;
+  SYNC_TOMBSTONE_VACUUM_FAILED = 2001;
+  SYNC_VECTOR_CLOCK_DIVERGENCE = 2002;
+  SYNC_SAGA_RECOVERY_FAILED = 2003;
+  SYNC_WAL_INTEGRITY_FAILED = 2004;
+  SYNC_DUPLICATE_NODE = 2005;
+  SYNC_HASH_FRONTIER_MISMATCH = 2006;
+  SYNC_DATABASE_LOCKED = 2007;
+  SYNC_SHADOW_DB_RENAME_FAILED = 2008;
+
+  // --- RUNTIME domain (3000–3099) ---
+  RUNTIME_WASM_INSTANTIATION_FAILED = 3000;
+  RUNTIME_ABI_VERSION_MISMATCH = 3001;
+  RUNTIME_FUEL_EXHAUSTED = 3002;
+  RUNTIME_MEMORY_LIMIT_EXCEEDED = 3003;
+  RUNTIME_EGRESS_LIMIT_EXCEEDED = 3004;
+  RUNTIME_POLICY_DENIED = 3005;
+  RUNTIME_CAPABILITY_NOT_DECLARED = 3006;
+  RUNTIME_SANDBOX_VIOLATION = 3007;
+  RUNTIME_TAPP_NOT_FOUND = 3008;
+
+  // --- GOV domain (4000–4099) ---
+  GOV_LICENSE_INVALID = 4000;
+  GOV_LICENSE_EXPIRED = 4001;
+  GOV_SEAT_LIMIT_EXCEEDED = 4002;
+  GOV_POLICY_EVALUATION_FAILED = 4003;
+  GOV_AUDIT_WRITE_FAILED = 4004;
+  GOV_PERMISSION_DENIED = 4005;
+  GOV_SCIM_SYNC_FAILED = 4006;
+  GOV_AUTHORITY_HIERARCHY_VIOLATION = 4007;
+
+  // --- ENCLAVE domain (5000–5099) ---
+  ENCLAVE_AI_ENDPOINT_UNAVAILABLE = 5000;
+  ENCLAVE_PII_REDACTION_FAILED = 5001;
+  ENCLAVE_MODEL_NOT_FOUND = 5002;
+  ENCLAVE_INFERENCE_TIMEOUT = 5003;
+  ENCLAVE_AUDIT_SIGNING_FAILED = 5004;
+  ENCLAVE_EGRESS_GUARD_BLOCKED = 5005;
+
+  // --- ECO domain (6000–6099) ---
+  ECO_SIGNATURE_INVALID = 6000;
+  ECO_TAPP_REVOKED = 6001;
+  ECO_DATAGRANT_QUORUM_PENDING = 6002;
+  ECO_DATAGRANT_REVOKED = 6003;
+  ECO_KILL_SWITCH_ACTIVATED = 6004;
+  ECO_PUBLISHER_TRUST_INSUFFICIENT = 6005;
+  ECO_TRANSPARENCY_LOG_MISMATCH = 6006;
+
+  // --- CLIENT domain (7000–7099) ---
+  CLIENT_IPC_CHANNEL_UNAVAILABLE = 7000;
+  CLIENT_STREAMING_TOKEN_EXPIRED = 7001;
+  CLIENT_UI_STATE_DESYNC = 7002;
+  CLIENT_OUTBOX_QUEUE_FULL = 7003;
+  CLIENT_WAL_LOCK_TIMEOUT = 7004;
+  CLIENT_THERMAL_THROTTLING = 7005;
+  CLIENT_MEMORY_PRESSURE = 7006;
+}
+
+/// Standard error response wrapper.
+/// All gRPC error responses use this structure.
+message TeraError {
+  ErrorCode code = 1;
+  /// Human-readable message — MUST NOT contain key material paths
+  string message = 2;
+  /// Domain that produced the error
+  string domain = 3;
+  /// Request trace_id for correlation
+  bytes trace_id = 4;
+}

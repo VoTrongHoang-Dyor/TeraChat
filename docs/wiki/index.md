@@ -1,6 +1,6 @@
 # Wiki Index
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 ## TeraChat — Product Definition
 
@@ -22,6 +22,7 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[Terachat Architecture Overview]] — System layers, communication model, spec dependency graph, role-based navigation — 2026-05-11
 - [[Zero-Knowledge Architecture]] — Blind router model, key material isolation, mathematical security guarantees — 2026-05-10
 - [[Enterprise License Model]] — License-gated access, deployment tiers, cryptographic license entanglement — 2026-05-10
+- [[ADR-006 AI Gateway Architecture]] — **ACCEPTED** Loại bỏ local proxy: TeraRelay Extension (Phase 1) → Native Rust SDK tc-enclave (Phase 2D), PII Gate mandatory — 2026-05-12
 
 ### Communication Model
 - [[Hierarchical Authority Messaging]] — Authority-gated communication, internal + branch only, no customer channels — 2026-05-11
@@ -78,13 +79,15 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 
 ## Syntheses
 
-### Improvement & Restructuring (2026-05-11)
+### Improvement & Restructuring (2026-05-11 / 2026-05-12)
 - [[improvement-plan-2026-05-11]] — **IMPROVEMENT HUB** — Central navigation: 14 weaknesses → 14 solutions, step-by-step execution order
 - [[narrowed-phase-1-mvp]] — Narrowed Phase 1 scope: MLS + License + OIDC + 1 t-app (deferred: PQ, mesh, AI, marketplace)
-- [[gap-resolution-tracker]] — GAP Resolution Tracker: 10 GAPs (A-J), concrete decisions needed, current status
+- [[gap-resolution-tracker]] — GAP Resolution Tracker: 10 GAPs (A-J), all resolved with final architectural decisions — 2026-05-12
 - [[platform-rollout-phasing]] — Platform rollout: macOS+iPhone first → Android → Windows → Linux → Huawei
 - [[prototype-first-model]] — Prototype-first + Progressive Complexity: 1 subsystem per phase, demo in 4-6 weeks
-- [[deployment-automation-spec]] — Deployment spec: 1-command install, 30-minute IT admin target
+- [[deployment-automation-spec]] — Deployment spec: 1-command install, backup/recovery, monitoring, staging, cost model
+- [[ci-cd-pipeline-spec]] — CI/CD pipeline: progressive gates, quality checks per phase, secrets management, hermetic builds — 2026-05-12
+- [[platform-limitation-registry]] — Cross-platform limitation registry: 10 XPLAT items, disclosure requirements, platform SLA matrix — 2026-05-12
 - [[quantitative-phase-metrics]] — Quantitative metrics for every phase + market validation gates
 - [[ai-independent-workstream]] — AI decoupled from messaging core via Host ABI boundary
 - [[security-review-requirements]] — Security review requirements: who, what, when, budget estimates

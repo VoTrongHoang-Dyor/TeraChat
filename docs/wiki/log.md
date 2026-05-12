@@ -108,3 +108,75 @@
   - Security review budgeted: $15K-$100K depending on phase
 - **Open questions remaining:** Gemma 4 RAM budget, marketplace revenue model, authority hierarchy depth, inter-branch latency, AI model vetting standard
 - **Key takeaway:** TeraChat architecture is excellent but was over-scoped and under-validated. The restructuring provides a realistic 18-24 month path focused on proving value incrementally rather than building everything at once.
+
+## [2026-05-12] query | Brainstorm AI Gateway Architecture — Thay thế Local Proxy
+- **Trigger:** Yêu cầu loại bỏ `ANTHROPIC_BASE_URL="http://localhost:8082"` local proxy pattern
+- **Vấn đề xác định:** 5 rủi ro production: plaintext loopback, PII Gate bypass, thiếu audit trail, không scale, single point of failure
+- **Bốn hướng đánh giá:** Native Rust SDK (H1), Unix Domain Socket (H2), TeraRelay Extension (H3), Cloudflare Gateway (H4)
+- **Quyết định: Hybrid H3 → H1**
+  - Phase 1: H3 TeraRelay Extension — reuse auth stack, giữ "1 binary 1 command" deployment
+  - Phase 2D: H1 Native Rust SDK trong `tc-enclave` — full control, zero intermediate hop
+  - H4 Cloudflare: REJECTED vĩnh viễn — vi phạm Zero-Knowledge + Offline-First invariants
+- **Tài liệu tạo:** `wiki/concepts/adr-006-ai-gateway-architecture.md`
+- **Index cập nhật:** Thêm ADR-006 vào Core Architecture section
+- **5 câu hỏi cần lock:** AI endpoint Phase 1, ONNX PII Gate location, rate limit unit, offline behavior, audit scope
+- **Key takeaway:** Local HTTP proxy là dev shortcut hợp lệ nhưng không phải production architecture. TeraRelay Extension là path ít friction nhất cho Phase 1 vì reuse existing auth infrastructure.
+
+## [2026-05-12] refactor | Chuyển dịch thanh toán sang Web — Loại bỏ In-App Payment
+
+- **Trigger:** Loại bỏ các thiết kế kiến trúc cũ về thanh toán ngay trên app
+- **Quyết định kiến trúc:**
+  - **Payment on Web Only:** Tất cả giao dịch (mua license, gia hạn, nâng cấp tier, mua .tapp) được xử lý trên **trang chủ web terachat.io**
+  - **App không xử lý thanh toán:** App chỉ nhận License JWT đã cấp và xác thực — không có payment form, checkout flow, hay billing page
+  - **.tapp Web Marketplace:** Mua .tapp trên web, app chỉ download, xác thực chữ ký, và chạy trong sandbox
+  - **Admin Console:** Nút "Renew" được thay bằng "Manage on terachat.io" — redirect ra web dashboard
+- **Nguyên tắc bất biến mới:** Payment processing không bao giờ tồn tại trong app codebase
+- **Files đã cập nhật:**
+  - `docs/wiki/concepts/enterprise-license-model.md` — Thêm "Payment on Web Only" section + Design Decision
+  - `docs/wiki/concepts/wasm-tapp-runtime.md` — Làm rõ Web Marketplace là nơi duy nhất mua .tapp
+  - `docs/raw/MD/Design.md` — License Dashboard: nút "Manage on terachat.io", Plugin Panel: link web marketplace
+  - `docs/raw/MD/Introduction.md` — Cập nhật flow license-gated architecture
+  - `README.md` — Cập nhật mô hình truy cập và .tapp marketplace
+  - `docs/wiki/concepts/phase-framework.md` — Marketplace billing trên web
+  - `docs/wiki/syntheses/deployment-automation-spec.md` — IT Admin mua license trên web
+  - `docs/raw/MD/Directory-tree.md` — Web_Marketplace.html mô tả
+  - `docs/HTML/Pricing_Packages.html` — Cover notice: "Payment on Web Only"
+  - `phase/README.md` — Web Marketplace payment notation
+- **Key takeaway:** TeraChat là enterprise platform với procurement cycle phức tạp — không thể tự động hóa qua in-app purchase. Tách payment khỏi app giữ app đơn giản và tập trung billing/compliance lên web dashboard nơi IT Admin quản lý toàn bộ quy trình tài chính.
+
+## [2026-05-12] resolve | Technical Audit Resolution — Giải quyết toàn bộ GAPs & Tech Debt Specs
+
+- **Trigger:** Báo cáo TeraChat_TechnicalAudit.html — 52/100 pre-prototype, 16 tech debt CRITICAL, 10 GAPs chưa giải quyết
+- **Nguyên tắc:** Điều chỉnh tài liệu kỹ thuật (chưa có code) để tránh nợ và xung đột kỹ thuật trong tương lai
+- **GAP Resolution — tất cả 10 GAPs đã có quyết định kiến trúc cuối cùng:**
+  - GAP-A: SagaRecoveryGuard protocol — retry limit 3, manual intervention path qua Admin Console
+  - GAP-B: WAL handshake signals — thêm vào CoreSignal enum, timeout 5s + exponential backoff, read-only mode silent
+  - GAP-C: NSE TOCTOU — POSIX flock() + memory-mapped ring buffer, không dùng SQLite cho NSE staging
+  - GAP-D: MemoryPressureWarning — đã resolved trước đó
+  - GAP-E: DataGrant quorum — weighted voting (HQ=3, Regional=2, Branch=1), generation counter từ 1
+  - GAP-F: Huawei disclosure — đã cập nhật Pricing_Packages.html với cảnh báo rõ ràng
+  - GAP-G: Burner Agent + EMDP Freeze — queue removal, force unfreeze 2h threshold, Admin signatures
+  - GAP-H: Float detection — đã resolved trước đó
+  - GAP-I: Binary Transparency gossip — đã resolved trước đó
+  - GAP-J: Outbox Queue TTL — đã resolved trước đó
+- **Tech Debt Resolution Specs — thêm 6 protocol specs vào Tech_Debt.md §5:**
+  - §5.8: EMDP Hybrid PQ-KEM Escrow (TD-009) — Hybrid ECIES + ML-KEM-768, RaptorQ FEC fragmentation
+  - §5.9: Hardware Monotonic Clock (TD-010) — mach_absolute_time, clock rollback detection, TimeSource trait
+  - §5.10: Secure Streaming Protocol (TD-011) — UDS + SO_PEERCRED (Desktop), OTST (Mobile), stream encryption
+  - §5.11: Duress PIN + Exponential Backoff Tarpit (TD-012) — exponential backoff, Duress PIN, remote wipe
+  - §5.12: Tenant-Salted CAS Dedup (TD-013 + TD-014) — workspace-salted hash, dual-algorithm for Gov tier
+  - §5.13: Thermal Budget Management Protocol (TD-016) — ThermalStateMonitor, 4 throttling levels, recovery
+- **Infrastructure Specs Created:**
+  - `ci-cd-pipeline-spec.md` — Progressive CI gates (Phase 0 → Phase 2+), secrets management, hermetic builds, runner infrastructure
+  - `deployment-automation-spec.md` (enhanced) — Backup/recovery procedures, monitoring stack (Prometheus+Loki+Grafana), staging environment, configuration reference, infrastructure cost model
+  - `platform-limitation-registry.md` — 10 XPLAT items với disclosure requirements, platform SLA matrix, testing requirements per platform
+- **AI-Vibe Coding Guardrails:**
+  - `CLAUDE.md` — 8 architectural invariants, 8 forbidden patterns, AI compatibility matrix, code review checklist, crypto code requirements
+  - `.claude/settings.local.json` — invariants, forbidden_patterns, security_critical_paths, pre_commit hooks
+- **Phase Plan Update:**
+  - `phase/README.md` V3.1 — Solo founder reality analysis, hire triggers, realistic budget per phase, burn-out warnings, minimum viable day rule
+  - Budget estimates: Prototype ~$100-200, Phase 1 ~$200-400, full path ~$30-55K (6 tháng) hoặc $200-500K/năm (Phase 3B)
+- **Pricing Update:**
+  - `Pricing_Packages.html` — Thêm Huawei disclaimer (GAP-F): Huawei chỉ Standard tier, SLA 4h, không Enterprise/Gov
+- **Files changed:** 10 files (4 created, 6 updated)
+- **Key takeaway:** Tất cả 10 GAPs đã có quyết định kiến trúc cuối cùng. Tất cả 16 tech debt items đã có protocol resolution cụ thể. Project sẵn sàng để bắt đầu prototype mà không có unresolved architectural questions.
