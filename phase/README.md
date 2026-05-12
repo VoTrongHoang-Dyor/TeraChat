@@ -2,8 +2,8 @@
 
 ```yaml
 id: "TERA-PHASE-MAP"
-version: "3.0.0"
-date: "2026-05-11"
+version: "3.1.0"
+date: "2026-05-12"
 principle: "Prototype → MVP → Progressive Complexity (1 subsystem/phase)"
 timeline: "18-24 months (not 35 days)"
 ```
@@ -144,7 +144,7 @@ PROTOTYPE (4-6 tuần)
 ## Phase 2C — .tapp Marketplace
 
 **Duration:** 2 tháng (Month 10-11)
-**Subsystem mới:** WASM Dual-Engine + Web Marketplace + Self-Service Deploy
+**Subsystem mới:** WASM Dual-Engine + Web Marketplace (payment on terachat.io) + Self-Service Deploy
 **Prerequisite:** ≥ 5 khách hàng trả tiền (cần user base cho marketplace)
 
 **Gate Metrics:**
@@ -279,9 +279,59 @@ Relay (VPS daemon)            →  All clients (mTLS/WSS)
 | Platform Rollout Phasing | `docs/wiki/syntheses/platform-rollout-phasing.md` |
 | Prototype First Model | `docs/wiki/syntheses/prototype-first-model.md` |
 | Deployment Automation Spec | `docs/wiki/syntheses/deployment-automation-spec.md` |
+| CI/CD Pipeline Spec | `docs/wiki/syntheses/ci-cd-pipeline-spec.md` |
 | Quantitative Phase Metrics | `docs/wiki/syntheses/quantitative-phase-metrics.md` |
 | AI Independent Workstream | `docs/wiki/syntheses/ai-independent-workstream.md` |
 | Security Review Requirements | `docs/wiki/syntheses/security-review-requirements.md` |
 | Vision Redefinition | `docs/wiki/syntheses/vision-redefinition-2026-05-11.md` |
 | Phase Framework (Economic) | `docs/wiki/concepts/phase-framework.md` |
 | Original 35-Day Plan | `phase/terachat-ai-agent-phase-plan.md` (archived reference) |
+
+---
+
+## Solo Founder Reality — Budget & Hire Triggers
+
+### Phân tích nguồn lực
+
+| Scenario | Team Size | Timeline Full Scope | Timeline MVP |
+|----------|-----------|---------------------|--------------|
+| Full senior team | 8-12 engineers | 3 năm | 4-6 tháng |
+| Solo + AI tools | 1 engineer + AI | 6-8 năm (không khả thi) | 4-6 tháng |
+| **Solo + Freelancers (khuyến nghị)** | **1 founder + hire đúng lúc** | **18-24 tháng** | **4-6 tháng** |
+
+### Hire Triggers — KHI NÀO cần hire
+
+| Trigger | Cần hire ai | Chi phí ước tính | Phase |
+|---------|-------------|------------------|-------|
+| Cần PQ-KEM implementation | Applied Cryptographer (freelance) | $15,000-30,000 | Phase 2A |
+| Cần BLE Mesh protocol | Distributed Systems Engineer | $80-120K/năm (full-time) | Phase 2B |
+| 3+ pilots active, cần support | Solutions Engineer | $60-80K/năm | Phase 1 |
+| Chuẩn bị ISO 27001 | Compliance Consultant | $20,000-40,000 | Phase 3A |
+| 50+ enterprise customers | SRE + Support team | $100-150K/năm/người | Phase 3B |
+| Revenue > $15K MRR | CTO/VP Engineering (full-time) | $120-180K/năm + equity | Phase 2 |
+
+### Budget Thực Tế
+
+| Giai đoạn | Duration | Infra/tháng | External Cost | Tổng |
+|-----------|----------|-------------|---------------|------|
+| **Phase 0 + Prototype** | 6-8 tuần | $30-50 | $0 (solo) | **~$100-200** |
+| **Phase 1 MVP** | 4 tháng | $50-100 | $0 (solo + AI) | **~$200-400** |
+| **Phase 2A PQ-KEM** | 2 tháng | $100-200 | $15K-30K (crypto review) | **~$15K-30K** |
+| **Phase 2B Mesh** | 3 tháng | $200-500 | $80-120K/năm (hire) | **~$20K-30K** |
+| **Phase 2C Marketplace** | 2 tháng | $200-500 | $0 (solo + AI) | **~$400-1,000** |
+| **Phase 2D AI** | 3 tháng | $300-800 | $0 (solo + AI) | **~$900-2,400** |
+| **Phase 3A Gov** | 4 tháng | $500-1,200 | $20K-40K (ISO 27001) | **~$22K-45K** |
+| **Phase 3B Scale** | 6 tháng | $1,000-3,000 | Team 5+ engineers | **~$200K-500K/năm** |
+
+### Nguyên tắc tài chính
+
+1. **Không hire trước khi có revenue** — ngoại trừ Applied Cryptographer (freelance) cho PQ-KEM
+2. **Mỗi lần hire = 1 người** — không hire 2 người cùng lúc
+3. **Revenue threshold trước khi hire full-time:** $15K MRR cho kỹ sư đầu tiên, $50K MRR cho kỹ sư thứ hai
+4. **Pilot revenue target:** 3 pilots × $500-1,500/tháng = $1,500-4,500 MRR (đủ cover infra + chi phí cơ bản)
+
+### Risk Burnout — Cảnh báo
+
+- **Spec writing limit:** Không viết spec mới khi spec cũ chưa có code chạy. Rule: "1 spec written → 1 prototype built → validate → next spec."
+- **Analysis paralysis:** 80+ docs là đủ cho 2 năm development. Không cần thêm spec mới trước khi có prototype.
+- **Minimum viable day:** Mỗi ngày phải có ít nhất 1 commit code hoặc 1 test passed. Không có ngày "chỉ research". |

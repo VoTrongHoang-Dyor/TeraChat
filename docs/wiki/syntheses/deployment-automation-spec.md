@@ -18,7 +18,7 @@ resolves: "Điểm yếu #9 — Không có deployment automation spec"
 ## Deployment Flow
 
 ```
-1. IT Admin nhận license key từ TeraChat (email)
+1. IT Admin mua license trên terachat.io → nhận license key qua email
 2. Mở terminal trên Mac mini / Linux server
 3. Chạy MỘT lệnh:
    curl -fsSL https://install.terachat.io | sudo bash
@@ -161,3 +161,146 @@ Kịch bản test bắt buộc:
 ## 🧠 Design Decision
 
 **Tại sao install script qua curl pipe bash?** → Đây là pattern quen thuộc với IT admin (Docker, Homebrew, Oh My Zsh đều dùng). Một binary + một lệnh = zero friction. Trade-off: cần ký script với GPG để chống tampering. Alternative: Homebrew (macOS) + apt repo (Linux) sẽ thêm sau Phase 1.
+
+---
+
+## Backup & Recovery
+
+### Automated Backup
+
+```bash
+# Chạy mỗi 6h qua cron/systemd timer
+terachat-relay backup --output /mnt/nas/terachat-backup/
+# Tạo: hot_dag.db.backup + cold_state.db.backup + config.toml.backup
+# Dùng: sqlite3 .backup (online, không lock)
+# Verify: BLAKE3 checksum trên mỗi backup file
+```
+
+### Recovery Procedure
+
+```bash
+terachat-relay restore --from /mnt/nas/terachat-backup/2026-05-12T06:00:00Z/
+# 1. Verify backup integrity (BLAKE3 checksum)
+# 2. Stop relay gracefully
+# 3. Restore databases từ backup
+# 4. Replay WAL từ backup time → current
+# 5. Start relay
+# 6. Health check → verify active
+```
+
+### Backup Retention Policy
+
+| Tier | Retention | Frequency |
+|------|-----------|-----------|
+| Standard | 7 ngày | Mỗi 6h |
+| Enterprise | 30 ngày | Mỗi 1h |
+| Gov/Military | 90 ngày + offline copy | Mỗi 15 phút |
+
+---
+
+## Monitoring Stack
+
+| Component | Tool | Phase |
+|-----------|------|-------|
+| Metrics | Prometheus (scrape `/metrics` mỗi 15s) | Phase 1 |
+| Logs | Loki + Promtail (JSON format) | Phase 1 |
+| Dashboards | Grafana (import từ `grafana/dashboards/`) | Phase 1 |
+| Alerts | Grafana AlertManager | Phase 1 |
+
+### Critical Metrics
+
+```
+terachat_messages_delivered_total
+terachat_messages_latency_seconds{quantile="0.5,0.95,0.99"}
+terachat_active_connections
+terachat_db_size_bytes
+terachat_wal_checkpoint_seconds
+terachat_mls_epoch_rotation_seconds
+terachat_license_days_remaining
+terachat_tls_cert_days_remaining
+terachat_backup_last_success_timestamp
+```
+
+### Critical Alerts
+
+| Alert | Condition | Severity | Channel |
+|-------|-----------|----------|---------|
+| Relay down | `up == 0` > 60s | P0 | PagerDuty |
+| TLS expiry < 7 days | `tls_expiry_days < 7` | P0 | PagerDuty |
+| Disk > 80% | `disk_used_pct > 80` | P1 | Slack |
+| License expiry < 30 days | `license_days < 30` | P1 | Slack |
+| Message latency > 5s (p95) | `p95 > 5` sustained 5m | P1 | Slack |
+| DB size > 80% max | `db_size / db_max > 0.8` | P2 | Email |
+| Backup failure > 12h | `backup_success == 0` > 12h | P1 | Slack |
+
+---
+
+## Staging Environment
+
+```
+staging.terachat.internal:
+  - Bản sao của production config (không phải production data)
+  - Deploy tự động từ main branch khi CI pass
+  - Smoke test sau deploy:
+    1. GET /health → 200
+    2. Gửi 10 messages giữa 2 test users → all delivered < 2s
+    3. Create channel + add member + remove member
+    4. Kill relay → auto restart < 10s → 0 data loss
+    5. Backup + restore cycle → no corruption
+  - Dữ liệu test được reset mỗi tuần
+  - Không chạy trên cùng machine với production
+```
+
+---
+
+## Configuration File Reference
+
+```toml
+# /etc/terachat/config.toml
+[server]
+listen = "0.0.0.0:443"
+health_port = 8443
+
+[tls]
+provider = "acme"            # acme | self-signed | manual
+domain = "chat.mycompany.com"
+acme_email = "it@mycompany.com"
+
+[storage]
+data_dir = "/var/lib/terachat"
+max_db_size_gb = 100
+backup_dir = "/mnt/nas/terachat-backup"
+
+[license]
+key = "TERA-XXXX-XXXX-XXXX"
+enterprise_tier = "standard"
+
+[auth]
+oidc_provider = "google"     # google | azure | keycloak
+oidc_client_id = "..."
+
+[mesh]
+enabled = false              # Phase 2B
+mesh_port = 0
+
+[monitoring]
+prometheus_port = 9090
+log_level = "info"           # debug | info | warn | error
+log_format = "json"          # json | text (json for Loki)
+```
+
+---
+
+## Infrastructure Cost Model
+
+| Component | Phase | Provider | Cost/month |
+|-----------|-------|----------|------------|
+| TeraRelay VPS | Prototype | Hetzner CX22 (2 vCPU, 4GB) | ~$5-8 |
+| Blob Storage | Prototype | Cloudflare R2 (S3, no egress) | ~$0 (10GB free) |
+| CI/CD | Phase 0 | GitHub Actions | ~$0-8 |
+| Monitoring | Phase 1 | Grafana Cloud free tier | ~$0 |
+| Secrets | Phase 1 | Doppler free tier | ~$0 |
+| Domain + DNS | Prototype | Cloudflare | ~$10/year |
+| EV Code Signing | Phase 2 | DigiCert KeyLocker | ~$500/year |
+| Apple Developer | Prototype | Apple Developer Program | ~$99/year |
+| **Total (Prototype-Phase 1)** | | | **~$30-50/month** |

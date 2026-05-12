@@ -1,0 +1,20 @@
+[package]
+name = "tc-mesh"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "TeraChat Survival Mesh — BLE 5.0, Wi-Fi Direct, EMDP protocol"
+
+[dependencies]
+tc-crypto = { path = "../tc-crypto" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+bytes = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }

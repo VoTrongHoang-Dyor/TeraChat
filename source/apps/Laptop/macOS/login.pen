@@ -1,0 +1,798 @@
+{
+  "version": "2.11",
+  "children": [
+    {
+      "type": "frame",
+      "id": "macOS_root",
+      "x": 0,
+      "y": 0,
+      "name": "macOS Login Window",
+      "clip": true,
+      "width": 900,
+      "height": 640,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bg_decor",
+          "name": "Background Decor Layer",
+          "width": 900,
+          "height": 640,
+          "fill": "#F5F9FC",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "glow_top_right",
+              "name": "Ambient Glow Top Right",
+              "x": 520,
+              "y": -120,
+              "width": 500,
+              "height": 400,
+              "fill": "#E8F4FD",
+              "opacity": 0.6
+            },
+            {
+              "type": "ellipse",
+              "id": "glow_bottom_left",
+              "name": "Ambient Glow Bottom Left",
+              "x": -100,
+              "y": 380,
+              "width": 400,
+              "height": 300,
+              "fill": "#D6EEFB",
+              "opacity": 0.4
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "left_brand_panel",
+          "name": "Left Brand Panel",
+          "x": 0,
+          "y": 0,
+          "width": 380,
+          "height": 640,
+          "fill": "#0F5B8A",
+          "layout": "vertical",
+          "gap": 28,
+          "padding": 56,
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "logo_container",
+              "name": "Logo Frame",
+              "width": 48,
+              "height": 48,
+              "fill": "rgba(255, 255, 255, 0.12)",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "logo_letter",
+                  "name": "Logo T",
+                  "fill": "#FFFFFF",
+                  "content": "T",
+                  "fontFamily": "SF Pro Display",
+                  "fontSize": 28,
+                  "fontWeight": "800"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "brand_name",
+              "name": "Brand Name",
+              "fill": "#FFFFFF",
+              "content": "TeraChat",
+              "fontFamily": "SF Pro Display",
+              "fontSize": 36,
+              "fontWeight": "800",
+              "lineHeight": 1.1
+            },
+            {
+              "type": "text",
+              "id": "tagline",
+              "name": "Tagline",
+              "fill": "rgba(255, 255, 255, 0.70)",
+              "content": "Enterprise Messaging Platform.\nZero-Knowledge.\nAbsolute Data Sovereignty.",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "400",
+              "lineHeight": 1.7
+            },
+            {
+              "type": "frame",
+              "id": "feature_list",
+              "name": "Feature Highlights",
+              "width": 280,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "feat_1",
+                  "name": "Feature 1 Row",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "feat1_dot",
+                      "name": "Dot",
+                      "width": 6,
+                      "height": 6,
+                      "fill": "rgba(255, 255, 255, 0.50)",
+                      "cornerRadius": 3
+                    },
+                    {
+                      "type": "text",
+                      "id": "feat1_text",
+                      "name": "MLS E2EE",
+                      "fill": "rgba(255, 255, 255, 0.70)",
+                      "content": "MLS E2EE · Post-Quantum Ready",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "feat_2",
+                  "name": "Feature 2 Row",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "feat2_dot",
+                      "name": "Dot",
+                      "width": 6,
+                      "height": 6,
+                      "fill": "rgba(255, 255, 255, 0.50)",
+                      "cornerRadius": 3
+                    },
+                    {
+                      "type": "text",
+                      "id": "feat2_text",
+                      "name": "Offline First",
+                      "fill": "rgba(255, 255, 255, 0.70)",
+                      "content": "Offline-First · BLE Mesh Survival",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "feat_3",
+                  "name": "Feature 3 Row",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "feat3_dot",
+                      "name": "Dot",
+                      "width": 6,
+                      "height": 6,
+                      "fill": "rgba(255, 255, 255, 0.50)",
+                      "cornerRadius": 3
+                    },
+                    {
+                      "type": "text",
+                      "id": "feat3_text",
+                      "name": "Work OS",
+                      "fill": "rgba(255, 255, 255, 0.70)",
+                      "content": "Work OS · WASM .tapp Ecosystem",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "security_badges",
+              "name": "Security Badges Row",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "badge_soc2",
+                  "name": "SOC2 Badge",
+                  "height": 24,
+                  "fill": "rgba(255, 255, 255, 0.10)",
+                  "cornerRadius": 12,
+                  "padding": [0, 10],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "soc2_text",
+                      "name": "SOC2 Text",
+                      "fill": "rgba(255, 255, 255, 0.60)",
+                      "content": "SOC 2",
+                      "fontFamily": "SF Pro Text",
+                      "fontSize": 10,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "badge_gdpr",
+                  "name": "GDPR Badge",
+                  "height": 24,
+                  "fill": "rgba(255, 255, 255, 0.10)",
+                  "cornerRadius": 12,
+                  "padding": [0, 10],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gdpr_text",
+                      "name": "GDPR Text",
+                      "fill": "rgba(255, 255, 255, 0.60)",
+                      "content": "GDPR",
+                      "fontFamily": "SF Pro Text",
+                      "fontSize": 10,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "badge_pq",
+                  "name": "PQ Badge",
+                  "height": 24,
+                  "fill": "rgba(255, 255, 255, 0.10)",
+                  "cornerRadius": 12,
+                  "padding": [0, 10],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "pq_text",
+                      "name": "PQ Text",
+                      "fill": "rgba(255, 255, 255, 0.60)",
+                      "content": "PQC",
+                      "fontFamily": "SF Pro Text",
+                      "fontSize": 10,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "right_login_panel",
+          "name": "Right Login Panel",
+          "x": 380,
+          "y": 0,
+          "width": 520,
+          "height": 640,
+          "fill": "#FFFFFF",
+          "layout": "vertical",
+          "gap": 32,
+          "padding": 72,
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "welcome_block",
+              "name": "Welcome Text Block",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "welcome_heading",
+                  "name": "Welcome Heading",
+                  "fill": "#0B1829",
+                  "content": "Welcome back",
+                  "fontFamily": "SF Pro Display",
+                  "fontSize": 30,
+                  "fontWeight": "700",
+                  "lineHeight": 1.2
+                },
+                {
+                  "type": "text",
+                  "id": "welcome_subtitle",
+                  "name": "Subtitle",
+                  "fill": "#5A6F85",
+                  "content": "Sign in to your organization to continue",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "400",
+                  "lineHeight": 1.4
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "form_area",
+              "name": "Form Area",
+              "width": 376,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "domain_field_group",
+                  "name": "Domain Field Group",
+                  "width": 376,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "domain_label",
+                      "name": "Domain Label",
+                      "fill": "#5A6F85",
+                      "content": "Organization Domain",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600",
+                      "lineHeight": 1.3
+                    },
+                    {
+                      "type": "frame",
+                      "id": "domain_input",
+                      "name": "Domain Input Field",
+                      "width": 376,
+                      "height": 48,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1.5,
+                        "fill": "#E2E8F0"
+                      },
+                      "gap": 10,
+                      "padding": [0, 16],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "domain_icon",
+                          "name": "Globe Icon",
+                          "width": 18,
+                          "height": 18,
+                          "iconFontName": "globe",
+                          "iconFontFamily": "lucide",
+                          "fill": "#8FA0B4"
+                        },
+                        {
+                          "type": "text",
+                          "id": "domain_placeholder",
+                          "name": "Domain Placeholder",
+                          "fill": "#8FA0B4",
+                          "content": "your-company.com",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "400"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "email_field_group",
+                  "name": "Email Field Group",
+                  "width": 376,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "email_label",
+                      "name": "Email Label",
+                      "fill": "#5A6F85",
+                      "content": "Work Email",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600",
+                      "lineHeight": 1.3
+                    },
+                    {
+                      "type": "frame",
+                      "id": "email_input",
+                      "name": "Email Input Field",
+                      "width": 376,
+                      "height": 48,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1.5,
+                        "fill": "#E2E8F0"
+                      },
+                      "gap": 10,
+                      "padding": [0, 16],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "email_icon",
+                          "name": "Mail Icon",
+                          "width": 18,
+                          "height": 18,
+                          "iconFontName": "mail",
+                          "iconFontFamily": "lucide",
+                          "fill": "#8FA0B4"
+                        },
+                        {
+                          "type": "text",
+                          "id": "email_placeholder",
+                          "name": "Email Placeholder",
+                          "fill": "#8FA0B4",
+                          "content": "you@company.com",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "400"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "password_field_group",
+                  "name": "Password Field Group",
+                  "width": 376,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "password_label",
+                      "name": "Password Label",
+                      "fill": "#5A6F85",
+                      "content": "Password",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600",
+                      "lineHeight": 1.3
+                    },
+                    {
+                      "type": "frame",
+                      "id": "password_input",
+                      "name": "Password Input Field",
+                      "width": 376,
+                      "height": 48,
+                      "fill": "#F8FAFC",
+                      "cornerRadius": 10,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1.5,
+                        "fill": "#E2E8F0"
+                      },
+                      "gap": 10,
+                      "padding": [0, 16],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "password_icon",
+                          "name": "Lock Icon",
+                          "width": 18,
+                          "height": 18,
+                          "iconFontName": "lock",
+                          "iconFontFamily": "lucide",
+                          "fill": "#8FA0B4"
+                        },
+                        {
+                          "type": "text",
+                          "id": "password_placeholder",
+                          "name": "Password Placeholder",
+                          "fill": "#8FA0B4",
+                          "content": "············",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "400"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "forgot_password_row",
+                  "name": "Forgot Password Row",
+                  "width": 376,
+                  "justifyContent": "flex-end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "forgot_password_link",
+                      "name": "Forgot Password Link",
+                      "fill": "#24A1DE",
+                      "content": "Forgot password?",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "signin_button",
+                  "name": "Sign In Button",
+                  "width": 376,
+                  "height": 48,
+                  "fill": "#24A1DE",
+                  "cornerRadius": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "shadow": {
+                    "type": "drop_shadow",
+                    "offset": { "x": 0, "y": 4 },
+                    "radius": 12,
+                    "color": "rgba(36, 161, 222, 0.30)"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "signin_text",
+                      "name": "Sign In Text",
+                      "fill": "#FFFFFF",
+                      "content": "Sign In",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "divider_row",
+              "name": "Divider Row",
+              "width": 376,
+              "gap": 14,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "div_left",
+                  "name": "Left Divider",
+                  "width": 156,
+                  "height": 1,
+                  "fill": "#E2E8F0"
+                },
+                {
+                  "type": "text",
+                  "id": "div_text",
+                  "name": "Or Text",
+                  "fill": "#8FA0B4",
+                  "content": "or continue with",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "400"
+                },
+                {
+                  "type": "frame",
+                  "id": "div_right",
+                  "name": "Right Divider",
+                  "width": 156,
+                  "height": 1,
+                  "fill": "#E2E8F0"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "sso_buttons",
+              "name": "SSO Provider Buttons",
+              "width": 376,
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "google_sso_btn",
+                  "name": "Google Workspace Button",
+                  "width": 376,
+                  "height": 46,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1.5,
+                    "fill": "#E2E8F0"
+                  },
+                  "gap": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "google_icon",
+                      "name": "Google Icon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "chrome",
+                      "iconFontFamily": "lucide",
+                      "fill": "#4285F4"
+                    },
+                    {
+                      "type": "text",
+                      "id": "google_text",
+                      "name": "Google Text",
+                      "fill": "#0B1829",
+                      "content": "Google Workspace",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "azure_sso_btn",
+                  "name": "Azure AD Button",
+                  "width": 376,
+                  "height": 46,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1.5,
+                    "fill": "#E2E8F0"
+                  },
+                  "gap": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "azure_icon",
+                      "name": "Azure Icon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "cloud",
+                      "iconFontFamily": "lucide",
+                      "fill": "#0078D4"
+                    },
+                    {
+                      "type": "text",
+                      "id": "azure_text",
+                      "name": "Azure Text",
+                      "fill": "#0B1829",
+                      "content": "Microsoft Azure AD",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "saml_sso_btn",
+                  "name": "SAML SSO Button",
+                  "width": 376,
+                  "height": 46,
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1.5,
+                    "fill": "#E2E8F0"
+                  },
+                  "gap": 10,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "saml_icon",
+                      "name": "Shield Icon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "shield",
+                      "iconFontFamily": "lucide",
+                      "fill": "#6366F1"
+                    },
+                    {
+                      "type": "text",
+                      "id": "saml_text",
+                      "name": "SAML Text",
+                      "fill": "#0B1829",
+                      "content": "Enterprise SAML SSO",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "500"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "license_link_row",
+              "name": "License Key Row",
+              "width": 376,
+              "gap": 8,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "license_icon",
+                  "name": "Key Icon",
+                  "width": 14,
+                  "height": 14,
+                  "iconFontName": "key",
+                  "iconFontFamily": "lucide",
+                  "fill": "#8FA0B4"
+                },
+                {
+                  "type": "text",
+                  "id": "license_text",
+                  "name": "License Link",
+                  "fill": "#24A1DE",
+                  "content": "Activate with Enterprise License Token",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "footer_note",
+              "name": "Footer Note",
+              "fill": "#8FA0B4",
+              "content": "TeraChat is enterprise-only. Licenses managed at terachat.io",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "400",
+              "lineHeight": 1.4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "accent-blue": { "type": "color", "value": "#24A1DE" },
+    "accent-blue-dark": { "type": "color", "value": "#1A8BC4" },
+    "accent-blue-light": { "type": "color", "value": "#E8F4FD" },
+    "bg-card": { "type": "color", "value": "#FFFFFF" },
+    "bg-primary": { "type": "color", "value": "#F5F9FC" },
+    "bg-input": { "type": "color", "value": "#F8FAFC" },
+    "brand-dark": { "type": "color", "value": "#0F5B8A" },
+    "brand-deeper": { "type": "color", "value": "#0B1829" },
+    "border-default": { "type": "color", "value": "#E2E8F0" },
+    "border-focus": { "type": "color", "value": "#24A1DE" },
+    "text-primary": { "type": "color", "value": "#0B1829" },
+    "text-secondary": { "type": "color", "value": "#5A6F85" },
+    "text-muted": { "type": "color", "value": "#8FA0B4" },
+    "white": { "type": "color", "value": "#FFFFFF" },
+    "font-display": { "type": "string", "value": "SF Pro Display" },
+    "font-body": { "type": "string", "value": "Inter" },
+    "font-text": { "type": "string", "value": "SF Pro Text" },
+    "radius-sm": { "type": "number", "value": 6 },
+    "radius-md": { "type": "number", "value": 10 },
+    "radius-lg": { "type": "number", "value": 12 },
+    "shadow-button": { "type": "color", "value": "rgba(36, 161, 222, 0.30)" },
+    "shadow-card": { "type": "color", "value": "rgba(11, 24, 41, 0.08)" }
+  }
+}

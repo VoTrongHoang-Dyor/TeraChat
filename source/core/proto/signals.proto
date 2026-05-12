@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package terachat.signals;
+
+option java_package = "io.terachat.proto.signals";
+option swift_prefix = "TCSig";
+
+// =============================================================================
+// CoreSignal — all IPC signals pushed from Rust Core → UI
+//
+// UI is a PASSIVE RENDERER. It never holds security logic.
+// Every signal maps to exactly one widget state.
+// =============================================================================
+
+/// Priority level for signal delivery.
+enum SignalPriority {
+  SIGNAL_PRIORITY_UNSPECIFIED = 0;
+  /// Security-critical — delivered immediately, bypasses queue
+  PRIORITY_SECURITY = 1;
+  /// High — delivered within 100ms
+  PRIORITY_HIGH = 2;
+  /// Normal — delivered within 500ms
+  PRIORITY_NORMAL = 3;
+  /// Low — batched, delivered within 2s
+  PRIORITY_LOW = 4;
+}
+
+/// Core signal pushed from Rust Core to UI layer.
+message CoreSignal {
+  /// Unique signal ID for deduplication
+  bytes signal_id = 1;
+  /// Signal type discriminator
+  CoreSignalType signal_type = 2;
+  /// Priority level
+  SignalPriority priority = 3;
+  /// Workspace scope
+  bytes workspace_id = 4;
+  /// Signal-specific payload (MessagePack encoded)
+  bytes payload = 5;
+  /// Monotonic timestamp
+  uint64 timestamp = 6;
+}
+
+enum CoreSignalType {
+  CORE_SIGNAL_UNSPECIFIED = 0;
+
+  // --- Connection & Security State ---
+  ONLINE_CONNECTED = 1;
+  OFFLINE_DETECTED = 2;
+  MESH_MODE_ACTIVE = 3;
+  EMDP_ACTIVATED = 4;
+  EMDP_DEACTIVATED = 5;
+  E2EE_SESSION_ESTABLISHED = 6;
+  E2EE_SESSION_DEGRADED = 7;
+  MLS_EPOCH_ROTATED = 8;
+
+  // --- Security Indicators ---
+  PENDING_SECURE_CHANNEL = 10;
+  SECURE_CHANNEL_READY = 11;
+  KEY_ESCROW_IN_PROGRESS = 12;
+  KEY_ESCROW_COMPLETE = 13;
+
+  // --- License State ---
+  LICENSE_VALID = 20;
+  LICENSE_WARNING_T30 = 21;
+  LICENSE_DEGRADED_T0 = 22;
+  LICENSE_INVALID = 23;
+
+  // --- Resource Management ---
+  MEMORY_PRESSURE_WARNING = 30;
+  MEMORY_PURGE_INITIATED = 31;
+  THERMAL_THROTTLING = 32;
+  GPU_TIER_DOWNGRADE = 33;
+
+  // --- WAL & Storage (GAP-B signals) ---
+  WAL_LOCK_REQUEST = 40;
+  WAL_FLUSH_ACK = 41;
+  WAL_LOCK_GRANTED = 42;
+
+  // --- .tapp Runtime ---
+  TAPP_LOADED = 50;
+  TAPP_UNLOADED = 51;
+  TAPP_FUEL_WARNING = 52;
+  TAPP_KILLED = 53;
+
+  // --- AI ---
+  AI_INFERENCE_STARTED = 60;
+  AI_INFERENCE_COMPLETE = 61;
+  AI_ENDPOINT_UNAVAILABLE = 62;
+
+  // --- Sync ---
+  SYNC_IN_PROGRESS = 70;
+  SYNC_COMPLETE = 71;
+  SYNC_CONFLICT_DETECTED = 72;
+
+  // --- DataGrant ---
+  DATAGRANT_PENDING_QUORUM = 80;
+  DATAGRANT_ACTIVATED = 81;
+  DATAGRANT_REVOKED = 82;
+
+  // --- First Contact Protocol ---
+  FCP_INITIATED = 90;
+  FCP_VERIFIED = 91;
+  FCP_FAILED = 92;
+}

@@ -109,6 +109,7 @@ App Opens
 [Illustration: secure vault, minimal]
 [Primary CTA: "Activate Enterprise License"]
 [Secondary: "Contact Your IT Administrator"]
+[Info: "Licenses are purchased at terachat.io"]
      ↓
 License Activation Screen:
   - QR Code scan (từ IT Admin / MDM)
@@ -425,8 +426,10 @@ Rust Core emit `GpuCapability { compositing_tier: u8 }` lúc init → UI chọn 
 [License Status Card]
   Tier: Enterprise | Seats: 234/500
   Status: Active ✓ | Expires: 2027-03-15
-  [Renew] [Export Report]
+  [Manage on terachat.io →] [Export Report]
 ```
+
+**Gia hạn và nâng cấp license:** Nút "Manage on terachat.io" mở browser redirect ra web dashboard. Admin Console không xử lý thanh toán hay nâng cấp — tất cả qua web.
 
 ### Plugin Registry Panel
 
@@ -437,8 +440,10 @@ Plugin Card:
   [Icon] [Name] [Publisher] [Tier Badge]
   [Permissions: network.egress, storage.persist]
   [Security Score: 95/100]
-  [Deploy to Workspace] [View Security Report]
+  [View on Web Marketplace →] [Deploy to Workspace]
 ```
+
+**Mua .tapp:** Link "View on Web Marketplace" mở browser đến terachat.io/marketplace. Tất cả giao dịch mua .tapp, thanh toán, và download đều trên web. Admin Console chỉ deploy .tapp đã mua vào workspace.
 
 ---
 
