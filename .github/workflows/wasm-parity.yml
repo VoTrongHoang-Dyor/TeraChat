@@ -1,0 +1,58 @@
+name: WasmParity CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+    paths:
+      - "source/core/tc-tapp/**"
+      - "source/core/proto/**"
+      - ".github/workflows/wasm-parity.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "source/core/tc-tapp/**"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  wasm-parity:
+    name: WasmParity — wasm3 vs wasmtime
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/core
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75.0"
+          targets: wasm32-unknown-unknown
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.x"
+
+      # NOTE: wasm3 and wasmtime runtimes not installed — SKIPPED until infrastructure available.
+      # See report/phase-0-hardware-gaps.md for details.
+      #
+      # Full implementation requires:
+      #   - wasmtime-cli installed on runner
+      #   - wasm3 binary compiled for runner arch
+      #   - Test vectors that exercise semantic equivalence
+      #
+      # For now, we verify that WASM targets compile correctly.
+
+      - name: Check WASM target compilation
+        run: cargo check --target wasm32-unknown-unknown -p tc-tapp
+
+      # FUTURE (Phase 4):
+      # - name: WasmParity semantic equivalence test
+      #   run: cargo test --test wasm_parity -- --engine both
+      #   env:
+      #     WASM3_BINARY: /usr/local/bin/wasm3
+      #     WASMTIME_BINARY: /usr/local/bin/wasmtime

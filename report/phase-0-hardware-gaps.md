@@ -212,6 +212,7 @@ This report documents all Phase 0 items that could NOT be implemented or verifie
 | 2.7 | BLE Mesh Testing | High | Phase 2 (mesh) | 3+ physical devices |
 | 2.8 | buf lint/breaking | Low | None | buf CLI |
 | 2.9 | Rust toolchain install | Medium | All (compilation) | rustup + stable 1.75.0 |
+| 2.10 | WasmParity CI runtime test | Medium | Phase 4 | wasm3 + wasmtime binaries |
 
 ---
 

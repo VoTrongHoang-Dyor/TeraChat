@@ -21,7 +21,7 @@ exit_criteria:
 ```yaml
 task_id: "PH0-T01"
 name: "Lock Domain Boundaries & Dependency Graph"
-status: pending
+status: complete
 priority: 🔴 CRITICAL
 estimated_hours: 8
 ```
@@ -78,7 +78,7 @@ estimated_hours: 8
 ```yaml
 task_id: "PH0-T02"
 name: "Freeze gRPC Contracts & ABI Versioning"
-status: pending
+status: complete
 priority: 🔴 CRITICAL
 estimated_hours: 8
 ```
@@ -135,7 +135,7 @@ estimated_hours: 8
 ```yaml
 task_id: "PH0-T03"
 name: "Deploy CI Gates & Automated Build Pipeline"
-status: pending
+status: complete
 priority: 🔴 CRITICAL
 estimated_hours: 8
 ```
@@ -194,7 +194,7 @@ estimated_hours: 8
 ```yaml
 task_id: "PH0-T04"
 name: "Freeze Design System & IPC Signal-to-UI Map"
-status: pending
+status: complete
 priority: 🟠 HIGH
 estimated_hours: 8
 ```
@@ -252,7 +252,7 @@ estimated_hours: 8
 ```yaml
 task_id: "PH0-T05"
 name: "Publish Architecture Decision Records & Phase 1 Entry Gate"
-status: pending
+status: complete
 priority: 🔴 CRITICAL
 estimated_hours: 4
 ```

@@ -1,0 +1,14 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - DEFAULT
+  except:
+    - PACKAGE_VERSION_SUFFIX
+  ignore:
+    - google
+breaking:
+  use:
+    - FILE
+  ignore_unstable_packages: true

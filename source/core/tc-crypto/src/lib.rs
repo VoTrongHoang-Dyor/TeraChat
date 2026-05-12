@@ -12,6 +12,7 @@
 pub mod error;
 pub mod ffi;
 pub mod key_management;
+pub mod lints;
 pub mod zeroize_guard;
 
 // WHY: Single public API module — all consumers go through this facade.

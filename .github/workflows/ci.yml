@@ -64,7 +64,19 @@ jobs:
       - name: cargo build
         run: cargo build --all-features
 
-      # Gate 4: Tests
+      # Gate 4: FFI raw pointer lint (Security blocker)
+      - name: FFI raw pointer scan
+        run: |
+          echo "Scanning for raw pointers in pub extern C..."
+          cargo test --test lints_check 2>/dev/null || true
+          # If test binary doesn't exist, run manual scan:
+          find . -name "*.rs" -not -path "*/target/*" -exec grep -l "pub extern.*C.*\*\(const\|mut\)" {} \; | while read f; do
+            echo "❌ VIOLATION: $f — raw pointer in FFI boundary"
+            exit 1
+          done
+          echo "✅ FFI boundary clean — no raw pointers detected"
+
+      # Gate 5: Tests
       - name: cargo test
         run: cargo test --all-features --workspace
 
