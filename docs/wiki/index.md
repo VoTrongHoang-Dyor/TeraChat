@@ -1,10 +1,13 @@
 # Wiki Index
 
-Last updated: 2026-05-12
+Last updated: 2026-05-15
 
 ## TeraChat — Product Definition
 
-TeraChat is an **enterprise Work OS** for internal and branch-company communication, governed by hierarchical authority. It combines secure messaging, self-service business t-apps, and local AI (Gemma 4 + open framework) — all under a Zero-Knowledge architecture where servers never see plaintext.
+TeraChat is an **enterprise Work OS** for internal and branch-company communication. It combines Zero-Knowledge E2EE (MLS RFC 9420), self-hosted Mac mini + NAS, local AI inference (Qwen2.5/MLX), and a .tapp WASM ecosystem — all under a blind router architecture where servers never see plaintext.
+
+**Development model:** Vertical Slice (shippable every 6-8 weeks) with Multi-Agent Harness (LangGraph + Claude Code).
+**Philosophy:** Deep Modules (Matt Pocock) — simple interfaces, complex interiors.
 
 **Scope:** Internal messaging + branch company communication. NOT customer-facing messaging.
 
@@ -17,6 +20,11 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 ### Vision & Roadmap
 - [[Phase Framework]] — Three economic phases: Sign Pilot, Renew/Upsell, Moat/Ecosystem — 2026-05-11
 - [[Vision Redefinition 2026-05-11]] — Synthesis: scope, authority model, Work OS, local AI — 2026-05-11
+
+### Methodology & Development
+- [[Vertical Slice Development]] — Shippable every 6-8 weeks, one use case across all layers — 2026-05-15
+- [[Multi-Agent Harness]] — LangGraph orchestrator, agent types and scope boundaries, daily workflow — 2026-05-15
+- [[Deep Module Design]] — Matt Pocock principle: simple interfaces (≤ 5 items), complex interiors — 2026-05-15
 
 ### Core Architecture
 - [[Terachat Architecture Overview]] — System layers, communication model, spec dependency graph, role-based navigation — 2026-05-11
@@ -38,6 +46,13 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 ### AI & Security
 - [[Secure Enclave & AI Security]] — Gemma 4 on-device AI, open AI framework, PII redaction, ZK Memory Agent — 2026-05-11
 - [[Open AI Framework]] — Bring-your-own-model, Gemma 4 default, Host ABI for AI inference, model registration — 2026-05-11
+- [[AI Inference Offloading]] — Distributed inference scheduler, ThermalMonitor, ModelTier per device, PII gateway — 2026-05-15
+- [[openmls Self-Healing]] — AI debug loop for MLS errors, ErrorContext sanitization, local fine-tuning — 2026-05-15
+
+### Infrastructure & Operations
+- [[Mac Mini HA Cluster]] — Zero-ops setup, mDNS discovery, Raft consensus, 99.99% SLA with mesh fallback — 2026-05-15
+- [[iOS Mesh Storage Tiers]] — BufferTier (Minimal/Standard/Enhanced/Full), auto-detection, LRU eviction — 2026-05-15
+- [[Tapp Community Framework]] — .tapp SDK, TappValidator CLI, TDD workflow for contributors — 2026-05-15
 
 ### Governance
 - [[Enterprise Identity & Governance]] — DID, OPA Policy Engine, RBAC, SCIM, immutable audit trail, authority hierarchy enforcement — 2026-05-10
@@ -48,6 +63,10 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 ### Legacy (Sample)
 - [[Large Language Models]] — AI systems trained on text for next-token prediction — 2026-05-06
 - [[Transformer Architecture]] — Dominant LLM architecture introduced by Vaswani et al. 2017 — 2026-05-06
+
+### Agent Core Files (2026-05-15 Restructure)
+- [[Ubiquitous Language]] — Shared vocabulary EN+VI, anti-patterns, code conventions — 2026-05-15
+- [[Invariants]] — Non-negotiable architectural rules, forbidden patterns, crypto stack — 2026-05-15
 
 ## Sources
 

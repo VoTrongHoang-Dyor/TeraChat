@@ -180,3 +180,36 @@
   - `Pricing_Packages.html` — Thêm Huawei disclaimer (GAP-F): Huawei chỉ Standard tier, SLA 4h, không Enterprise/Gov
 - **Files changed:** 10 files (4 created, 6 updated)
 - **Key takeaway:** Tất cả 10 GAPs đã có quyết định kiến trúc cuối cùng. Tất cả 16 tech debt items đã có protocol resolution cụ thể. Project sẵn sàng để bắt đầu prototype mà không có unresolved architectural questions.
+
+## [2026-05-15] restructure | Reframe Wiki to Vertical Slice + Multi-Agent Harness Architecture
+
+Major documentation restructure to align with new development philosophy: Vertical Slice over Horizontal Layer, Deep Modules (Matt Pocock), and Multi-Agent Harness with LangGraph.
+
+**Core agent files created:**
+- `AGENT_CONTEXT.md` (project root) — First file every agent reads: project overview, reading order, file scope per agent
+- `docs/wiki/ubiquitous-language.md` — Shared vocabulary EN+VI, anti-patterns, code conventions
+- `docs/wiki/invariants.md` — Non-negotiable architectural rules with code examples
+
+**New concept pages (8):**
+- `docs/wiki/concepts/vertical-slice-development.md` — Shippable slices every 6-8 weeks, Slice 0-6 overview
+- `docs/wiki/concepts/multi-agent-harness.md` — LangGraph orchestrator, agent types, daily workflow
+- `docs/wiki/concepts/deep-module-design.md` — Matt Pocock principle applied to Rust, CI enforcement
+- `docs/wiki/concepts/ai-inference-offloading.md` — InferenceScheduler, ThermalMonitor, ModelTiers, PII gate
+- `docs/wiki/concepts/mac-mini-ha-cluster.md` — One-touch setup, mDNS discovery, Raft consensus, SLA tiers
+- `docs/wiki/concepts/tapp-community-framework.md` — .tapp SDK, TappValidator, contribution flow
+- `docs/wiki/concepts/ios-mesh-storage-tiers.md` — BufferTier, auto-detection, eviction policy
+- `docs/wiki/concepts/openmls-self-healing.md` — AI debug loop, ErrorContext sanitization, fine-tuning
+
+**Agent orchestrator:**
+- `.agents/langgraph/terachat_graph.py` — LangGraph StateGraph: grooming → TDD → implement → invariant check → security → integration
+- `.agents/grooming-template.md` — Design-first checklist for task assignment
+
+**Updated files:**
+- `CLAUDE.md` — v2.0.0: Added Deep Module Principle, Vertical Slice, Multi-Agent Harness, Model Tiers, iOS constraints
+- `phase/README.md` — v4.0.0: Replaced Phase 1-6 with Slice 0-6, 18-month timeline, updated budget/hire triggers
+- `docs/wiki/index.md` — Added all new pages, updated product definition
+- `CONTRIBUTING.md` (new) — .tapp developer guide with TDD workflow
+- `.claude/settings.local.json` — Removed invalid `hooks.pre_commit` (not a valid Claude Code hook event)
+- `.git/hooks/pre-commit` (new) — Bash hook: cargo fmt + clippy + gitleaks
+
+**Key takeaway:** Documentation now reflects the solo-dev reality: vertical slices for fast feedback, deep modules for AI agent compatibility, multi-agent harness for scaling output. All architectural modules (AI inference, HA, .tapp, mesh storage, MLS self-healing) documented as concept pages.

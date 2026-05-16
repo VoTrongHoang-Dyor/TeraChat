@@ -1,291 +1,234 @@
-# TeraChat — Phase Execution Map (V3)
+# TeraChat — Vertical Slice Execution Map
 
 ```yaml
-id: "TERA-PHASE-MAP"
-version: "3.1.0"
-date: "2026-05-12"
-principle: "Prototype → MVP → Progressive Complexity (1 subsystem/phase)"
-timeline: "18-24 months (not 35 days)"
+id: "TERA-SLICE-MAP"
+version: "4.0.0"
+date: "2026-05-15"
+principle: "Vertical Slice — mỗi slice là shippable, demo được, charge được"
+philosophy: "Deep Modules + Multi-Agent Harness"
+timeline: "18 months (46 weeks)"
 ```
 
-## Tổng quan Timeline
+## Mental Model: Vertical Slice > Horizontal Layer
 
 ```
-PROTOTYPE (4-6 tuần)
-  │  MLS Chat cơ bản. Demo được.
+❌ WRONG (Horizontal Layer):
+[Crypto] → [Sync] → [Runtime] → [Client] → [AI]
+2 years later: nothing runnable
+
+✅ RIGHT (Vertical Slice):
+Slice 1: "E2EE message giữa 2 Mac" (6 weeks) → demo
+Slice 2: "iPhone → Mac" (6 weeks) → demo on real devices
+Slice 3: "Relay + mesh failover" (6 weeks) → HA demo
+Slice 4: ".tapp đầu tiên" (8 weeks) → Work OS demo
+Slice 5: "AI summarize thread" (8 weeks) → AI demo
+```
+
+Every slice is **shippable** — can demo, can charge, can get feedback. Each slice adjusts based on previous feedback.
+
+---
+
+## Tổng quan Timeline (18 tháng, 46 tuần)
+
+```
+SLICE 0: Foundation (Tuần 1-2)
+  │  Repo compiles, CI green, proto scaffolding
   │
-  ├─ PHASE 1 MVP (Tháng 1-4): MLS + License + OIDC + 1 t-app
-  │    │  Subsystem: Identity Integration
-  │    │  Gate: 3 signed pilots, 0 data loss
+  ├─ SLICE 1: "Hello E2EE" (Tuần 3-8) — 6 tuần
+  │    │  MLS roundtrip test. Không UI, không network.
+  │    │  Deliverable: cargo test --test mls_roundtrip pass
   │    │
-  │    ├─ PHASE 2A (Tháng 5-6): PQ-KEM Hybrid
-  │    │    │  Subsystem: Post-Quantum Crypto
+  │    ├─ SLICE 2: "Relay + Persistence" (Tuần 9-14) — 6 tuần
+  │    │    │  Messages through relay. hot_dag.db append-only.
+  │    │    │  Deliverable: terachat-relay binary + integration test
   │    │    │
-  │    │    ├─ PHASE 2B (Tháng 7-9): Survival Mesh
-  │    │    │    │  Subsystem: Offline P2P
+  │    │    ├─ SLICE 3: "macOS + iPhone UI" (Tuần 15-22) — 8 tuần
+  │    │    │    │  Real devices chatting. Tauri + Flutter.
+  │    │    │    │  Deliverable: E2EE message between iPhone and Mac
   │    │    │    │
-  │    │    │    ├─ PHASE 2C (Tháng 10-11): .tapp Marketplace
-  │    │    │    │    │  Subsystem: WASM + App Store
+  │    │    │    ├─ SLICE 4: "HA + Mesh Failover" (Tuần 23-30) — 8 tuần
+  │    │    │    │    │  2× Mac mini cluster + BLE emergency fallback
+  │    │    │    │    │  Deliverable: 99.99% SLA demo
   │    │    │    │    │
-  │    │    │    │    ├─ PHASE 2D (Tháng 12-14): Gemma 4 AI
-  │    │    │    │    │    │  Subsystem: Local AI
+  │    │    │    │    ├─ SLICE 5: ".tapp Runtime MVP" (Tuần 31-38) — 8 tuần
+  │    │    │    │    │    │  3 first-party .tapps running
+  │    │    │    │    │    │  Deliverable: Expense Approval .tapp works
   │    │    │    │    │    │
-  │    │    │    │    │    ├─ PHASE 3A (Tháng 15-18): Open AI + Gov
-  │    │    │    │    │    │    │  Subsystem: Multi-Model AI + Compliance
-  │    │    │    │    │    │    │
-  │    │    │    │    │    │    └─ PHASE 3B (Tháng 19-24): Scale
-  │    │    │    │    │    │         Subsystem: Enterprise Scale
-  │    │    │    │    │    │
-  Mỗi mũi tên = 1 subsystem chính. Không thêm 2 subsystem cùng lúc.
+  │    │    │    │    │    └─ SLICE 6: "Local AI" (Tuần 39-46) — 8 tuần
+  │    │    │    │    │         │  Qwen2.5 on-device, PII gate
+  │    │    │    │    │         │  Deliverable: AI summarize with zero PII leaks
+  │    │    │    │    │
+  Mỗi slice = demonstrable, feedbackable, chargeable.
 ```
+
+---
+
+## Slice Details
+
+### Slice 0: Foundation (Week 1-2)
+
+**Goal:** Repository compiles, CI green, no real code yet.
+
+```bash
+cargo test --workspace    # 0 tests but compiles
+buf lint                  # proto files valid
+cargo clippy -- -D warnings  # 0 warnings
+```
+
+**Human work:** Review CI config, sign off CLAUDE.md, setup secrets.
+**AI work:** CI/CD pipeline, buf.yaml, proto scaffolding.
+
+---
+
+### Slice 1: "Hello E2EE" (Week 3-8)
+
+**Goal:** Two processes on same Mac send/receive E2EE messages via MLS. No UI, no network, no database.
+
+```rust
+#[tokio::test]
+async fn mls_roundtrip() {
+    let alice = MlsClient::new_test().await;
+    let bob = MlsClient::new_test().await;
+
+    let group = alice.create_group("test-group").await?;
+    group.add_member(&bob.key_package()).await?;
+
+    let ciphertext = group.encrypt(b"hello bob").await?;
+    let plaintext = bob.decrypt(&ciphertext).await?;
+    assert_eq!(plaintext, b"hello bob");
+
+    // Bob leaves → new epoch → Bob can't decrypt
+    group.remove_member(&bob.identity()).await?;
+    let new_cipher = group.encrypt(b"bob is gone").await?;
+    assert!(bob.decrypt(&new_cipher).await.is_err());
+}
+```
+
+**Key Deliverables:**
+- `MlsClient`, `MlsGroup` with openmls wrapper
+- `mls_roundtrip` test passing
+- ZeroizeOnDrop on all key types verified
+- `cargo miri test --test ffi_boundary_zeroize` pass
+
+**Agent assignment:** Rust Agent writes MlsClient/MlsGroup, Test Agent writes roundtrip test, Review Agent verifies invariants.
+
+---
+
+### Slice 2: "Relay + Persistence" (Week 9-14)
+
+**Goal:** Messages through relay binary, persisted in SQLite WAL.
+
+```
+Client A ──TLS 1.3──> TeraRelay ──TLS 1.3──> Client B
+                         │
+                    SQLite WAL
+                    (ciphertext only — relay sees nothing)
+```
+
+**Key Deliverables:**
+- `terachat-relay` binary — single command deploy
+- `hot_dag.db` — append-only CRDT events
+- License JWT validation
+- Health check endpoint
+- Integration test: 1000 messages → 0 loss, kill relay mid-send → reconnect → message delivered
+
+---
+
+### Slice 3: "macOS + iPhone UI" (Week 15-22)
+
+**Goal:** Two real devices chatting with each other.
+
+**Stack:** Tauri (macOS) + Flutter (iPhone) + gRPC over UDS for IPC.
+
+**UI — minimal but correct:**
+- Channel list
+- E2EE indicator (from CoreSignal)
+- Send/receive message
+- Glassmorphism basic
+
+**Human work:** UX decisions, testing on real devices.
+**AI work:** Tauri commands, Flutter screens, FFI bindings.
+
+---
+
+### Slice 4: "HA + Mesh Failover" (Week 23-30)
+
+**Goal:** Enterprise-grade HA with automatic mesh fallback. This is the SLA argument for customer deals.
+
+```
+Normal: Devices → TeraRelay (Mac mini primary) → Database
+
+Primary fail (auto-detect within 5s):
+  → BLE/WiFi Direct mesh activated
+  → Store-and-forward CRDT
+  → When primary returns: auto-sync
+```
+
+**Approach:** Use Apple `MultipeerConnectivity` (iOS) + `mDNS + TCP` (macOS) — not raw BLE 5.0 GATT. App Store safe, reliable.
+
+**SLA:**
+- 1 Mac mini: 99.5% (~4h downtime/year)
+- 2 Mac mini HA: 99.95% (~4 min downtime/year)
+- 2 Mac mini + Mesh: **99.99%** (~1 min downtime/year) — enterprise contract grade
+
+---
+
+### Slice 5: ".tapp Runtime MVP" (Week 31-38)
+
+**Goal:** Not a marketplace — just 3 first-party .tapps running.
+
+| .tapp | Use Case |
+|-------|----------|
+| Expense Approval | Manager approve/reject with digital signature |
+| Document Signing | Multi-party Ed25519 document signing |
+| Task Assignment | Create, assign, track tasks |
+
+**WASM runtime:**
+- wasmtime (desktop) + wasm3 (iOS) dual-engine
+- Host ABI: storage_get/set, ed25519_sign, event_publish
+- Fuel metering from day 1 (not retrofitted)
+- No egress network, no AI inference, no SQLite virtual tables yet
+
+---
+
+### Slice 6: "Local AI" (Week 39-46)
+
+**Goal:** AI summarize thread content, running entirely on device.
+
+**Stack:**
+- iPhone: Qwen2.5-0.5B (MLX, ~400MB)
+- Mac mini: Qwen2.5-7B or Gemma2-9B (MLX, ~5GB)
+- PII redaction mandatory before any inference
+- ThermalMonitor gates inference during thermal stress
+
+**Why not Gemma 4?** Gemma 4 doesn't have stable MLX export. Qwen2.5 and Gemma 2 do. Swap when stable.
+
+---
 
 ## Platform Rollout (Progressive)
 
-| Giai đoạn | Nền tảng | Khi nào | Lý do |
-|-----------|----------|---------|-------|
-| **Prototype** | macOS + iPhone | Tuần 1-6 | Cùng hệ sinh thái Apple, cùng Secure Enclave, 1 team |
-| **Phase 1** | macOS + iPhone | Tháng 1-4 | Pilot trên 2 nền tảng chính |
-| **Phase 2A-C** | + Android, Oppo | Tháng 5-11 | Thị trường Việt Nam/Á, sau khi có revenue |
-| **Phase 2D** | + Windows | Tháng 12-14 | Doanh nghiệp Windows-heavy |
-| **Phase 3** | + Linux, Huawei, Server | Tháng 15-24 | Gov/Defense, toàn cầu |
+| Slice | Platforms | Why |
+|-------|-----------|-----|
+| **0-2** | macOS only | No UI, test-only |
+| **3** | macOS + iPhone | Same Apple ecosystem, same Secure Enclave |
+| **4** | macOS + iPhone | Mesh test on same ecosystem |
+| **5** | + Android | .tapp needs broader test base |
+| **6** | + Windows | Enterprise AI demand |
 
-**Nguyên tắc:** Chỉ thêm nền tảng khi có 3+ khách hàng trả tiền yêu cầu. Không thêm "vì có thể."
-
----
-
-## Phase 0 — Architecture & Design Foundation
-
-**Duration:** 1 tuần
-**Goal:** Khóa ranh giới kiến trúc, CI/CD, design system
-
-| File | Nội dung chính |
-|------|---------------|
-| [Phase 0](phase-0-architecture-foundation.md) | 5 task boxes: Domain boundaries, gRPC/Protobuf, CI baseline, Design system, ADRs |
-
----
-
-## Prototype Phase — "TeraChat Zero"
-
-**Duration:** 4-6 tuần
-**Goal:** MLS E2EE chat chạy được trên macOS + iPhone. Demo được cho khách hàng.
-**Subsystem:** Chỉ MLS cơ bản (Curve25519, không PQ)
-
-| File | Nội dung chính |
-|------|---------------|
-| [Prototype Phase](prototype-phase.md) | MLS E2EE chat, License JWT, macOS+iPhone, TeraRelay single binary |
-
-**Exit Gate:** Demo được cho 5+ doanh nghiệp. Thu thập feedback.
-
----
-
-## Phase 1 MVP — "Sign the Pilot"
-
-**Duration:** 3-4 tháng (sau prototype)
-**Subsystem mới:** Identity Integration (OIDC/SAML)
-**Economic goal:** 3 signed pilots → ít nhất 1 chuyển thành paid
-
-### Scope: VÀO / RA
-
-| VÀO (4 components) | RA (Deferred) |
-|---------------------|---------------|
-| MLS E2EE Internal Messaging | ~~Hybrid PQ-KEM~~ → Phase 2A |
-| License JWT + DeviceIdentityKey | ~~Survival Mesh~~ → Phase 2B |
-| OIDC/SAML (Google Workspace + Azure AD) | ~~.tapp Marketplace~~ → Phase 2C |
-| 1 Reference .tapp (Expense Approval) | ~~Gemma 4 AI~~ → Phase 2D |
-| Deployment Automation (30-min target) | ~~Mac mini HA Cluster~~ → Phase 3 |
-| | ~~Customer Messaging~~ → NEVER |
-
-### Quantitative Gate Metrics
-
-| # | Metric | Target |
-|---|--------|--------|
-| M1 | Signed Pilots | ≥ 3 tổ chức |
-| M2 | IT Admin Deploy Time | ≤ 30 phút (không hỗ trợ) |
-| M3 | Daily Active Users (per pilot) | ≥ 20 users, 14 ngày liên tục |
-| M4 | Message Delivery | 100%, 0 loss |
-| M5 | Uptime | ≥ 99.5% trong 30 ngày |
-| M6 | Pilot → Paid LOI | ≥ 1 signed Letter of Intent |
-| M7 | Data Loss Incidents | 0 |
-
-**Gate:** ≥ 5/7 metrics đạt → GO Phase 2. < 5/7 → pivot hoặc tiếp tục Phase 1.
-
-| File | Nội dung chính |
-|------|---------------|
-| [Phase 1](phase-1-trust-kernel.md) | MLS E2EE, License JWT, OIDC/SAML, Deployment Automation, 1 Reference .tapp |
-
----
-
-## Phase 2A — Post-Quantum Cryptography
-
-**Duration:** 2 tháng (Month 5-6)
-**Subsystem mới:** ML-KEM-768 Hybrid PQ-KEM
-**Prerequisite:** Phase 1 GO + ít nhất 1 khách yêu cầu PQ
-
-**Gate Metrics:**
-- MLS Epoch Rotation với 100 members < 1s
-- PQ handshake không làm chậm UX quá 200ms
-- Zeroize verification pass dưới cargo miri
-
----
-
-## Phase 2B — Survival Mesh
-
-**Duration:** 3 tháng (Month 7-9)
-**Subsystem mới:** BLE 5.0 + Wi-Fi Direct P2P Mesh
-**Prerequisite:** 3+ khách hàng hỏi "nếu mất internet thì sao?"
-
-**Gate Metrics:**
-- SC-01: Internet partition 30 phút → full recovery < 120s, 0 data loss
-- SC-38: BLE 100kbps cap + 250ms RTT → P0 delivered < 2s
-- EmdpSessionTerminated không bị drop bởi P2 transfer
-
----
-
-## Phase 2C — .tapp Marketplace
-
-**Duration:** 2 tháng (Month 10-11)
-**Subsystem mới:** WASM Dual-Engine + Web Marketplace (payment on terachat.io) + Self-Service Deploy
-**Prerequisite:** ≥ 5 khách hàng trả tiền (cần user base cho marketplace)
-
-**Gate Metrics:**
-- ≥ 5 vetted .tapps trên marketplace
-- ≥ 2 .tapps có active usage
-- Self-service deploy < 10 phút (không cần IT admin)
-- WasmParity CI: wasm3 ≡ wasmtime (delta ≤ 20ms)
-
----
-
-## Phase 2D — Gemma 4 Local AI
-
-**Duration:** 3 tháng (Month 12-14)
-**Subsystem mới:** Gemma 4 ONNX on-device + SanitizedPrompt Pipeline
-**Prerequisite:** ≥ 30% khách hàng survey nói "cần AI trong chat"
-
-**Gate Metrics:**
-- ≥ 30% users dùng AI feature ít nhất 1 lần/tuần
-- PII redaction: 0 false negatives (PII lọt qua)
-- Model load < 5s, inference < 2s với prompt ≤ 2000 tokens
-- RAM peak < 4GB khi Gemma 4 loaded
-
----
-
-## Phase 3A — Open AI Framework + Governance
-
-**Duration:** 4 tháng (Month 15-18)
-**Subsystem mới:** Multi-Model AI Framework + SCIM/Legal Hold đầy đủ
-**Prerequisite:** Gemma 4 AI có usage ≥ 30%
-
-**Gate Metrics:**
-- ≥ 5 enterprise custom models registered
-- SCIM offboarding < 30s
-- ISO 27001 audit initiated
-- 90-day retention ≥ 80%
-
----
-
-## Phase 3B — Scale & Gov/Military
-
-**Duration:** 6 tháng (Month 19-24)
-**Subsystem mới:** Air-Gapped Deployment + Gov Certification
-**Prerequisite:** ISO 27001 certified + ≥ 2 commercial references
-
-**Gate Metrics:**
-- ≥ 50 enterprise customers
-- ≥ $1M ARR
-- ≥ 1 Gov/Military contract signed
-- ≥ 10 third-party .tapp publishers
-- NRR ≥ 110%
+**Rule:** Only add platform when 3+ paying customers request it.
 
 ---
 
 ## Platform Coverage Matrix
 
-| Platform | App Path | Core Engine | UI Framework | Secure Enclave | Phase |
-|----------|----------|-------------|--------------|----------------|-------|
-| **macOS** | `apps/Laptop/macos` | Rust Core (native) | Tauri | Secure Enclave | Prototype |
-| **iPhone** | `apps/Phone/Iphone` | Rust Core (FFI) | SwiftUI | Secure Enclave | Prototype |
-| **Android** | `apps/Phone/Android` | Rust Core (Foreground Svc) | Jetpack Compose | StrongBox | Phase 2A |
-| **Oppo** | `apps/Phone/Oppo` | Rust Core (Foreground Svc) | Jetpack Compose | StrongBox | Phase 2A |
-| **Windows** | `apps/Laptop/windows` | Rust Core (native) | Tauri | TPM 2.0 | Phase 2D |
-| **Linux** | `apps/Laptop/linux` | Rust Core (native) | Tauri | TPM 2.0 | Phase 3A |
-| **Huawei** | `apps/Phone/Huawei` | Rust Core (FFI) | ArkUI | KeyStore | Phase 3A |
-| **Mac Server** | `server/Mac` | TeraRelay binary | — | Secure Enclave | Phase 3A |
-| **Physical Srv** | `server/Physical Server` | TeraRelay binary | — | TPM 2.0 / HSM | Phase 3B |
-
-## Responsible Departments
-
-| Department | Phase Focus | Lead Role |
-|------------|-------------|-----------|
-| **Architecture & Leadership** | Phase 0 + tất cả phase exits | System Architect |
-| **Core Mesh & Cryptography** | Prototype, Phase 1, Phase 2A, Phase 2B | Applied Cryptographer |
-| **State & CRDT Systems** | Phase 1, Phase 2C | Distributed Systems Engineer |
-| **Client & UX Engineering** | Prototype, Phase 1, Phase 2C | Product UI Lead |
-| **AI & Enclave Engineering** | Phase 2D, Phase 3A | ML/Enclave Lead |
-| **Governance & Compliance** | Phase 3A, Phase 3B | CISO |
-| **Infra, Ops & Quality** | Phase 0, Phase 1 (deploy), Phase 3 (chaos) | SRE + SecOps |
-
-## System Design: What Connects to What
-
-```
-tc-crypto (MLS E2EE, PQ-KEM)  →  tc-mesh (BLE/WiFi Direct)
-                               →  tc-store (encryption keys)
-                               →  Hardware (Secure Enclave / TPM)
-
-tc-mesh (BLE, EMDP)           →  tc-crypto (session keys)
-                               →  tc-crdt-sync (offline queue)
-                               →  UI HUD (signal renderer)
-
-tc-crdt-sync (CRDT DAG)       →  tc-store (hot_dag.db)
-                               →  tc-tapp (WASM state)
-                               →  Relay (WAL replication)
-
-tc-store (SQLite, CAS VFS)    →  tc-crypto (encryption)
-                               →  tc-crdt-sync (read/write)
-                               →  Bindings (FFI data path)
-
-tc-tapp (WASM, Host ABI)      →  tc-store (transient state)
-                               →  tc-crypto (ABI key delegation)
-                               →  AI Module (host_ai_invoke)
-
-AI Module (Gemma 4, Open FW)  →  tc-tapp (Host ABI boundary)
-                               →  SanitizedPrompt (PII guard)
-                               →  ONNX Runtime (local execution)
-
-Bindings (FFI)                →  Core (all crates via gRPC)
-                               →  Clients (Flutter/SwiftUI/Tauri)
-
-Relay (VPS daemon)            →  All clients (mTLS/WSS)
-                               →  Object Storage (MinIO/R2)
-                               →  PostgreSQL (metadata/audit)
-```
-
-## Invariants — Never Violated
-
-1. **Rust Core is domain owner** — UI is passive renderer only
-2. **Headless daemon + gRPC** before UI expansion
-3. **Dual-plane sync** — CRDT for chat, Relational for structured data
-4. **AI only after SanitizedPrompt** — PII redaction + no embedding egress
-5. **CISO holds veto** — DataGrant, SCIM, legal hold, kill-switch
-6. **Test never trails** — SC-34 to SC-40 are deployment blockers
-7. **1 subsystem per phase** — Progressive complexity, không build song song
-
-## Reference Documents
-
-| Document | Location |
-|----------|----------|
-| Improvement Hub | `docs/wiki/syntheses/improvement-plan-2026-05-11.md` |
-| Narrowed Phase 1 MVP | `docs/wiki/syntheses/narrowed-phase-1-mvp.md` |
-| GAP Resolution Tracker | `docs/wiki/syntheses/gap-resolution-tracker.md` |
-| Platform Rollout Phasing | `docs/wiki/syntheses/platform-rollout-phasing.md` |
-| Prototype First Model | `docs/wiki/syntheses/prototype-first-model.md` |
-| Deployment Automation Spec | `docs/wiki/syntheses/deployment-automation-spec.md` |
-| CI/CD Pipeline Spec | `docs/wiki/syntheses/ci-cd-pipeline-spec.md` |
-| Quantitative Phase Metrics | `docs/wiki/syntheses/quantitative-phase-metrics.md` |
-| AI Independent Workstream | `docs/wiki/syntheses/ai-independent-workstream.md` |
-| Security Review Requirements | `docs/wiki/syntheses/security-review-requirements.md` |
-| Vision Redefinition | `docs/wiki/syntheses/vision-redefinition-2026-05-11.md` |
-| Phase Framework (Economic) | `docs/wiki/concepts/phase-framework.md` |
-| Original 35-Day Plan | `phase/terachat-ai-agent-phase-plan.md` (archived reference) |
+| Platform | Core Engine | UI Framework | Secure Enclave | Slice |
+|----------|------------|--------------|----------------|-------|
+| **macOS** | Rust Core (native) | Tauri | Secure Enclave | 3 |
+| **iPhone** | Rust Core (FFI) | Flutter | Secure Enclave | 3 |
+| **Android** | Rust Core (Foreground Svc) | Jetpack Compose | StrongBox | 5 |
+| **Windows** | Rust Core (native) | Tauri | TPM 2.0 | 6 |
+| **Linux** | Rust Core (native) | Tauri | TPM 2.0 | Post-6 |
+| **Mac Server** | TeraRelay binary | — | Secure Enclave | 2 |
 
 ---
 
@@ -293,45 +236,96 @@ Relay (VPS daemon)            →  All clients (mTLS/WSS)
 
 ### Phân tích nguồn lực
 
-| Scenario | Team Size | Timeline Full Scope | Timeline MVP |
-|----------|-----------|---------------------|--------------|
-| Full senior team | 8-12 engineers | 3 năm | 4-6 tháng |
-| Solo + AI tools | 1 engineer + AI | 6-8 năm (không khả thi) | 4-6 tháng |
-| **Solo + Freelancers (khuyến nghị)** | **1 founder + hire đúng lúc** | **18-24 tháng** | **4-6 tháng** |
+| Scenario | Team Size | Timeline |
+|----------|-----------|----------|
+| Full senior team | 8-12 engineers | 12-18 months |
+| **Solo + AI agents (khuyến nghị)** | **1 founder + AI harness** | **18 months** |
+| Solo without AI agents | 1 engineer | 6-8 years (not feasible) |
 
-### Hire Triggers — KHI NÀO cần hire
+### Hire Triggers
 
-| Trigger | Cần hire ai | Chi phí ước tính | Phase |
-|---------|-------------|------------------|-------|
-| Cần PQ-KEM implementation | Applied Cryptographer (freelance) | $15,000-30,000 | Phase 2A |
-| Cần BLE Mesh protocol | Distributed Systems Engineer | $80-120K/năm (full-time) | Phase 2B |
-| 3+ pilots active, cần support | Solutions Engineer | $60-80K/năm | Phase 1 |
-| Chuẩn bị ISO 27001 | Compliance Consultant | $20,000-40,000 | Phase 3A |
-| 50+ enterprise customers | SRE + Support team | $100-150K/năm/người | Phase 3B |
-| Revenue > $15K MRR | CTO/VP Engineering (full-time) | $120-180K/năm + equity | Phase 2 |
+| Trigger | Role | Est. Cost | Slice |
+|---------|------|-----------|-------|
+| MLS implementation review | Applied Cryptographer (freelance) | $15,000-30,000 | 1 |
+| 3+ pilots active, need support | Solutions Engineer | $60-80K/year | 3 |
+| PQ-KEM implementation | Applied Cryptographer (freelance) | $15,000-30,000 | Post-6 |
+| BLE mesh protocol tuning | Distributed Systems Engineer | $80-120K/year | 4 |
+| ISO 27001 preparation | Compliance Consultant | $20,000-40,000 | Post-6 |
+| 50+ enterprise customers | SRE + Support team | $100-150K/person/year | Post-6 |
+| Revenue > $15K MRR | CTO/VP Engineering (full-time) | $120-180K + equity | 5+ |
 
-### Budget Thực Tế
+### Budget per Slice
 
-| Giai đoạn | Duration | Infra/tháng | External Cost | Tổng |
-|-----------|----------|-------------|---------------|------|
-| **Phase 0 + Prototype** | 6-8 tuần | $30-50 | $0 (solo) | **~$100-200** |
-| **Phase 1 MVP** | 4 tháng | $50-100 | $0 (solo + AI) | **~$200-400** |
-| **Phase 2A PQ-KEM** | 2 tháng | $100-200 | $15K-30K (crypto review) | **~$15K-30K** |
-| **Phase 2B Mesh** | 3 tháng | $200-500 | $80-120K/năm (hire) | **~$20K-30K** |
-| **Phase 2C Marketplace** | 2 tháng | $200-500 | $0 (solo + AI) | **~$400-1,000** |
-| **Phase 2D AI** | 3 tháng | $300-800 | $0 (solo + AI) | **~$900-2,400** |
-| **Phase 3A Gov** | 4 tháng | $500-1,200 | $20K-40K (ISO 27001) | **~$22K-45K** |
-| **Phase 3B Scale** | 6 tháng | $1,000-3,000 | Team 5+ engineers | **~$200K-500K/năm** |
+| Slice | Duration | Infra/month | External Cost | Total |
+|-------|----------|-------------|---------------|-------|
+| **0: Foundation** | 2 weeks | $30-50 | $0 | **~$50** |
+| **1: Hello E2EE** | 6 weeks | $30-50 | $0 | **~$100** |
+| **2: Relay** | 6 weeks | $50-100 | $0 | **~$150** |
+| **3: UI** | 8 weeks | $50-100 | $0 | **~$200** |
+| **4: HA + Mesh** | 8 weeks | $100-200 | $0 (solo) | **~$400** |
+| **5: .tapp** | 8 weeks | $200-500 | $0 (solo + AI) | **~$1,000** |
+| **6: AI** | 8 weeks | $300-800 | $0 (solo + AI) | **~$1,600** |
 
-### Nguyên tắc tài chính
+### Financial Principles
 
-1. **Không hire trước khi có revenue** — ngoại trừ Applied Cryptographer (freelance) cho PQ-KEM
-2. **Mỗi lần hire = 1 người** — không hire 2 người cùng lúc
-3. **Revenue threshold trước khi hire full-time:** $15K MRR cho kỹ sư đầu tiên, $50K MRR cho kỹ sư thứ hai
-4. **Pilot revenue target:** 3 pilots × $500-1,500/tháng = $1,500-4,500 MRR (đủ cover infra + chi phí cơ bản)
+1. **No hire before revenue** — except Applied Cryptographer (freelance) for MLS review
+2. **Hire one at a time** — never two people simultaneously
+3. **Revenue thresholds:** $15K MRR → first engineer, $50K MRR → second engineer
+4. **Pilot revenue target:** 3 pilots × $500-1,500/month = $1,500-4,500 MRR
 
-### Risk Burnout — Cảnh báo
+---
 
-- **Spec writing limit:** Không viết spec mới khi spec cũ chưa có code chạy. Rule: "1 spec written → 1 prototype built → validate → next spec."
-- **Analysis paralysis:** 80+ docs là đủ cho 2 năm development. Không cần thêm spec mới trước khi có prototype.
-- **Minimum viable day:** Mỗi ngày phải có ít nhất 1 commit code hoặc 1 test passed. Không có ngày "chỉ research". |
+## System Design: What Connects to What
+
+```
+tc-crypto (MLS E2EE)  →  tc-mesh (BLE/WiFi Direct)
+                      →  tc-store (encryption keys)
+                      →  Hardware (Secure Enclave / TPM)
+
+tc-mesh               →  tc-crypto (session keys)
+                      →  tc-crdt-sync (offline queue)
+                      →  UI HUD (CoreSignal renderer)
+
+tc-crdt-sync          →  tc-store (hot_dag.db)
+                      →  tc-tapp (WASM state)
+                      →  Relay (WAL replication)
+
+tc-store              →  tc-crypto (encryption)
+                      →  tc-crdt-sync (read/write)
+                      →  FFI data path
+
+tc-tapp (WASM)        →  tc-store (transient state)
+                      →  tc-crypto (ABI key delegation)
+                      →  AI Module (host_ai_invoke)
+
+AI Module             →  tc-tapp (Host ABI boundary)
+                      →  SanitizedPrompt (PII guard)
+                      →  ThermalMonitor (resource gate)
+                      →  MLX Runtime (local execution)
+
+Relay                 →  All clients (mTLS/WSS)
+                      →  RaftNode (WAL replication)
+                      →  Object Storage (MinIO/R2)
+```
+
+---
+
+## Invariants — Never Violated
+
+1. **Rust Core is domain owner** — UI is passive renderer only
+2. **Headless daemon + gRPC** before UI expansion
+3. **Dual-plane sync** — CRDT for chat, Relational for structured data
+4. **AI only after SanitizedPrompt** — PII redaction + no embedding egress
+5. **Deep modules** — ≤ 5 public items per module, ≤ 7 enforced by CI
+6. **Test never trails** — every slice has passing tests before demo
+7. **One slice at a time** — Progressive complexity, no parallel slices
+8. **iOS election_weight = 0** — iPhone never mesh coordinator
+
+---
+
+## Risk Burnout — Guardrails
+
+- **Spec limit:** Don't write new specs when old specs have no running code. Rule: "1 spec → 1 prototype → validate → next spec."
+- **Analysis paralysis:** 80+ docs is enough for 18 months of development. No more specs before prototype.
+- **Minimum viable day:** At least 1 commit or 1 test passed per day. No "research only" days.
+- **AI does the typing:** Human does architecture + review. Claude Code writes the code.

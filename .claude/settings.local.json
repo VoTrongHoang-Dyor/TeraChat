@@ -33,12 +33,5 @@
     "tc-crypto/src/**/*.rs",
     "tc-mesh/src/**/*.rs",
     "source/core/tc-crypto/src/"
-  ],
-  "hooks": {
-    "pre_commit": [
-      "cargo fmt --all -- --check",
-      "cargo clippy --all-targets -- -D warnings",
-      "gitleaks detect --source ."
-    ]
-  }
+  ]
 }
