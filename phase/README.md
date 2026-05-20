@@ -2,8 +2,8 @@
 
 ```yaml
 id: "TERA-SLICE-MAP"
-version: "4.0.0"
-date: "2026-05-15"
+version: "5.0.0"
+date: "2026-05-18"
 principle: "Vertical Slice — mỗi slice là shippable, demo được, charge được"
 philosophy: "Deep Modules + Multi-Agent Harness"
 timeline: "18 months (46 weeks)"
@@ -19,7 +19,7 @@ timeline: "18 months (46 weeks)"
 ✅ RIGHT (Vertical Slice):
 Slice 1: "E2EE message giữa 2 Mac" (6 weeks) → demo
 Slice 2: "iPhone → Mac" (6 weeks) → demo on real devices
-Slice 3: "Relay + mesh failover" (6 weeks) → HA demo
+Slice 3: "Relay + TeraLink fallback" (6 weeks) → HA demo
 Slice 4: ".tapp đầu tiên" (8 weeks) → Work OS demo
 Slice 5: "AI summarize thread" (8 weeks) → AI demo
 ```
@@ -75,8 +75,14 @@ buf lint                  # proto files valid
 cargo clippy -- -D warnings  # 0 warnings
 ```
 
-**Human work:** Review CI config, sign off CLAUDE.md, setup secrets.
+**Human work:** Review CI config, sign off CLAUDE.md, create `BSL_BOUNDARY.sha256`, setup secrets.
 **AI work:** CI/CD pipeline, buf.yaml, proto scaffolding.
+
+**Pre-code documents (produced in Slice 0 — before any code):**
+- `PLATFORM_ARCHITECTURE.md` — License tiers, BSL boundary, module diagram
+- `THREAT_MODEL.md` — STRIDE for 3 attack vectors
+- `HARDWARE_SPEC.md` — Updated hardware table with Compute/Storage/AI node separation
+- `INVARIANTS.md` updated — 13 invariants with enforcement mechanisms
 
 ---
 
@@ -109,28 +115,37 @@ async fn mls_roundtrip() {
 - `mls_roundtrip` test passing
 - ZeroizeOnDrop on all key types verified
 - `cargo miri test --test ffi_boundary_zeroize` pass
+- `SanitizedPrompt` type implemented (compile-time PII enforcement)
+- OpenTelemetry traces for all MLS operations (not retrofitted later)
 
 **Agent assignment:** Rust Agent writes MlsClient/MlsGroup, Test Agent writes roundtrip test, Review Agent verifies invariants.
+
+**External hire:** Applied Cryptographer ($15,000–30,000 freelance) reviews MLS implementation.
 
 ---
 
 ### Slice 2: "Relay + Persistence" (Week 9-14)
 
-**Goal:** Messages through relay binary, persisted in SQLite WAL.
+**Goal:** Messages through relay binary, persisted in SQLite WAL on NAS ECC storage path.
 
 ```
 Client A ──TLS 1.3──> TeraRelay ──TLS 1.3──> Client B
                          │
-                    SQLite WAL
-                    (ciphertext only — relay sees nothing)
+                    NAS ECC Storage
+                    (SQLite WAL — ciphertext only, relay sees nothing)
 ```
 
 **Key Deliverables:**
 - `terachat-relay` binary — single command deploy
-- `hot_dag.db` — append-only CRDT events
+- `hot_dag.db` — append-only CRDT events on NAS ECC path
+- NAS-aware storage path config (I-10 enforcement)
+- Async SQLCipher rekey (double-buffer, no UI block)
 - License JWT validation
 - Health check endpoint
 - Integration test: 1000 messages → 0 loss, kill relay mid-send → reconnect → message delivered
+- **Vanta/Drata setup** — begin SOC2 evidence collection ($5,000–8,000/yr)
+
+**Milestone:** 1 paying pilot customer by end of Slice 2.
 
 ---
 
@@ -146,30 +161,42 @@ Client A ──TLS 1.3──> TeraRelay ──TLS 1.3──> Client B
 - Send/receive message
 - Glassmorphism basic
 
+**FFI constraint:** `flutter_rust_bridge` with strict ownership transfer — Dart never holds raw Rust pointer > 1 frame.
+
+**Platform constraint:** macOS + iOS first. Android only when 3+ paying customers request it.
+
 **Human work:** UX decisions, testing on real devices.
 **AI work:** Tauri commands, Flutter screens, FFI bindings.
 
 ---
 
-### Slice 4: "HA + Mesh Failover" (Week 23-30)
+### Slice 4: "HA + TeraLink Fallback Network" (Week 23-30)
 
-**Goal:** Enterprise-grade HA with automatic mesh fallback. This is the SLA argument for customer deals.
+**Goal:** Enterprise-grade HA with automatic TeraLink 3-tier fallback. This is the SLA argument for customer deals.
 
 ```
-Normal: Devices → TeraRelay (Mac mini primary) → Database
+Normal (T1): Devices → TeraRelay (Compute Node) → NAS ECC Storage
 
-Primary fail (auto-detect within 5s):
-  → BLE/WiFi Direct mesh activated
-  → Store-and-forward CRDT
-  → When primary returns: auto-sync
+Compute Node fail (auto-detect within 5s):
+  T2 → mDNS/Multipeer activated (server down, LAN intact)
+  T3 → BLE emergency if LAN also unavailable (text only, ≤ 500 bytes)
+  Store-and-forward CRDT
+  When primary returns: auto-sync all tiers → T1
 ```
 
-**Approach:** Use Apple `MultipeerConnectivity` (iOS) + `mDNS + TCP` (macOS) — not raw BLE 5.0 GATT. App Store safe, reliable.
+**TeraLink 3-Tier Implementation:**
+- T1: LAN/Wi-Fi — gRPC to Compute Node, full features
+- T2: mDNS peer discovery + Wi-Fi Direct / iOS Multipeer Connectivity — text + presence
+- T3: BLE 5.0 Coded PHY — text only, ≤ 500 bytes, Floor Subnet Architecture (≤50 devices/subnet)
+
+**Approach:** Apple `MultipeerConnectivity` (iOS) + `mDNS + TCP` (macOS) for T2. Floor Gateway: Raspberry Pi 4 pre-configured image per floor.
 
 **SLA:**
-- 1 Mac mini: 99.5% (~4h downtime/year)
-- 2 Mac mini HA: 99.95% (~4 min downtime/year)
-- 2 Mac mini + Mesh: **99.99%** (~1 min downtime/year) — enterprise contract grade
+- 1 Compute Node + External SSD: 99.5% (~4h downtime/year)
+- 2 Compute Node HA + NAS ECC: 99.95% (~4 min downtime/year)
+- 2 Compute Node + NAS ECC + TeraLink Fallback: **99.99%** (~1 min downtime/year) — enterprise contract grade
+
+**Milestone:** SOC2 Type I audit with boutique auditor (~$20K total).
 
 ---
 
@@ -187,19 +214,30 @@ Primary fail (auto-detect within 5s):
 - wasmtime (desktop) + wasm3 (iOS) dual-engine
 - Host ABI: storage_get/set, ed25519_sign, event_publish
 - Fuel metering from day 1 (not retrofitted)
-- No egress network, no AI inference, no SQLite virtual tables yet
+- Capability enforcement at Host ABI syscall layer (I-12)
+- `network:external` syscall permanently blocked (I-12 enforcement)
+- `send_media()` blocked when transport = BLE (I-11 enforcement)
+
+**Milestone:** Publish `tapp-sdk` (MIT) on GitHub. Write `TAPP_SPEC.md` public specification.
 
 ---
 
 ### Slice 6: "Local AI" (Week 39-46)
 
-**Goal:** AI summarize thread content, running entirely on device.
+**Goal:** AI summarize thread content, running on AI Inference Node (separate from Compute).
 
 **Stack:**
 - iPhone: Qwen2.5-0.5B (MLX, ~400MB)
-- Mac mini: Qwen2.5-7B or Gemma2-9B (MLX, ~5GB)
-- PII redaction mandatory before any inference
+- AI Node (Mac mini M4 Max): Qwen2.5-7B or Gemma2-9B (MLX, ~5GB)
+- PII redaction mandatory before any inference (I-5 type system enforcement)
 - ThermalMonitor gates inference during thermal stress
+
+**TeraAiAdapter implementations:**
+- Ollama local (default)
+- Azure OpenAI private endpoint (enterprise)
+- ONNX air-gapped bundle (Gov/Military)
+
+**Milestone:** Publish `ai-adapter-sdk` (MIT). Measure prompt rejection rate < 0.5%. Begin SOC2 Type II observation period.
 
 **Why not Gemma 4?** Gemma 4 doesn't have stable MLX export. Qwen2.5 and Gemma 2 do. Swap when stable.
 
@@ -303,6 +341,17 @@ AI Module             →  tc-tapp (Host ABI boundary)
                       →  ThermalMonitor (resource gate)
                       →  MLX Runtime (local execution)
 
+tc-ai (AI adapter)     →  SanitizedPrompt (PII type guard)
+                      →  TeraAiAdapter trait (Ollama/Azure/ONNX)
+                      →  AI Inference Node (optional, dedicated)
+
+tapp-sdk (MIT)        →  Public WASM SDK for .tapp developers
+                      →  Tapp trait (on_start, on_action, on_tick)
+                      →  Manifest format + signing toolchain
+
+ai-adapter-sdk (MIT)  →  Public SDK for AI adapter developers
+                      →  TeraAiAdapter trait implementation guide
+
 Relay                 →  All clients (mTLS/WSS)
                       →  RaftNode (WAL replication)
                       →  Object Storage (MinIO/R2)
@@ -310,16 +359,46 @@ Relay                 →  All clients (mTLS/WSS)
 
 ---
 
+## Pricing (License Tiers)
+
+| Tier | Price/Year | Org Size | Concurrent Capacity | Key Features |
+|------|-----------|----------|---------------------|--------------|
+| **Starter** | $900/yr | ≤50 users | 80–120 | 1-click install, basic E2EE, community support |
+| **Business** | $2,400/yr | ≤500 users | 300–500 | TeraLink Fallback, .tapp support, email support |
+| **Enterprise** | $6,000/yr | ≤5,000 users | 1,500–2,000 | HA Cluster, AI Node, priority support, SLA |
+| **Gov/Military** | $15,000+/yr | Negotiate | Negotiate | FIPS 140-3, air-gapped, HSM, Shamir 3-of-5, dedicated support |
+
+**Ghi chú:** 'User' trong pricing = tổng tài khoản trong tổ chức. 'Concurrent' = số session hoạt động đồng thời tại peak. Một org 500 nhân viên với peak 200 concurrent → cần Business license (≤500 users) + Business hardware (300–500 concurrent capacity).
+
+Pricing rẻ hơn 40–70% so với Slack/Teams tính per-org. TCO Calculator trên `terachat.io` so sánh 3-year cost là conversion tool chính.
+
+## SOC2 Compliance Roadmap
+
+| Giai đoạn | Slice | Scope | Cost |
+|-----------|-------|-------|------|
+| **G1: Preparation** | Slice 2 | Vanta/Drata setup, evidence collection, policy drafting | ~$5,000–8,000/yr |
+| **G2: Type I Audit** | Slice 4 | Point-in-time assessment by boutique auditor | ~$20,000 total |
+| **G3: Type II Audit** | Post-Slice 6 | 6-month continuous monitoring period | ~$30,000+ |
+
+GDPR DPA template và HIPAA BAA template được chuẩn bị trong G2. FedRAMP để sau năm 3.
+
+---
+
 ## Invariants — Never Violated
 
-1. **Rust Core is domain owner** — UI is passive renderer only
-2. **Headless daemon + gRPC** before UI expansion
-3. **Dual-plane sync** — CRDT for chat, Relational for structured data
-4. **AI only after SanitizedPrompt** — PII redaction + no embedding egress
-5. **Deep modules** — ≤ 5 public items per module, ≤ 7 enforced by CI
-6. **Test never trails** — every slice has passing tests before demo
-7. **One slice at a time** — Progressive complexity, no parallel slices
-8. **iOS election_weight = 0** — iPhone never mesh coordinator
+1. **Rust Core is domain owner** — UI is passive renderer only (CI enforced)
+2. **ZeroizeOnDrop on ALL key material** — no `mem::forget`, `ManuallyDrop`, or `Arc<KeyMaterial>` (CI enforced)
+3. **No raw pointer in `pub extern "C"`** — Token Protocol only (CI enforced)
+4. **Dual-plane sync** — CRDT for chat, Relational for structured data (CI lint enforced)
+5. **AI only after SanitizedPrompt** — PII redaction + type system enforced, compile-time guarantee
+6. **Headless daemon + gRPC** before UI expansion (integration test enforced)
+7. **Test never trails** — every slice has passing tests before demo (CI enforced)
+8. **One slice at a time** — Progressive complexity, no parallel slices (process enforced)
+9. **iOS election_weight = 0** — iPhone never Floor Gateway coordinator (CI enforced)
+10. **NAS ECC sole storage authority** — Mac mini never primary DB writer (type system enforced)
+11. **BLE text only ≤ 500 bytes** — no file/media over TeraLink T3 (type system enforced)
+12. **.tapp no external network egress** — capability permanently blocked (Host ABI enforced)
+13. **BSL boundary immutable** — LICENSE hash in git tag (CI enforced)
 
 ---
 

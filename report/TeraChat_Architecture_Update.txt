@@ -1,0 +1,371 @@
+
+TeraChat
+Báo cáo Nâng cấp, Thay đổi & Định hướng Kiến trúc
+Phiên bản 2.0  —  So sánh với tài liệu gốc  —  Tháng 5 năm 2026
+
+Mục đích
+Cung cấp cho AI cố vấn kỹ thuật toàn bộ delta giữa kiến trúc gốc và phiên bản đã được phân tích, phê duyệt. Dùng để điều chỉnh toàn bộ tài liệu spec trước khi bắt đầu code.
+Trạng thái
+Slice 0 — Foundation (chưa viết code thực tế). Đây là thời điểm tối ưu để điều chỉnh kiến trúc.
+Phạm vi
+4 nhóm thay đổi: (1) Hạ tầng & phần cứng, (2) Kiến trúc mesh, (3) Platform & Open-source strategy, (4) Compliance & kinh doanh. Tổng: 18 thay đổi cụ thể.
+Ưu tiên hành động
+3 việc phải làm trước khi mở IDE: (1) Viết PLATFORM_ARCHITECTURE.md, (2) Viết Threat Model, (3) Cập nhật hardware spec table. Tất cả trong tài liệu, không phải code.
+
+1. Bảng tổng hợp thay đổi (Delta Summary)
+Mỗi hàng là một quyết định kiến trúc cụ thể. Cột 'Phiên bản gốc' là nội dung trong tài liệu ban đầu. Cột 'Phiên bản cập nhật' là quyết định sau phân tích.
+1A — Hạ tầng & Phần cứng
+Hạng mục
+Phiên bản gốc
+Phiên bản cập nhật
+Vai trò Mac mini
+Compute + Storage trên cùng 1 thiết bị. Mac mini chạy cả TeraChat core lẫn lưu SQLite WAL.
+Tách vai trò: Mac mini = Compute Node. NAS (Synology ECC) = Persistent Storage Node. SQLite WAL journal nằm trên NAS qua NFS — tránh data corruption khi non-ECC RAM lỗi.
+Tier nhỏ ≤50 user
+1 Mac mini M2 8GB + NAS 4TB — 50 users.
+1 Mac mini M4 Pro 24GB (compute) + Synology DS423+ ECC (storage). Claim thực tế: 80–120 concurrent sessions, không phải 50 total accounts.
+Tier vừa ≤500 user
+1 Mac mini M2 Pro 32GB + NAS 16TB — 500 users.
+2 Mac mini M4 Pro 48GB HA cluster + Synology DS923+ ECC. Claim thực tế: 300–500 concurrent sessions. Cần định nghĩa lại 'user' = concurrent active, không phải tổng tài khoản.
+Tier lớn ≤5.000 user
+2 Mac mini M4 Pro 48GB + NAS 32TB — 5.000 users.
+2 Mac mini M4 Pro 64GB + 1 Mac Studio M2 Ultra relay + Synology RS2423+ rackmount ECC. Thực tế: 1.500–2.000 concurrent. 5.000 total accounts với 30% online cùng lúc là feasible.
+Tier Gov/Military
+2 Mac mini + NAS + HSM — không giới hạn.
+THAY ĐỔI PLATFORM: HPE MicroServer Gen10+ (ECC RAM, IPMI, FIPS 140-3 validated) thay Mac mini. Lý do: Apple hardware không pass FIPS 140-3 cho gov procurement Mỹ/EU. TeraChat Rust binary compile cross-platform — software giữ nguyên, chỉ thay hardware.
+AI inference node
+Qwen2.5 / Gemma 2 chạy trên Mac mini + NAS. Không tách riêng.
+AI Inference tách thành node riêng: tier nhỏ/vừa dùng Mac mini M4 Pro 64GB riêng + Ollama Q4 (Qwen2.5-3B: 2GB RAM, Gemma2-2B: 1.5GB RAM). Tier lớn: Mac Studio M2 Ultra 64GB. AI là SKU add-on tùy chọn, không bắt buộc cho TeraChat core.
+
+1B — Kiến trúc Mesh & Offline
+Hạng mục
+Phiên bản gốc
+Phiên bản cập nhật
+Mô hình fallback
+BLE Mesh (BitChat-style) — 1 lớp dự phòng khi mất internet.
+3-tier fallback hierarchy: T1 = LAN/Wi-Fi qua Mac mini server (bình thường). T2 = mDNS peer discovery + Wi-Fi Direct / iOS Multipeer Connectivity (mất server nhưng còn AP). T3 = BLE Mesh emergency-only (mất toàn bộ Wi-Fi). Đổi tên 'Mesh' → 'TeraLink Fallback Network' trong marketing.
+BLE Mesh density
+BLE Mesh cho toàn bộ tòa nhà, không giới hạn số thiết bị.
+Floor Subnet Architecture: mỗi tầng = 1 BLE subnet ≤50 devices. 1 Floor Gateway (Raspberry Pi 4 cấu hình sẵn) per tầng làm inter-subnet bridge. TTL giới hạn = 2 trong subnet. Giải quyết broadcast storm ở environment ≥200 nodes. Floor Gateway là hardware SKU add-on ($150–200).
+iOS trong mesh
+iPhone không là mesh coordinator (election_weight = 0). Đã đúng.
+Giữ nguyên election_weight = 0. Bổ sung thêm: iOS không là relay node khi màn hình tắt (background restriction). iOS dùng Multipeer Connectivity Framework cho T2, không dùng Wi-Fi Direct. Ghi rõ constraint này trong tc-mesh spec.
+
+1C — Platform & Open-Source Strategy
+Hạng mục
+Phiên bản gốc
+Phiên bản cập nhật
+License strategy
+License JWT bắt chéo để tránh fork thương mại. Không đề cập open-source strategy cụ thể.
+BSL + MIT SDK model (3 tầng): (1) tc-crypto, license engine, HA orchestration = CLOSED SOURCE mãi mãi. (2) tc-crdt-sync, tc-mesh, tc-store, server core = BSL 1.1 (đọc được, không fork thương mại, auto-convert Apache 2.0 sau 4 năm). (3) tapp-sdk, ai-adapter-sdk, tc-proto, installer = MIT (cộng đồng tự do đóng góp).
+BSL competitive use clause
+Không có định nghĩa cụ thể.
+Định nghĩa rõ trong BSL text: 'Competitive use = cung cấp TeraChat-compatible messaging service cho third-party organization as a service.' Được phép: tự deploy nội bộ, build .tapp bán trên marketplace, integrate AI adapter. Không được phép: fork server + rebrand, SaaS reselling.
+1-click setup path
+Mac mini setup trong 15–30 phút. Không mô tả migration path.
+3-giai đoạn upgrade path: (1) Mac mini 1-command install: curl terachat.io/install | bash, mục tiêu 12 phút end-to-end. (2) Linux server migration: terachat migrate --target linux. (3) HA cluster: terachat cluster init. Mỗi bước là upgrade, không phải reinstall — data và client không bị ảnh hưởng.
+.tapp SDK
+WASM sandbox — mini-app chạy trong hộp cát. Không có SDK spec.
+3-lớp developer interface: UI Layer (tapp_ui::* — JSON DSL, không cần biết Rust), Data Layer (tapp_store::* — KV/Document API, CRDT ẩn hoàn toàn), Permission Layer (capability declarations trong tapp.manifest). Developer không viết crypto/security code — chỉ khai báo intent. Manifest format chuẩn được định nghĩa đầy đủ.
+AI framework
+Qwen2.5 / Gemma 2 chạy local. AI cố định, không extensible.
+TeraAiAdapter Rust trait chuẩn: 5 provider built-in (Ollama local, Azure OpenAI private endpoint, AWS Bedrock, BYO custom model WASM, air-gapped ONNX bundle). SanitizedPrompt type — PII filter enforce ở type system, không phải convention. Adapter nhận SanitizedPrompt, không bao giờ nhận raw String.
+.tapp marketplace
+Hoa hồng khi bán .tapp trên terachat.io. Không có timeline.
+Flywheel 5 bước: (1) TeraChat build 3 reference .tapp nội bộ (task manager, expense report, leave request). (2) Publish MIT. (3) Enterprise thấy ecosystem, mua license. (4) Third-party developer build thêm vì có khách hàng. (5) Marketplace hoa hồng 20% bắt đầu có nghĩa. Revenue từ marketplace chỉ meaningful sau 500+ org customers.
+
+1D — Kinh doanh & Compliance
+Hạng mục
+Phiên bản gốc
+Phiên bản cập nhật
+Pricing model
+License JWT theo năm, không tính đầu người. Không có tier cụ thể, không có giá.
+4-tier license: Starter (≤50 user, $900/năm), Business (≤500 user, $2.400/năm), Enterprise (≤5.000 user, $6.000/năm), Gov/Military (negotiate, $15k+). Bao gồm: hardware support, onboarding, SLA escalation. Rẻ hơn 40–70% so với Slack/Teams tính per-org.
+SOC2 / Compliance
+Không đề cập. Không có cert nào.
+Lộ trình 3 giai đoạn: G1 (Slice 0–2): Compliance-Ready Architecture — build đúng từ đầu, dùng Vanta/Drata $5–8k/năm collect evidence tự động. G2 (Slice 3–4): SOC2 Type I — boutique auditor $8–15k, total ~$20k. G3 (Slice 5–6): SOC2 Type II + GDPR DPA template + HIPAA BAA template. FedRAMP để sau năm 3.
+Go-to-market
+IT Admin triển khai → nhân viên dùng. Không có GTM strategy.
+Pilot-first GTM: Slice 2 kết thúc → có 1 paying pilot customer. Target market ưu tiên: (1) SEA enterprise (regulatory arbitrage — data sovereignty laws). (2) Western SMB 50–500 người paranoid về Big Tech. (3) Gov/Military SEA. TCO Calculator trên terachat.io so sánh 3-year cost vs Slack/Teams là conversion tool chính.
+HarmonyOS
+Không đủ điều kiện tier Gov/Military vì HMS Push. Đã đúng.
+Giữ nguyên quyết định. Ghi rõ thêm: HarmonyOS không có Secure Enclave tương đương Apple, không có TPM attestation chuẩn. Không support ở bất kỳ tier nào cho đến khi Huawei cung cấp hardware-backed key storage đạt chuẩn.
+
+2. Cập nhật Invariants — Các quy tắc bất biến
+Phần này giữ nguyên 8 invariants gốc và bổ sung 4 invariants mới phát sinh từ quá trình phân tích. Mọi invariant phải được enforce bằng type system hoặc CI gate — không phải chỉ comment hay convention.
+Invariants gốc — Giữ nguyên (8/8)
+#
+Invariant
+Ghi chú bổ sung
+I-1
+Server không bao giờ thấy tin nhắn rõ
+VPS relay chỉ forward ciphertext. Stateless invariant phải được verify bằng integration test: intercept relay traffic, assert không có plaintext.
+I-2
+Private key không rời khỏi chip bảo mật
+Secure Enclave (iOS/Mac) hoặc TPM (Windows/Linux). Thêm: HSM (YubiHSM2) cho Gov tier. Key attestation phải có trong Security Whitepaper.
+I-3
+Không tự implement thuật toán mã hóa
+Chỉ dùng ring crate hoặc openmls. Thêm rule: không fork, không patch local copy. Mọi crypto dependency phải pin exact version trong Cargo.lock.
+I-4
+CRDT chỉ append, không xóa, không sửa
+Bổ sung: GC epoch design — sau N epoch, tombstone được 'sealed' và archive sang cold storage, không xóa khỏi ledger. Cần định nghĩa N trong tc-crdt-sync spec.
+I-5
+iPhone election_weight = 0
+Giữ nguyên. Bổ sung: iOS không là relay node khi màn hình tắt — background BLE restriction. Ghi rõ trong tc-mesh spec.
+I-6
+UI chỉ là màn hình hiển thị
+Logic xử lý nằm trong Rust core. Thêm: FFI boundary safety — Dart không giữ raw pointer Rust quá 1 frame. Dùng flutter_rust_bridge với strict ownership transfer.
+I-7
+AI phải qua cổng lọc PII
+Enforce bằng type system: SanitizedPrompt(String) — private field, không thể construct bên ngoài tc-ai module. Adapter nhận SanitizedPrompt, không nhận raw String.
+I-8
+AI Local prompt rejection gần 0
+Implement Blind RAG + semantic guardrails. Prompt rejection < 0.5% là metric cần đo trong Slice 6 testing.
+
+Invariants mới — Bổ sung (4 mới)
+#
+Invariant
+Nguồn gốc & Cách enforce
+I-9
+NAS ECC là storage authority duy nhất
+Mac mini non-ECC RAM không được là primary database writer. Phát sinh từ: risk of silent data corruption. Enforce: SQLite WAL journal path phải trỏ đến NAS mount, không phải local SSD. Kiểm tra trong startup health check.
+I-10
+BLE Mesh chỉ relay text ≤500 bytes
+BLE Mesh T3 không relay file, media, hay attachment. Phát sinh từ: BLE bandwidth limitation (0.5 Mbps effective payload). Enforce: Host ABI từ chối WASM syscall send_media() khi transport = BLE.
+I-11
+.tapp không có network egress ra ngoài tổ chức
+capability 'network:external' bị từ chối hoàn toàn ở Host ABI — không phải policy, mà là kỹ thuật. Phát sinh từ: Zero Data Egress guarantee cho enterprise compliance. Enforce: WASM sandbox syscall whitelist không bao gồm external DNS/TCP calls.
+I-12
+BSL boundary không được thay đổi sau khi publish
+Một khi module được publish dưới BSL hoặc MIT, không được upgrade lên license restrictive hơn. Phát sinh từ: bài học HashiCorp 2023 — license bait-and-switch phá hủy community trust. Enforce: LICENSE file được hash và ghi vào git tag release.
+
+3. Cấu trúc Module Rust — Cập nhật
+Rust core modules (giữ nguyên + bổ sung)
+Module
+License
+Trách nhiệm & Thay đổi
+tc-crypto
+CLOSED
+MLS RFC 9420, ML-KEM-768, ZeroizeOnDrop. THÊM: key attestation API cho HSM tier. THÊM: forward secrecy cleanup job — zeroize epoch keys cũ hơn N epoch.
+tc-crdt-sync
+BSL 1.1
+CRDT DAG, hot_dag.db, tombstone. THÊM: GC epoch design (tombstone sealing). THÊM: proptest property-based testing với 10.000+ random merge scenarios bắt buộc trước Slice 2 ship.
+tc-mesh
+BSL 1.1
+BLE + Wi-Fi Direct. THAY ĐỔI LỚN: Refactor thành 3-tier TeraLink (T1 LAN, T2 mDNS/Multipeer, T3 BLE). THÊM: Floor Subnet routing với TTL=2. THÊM: BLE subnet isolation logic.
+tc-store
+BSL 1.1
+SQLite WAL + TeraVault VFS. THÊM: NAS-aware storage path config. THÊM: async SQLCipher rekey (double-buffer, không block UI). THÊM: WAL checkpoint latency histogram cho observability.
+tc-tapp
+BSL 1.1
+WASM engine (wasm3 iOS, wasmtime Android/desktop). THÊM: Capability enforcement ở Host ABI syscall layer. THÊM: network:external syscall blocked unconditionally. THÊM: send_media() blocked khi transport = BLE.
+tc-proto
+MIT
+Protobuf definitions. THÊM: buf breaking check bắt buộc trong CI từ Slice 0. Rule: mọi change phải backward-compatible, dùng reserved thay vì xóa field.
+tc-ai (MỚI)
+BSL 1.1
+MODULE MỚI. TeraAiAdapter trait + SanitizedPrompt type + PII filter engine. Built-in adapters: Ollama, Azure OpenAI, AWS Bedrock, ONNX air-gapped. Private field SanitizedPrompt(String) — type system enforce PII filter.
+tapp-sdk (MỚI)
+MIT
+MODULE MỚI — Public SDK. tapp_ui::*, tapp_store::*, tapp_capability::*. JSON DSL cho UI. Manifest format chuẩn. Publisher signing toolchain. 'Hello World .tapp trong 30 phút' là acceptance criterion.
+ai-adapter-sdk (MỚI)
+MIT
+MODULE MỚI — Public SDK. TeraAiAdapter trait public. Hướng dẫn implement custom adapter. Reference implementations: Ollama + Azure. Security model documentation.
+
+4. Hardware Specification — Phiên bản cập nhật
+Nguyên tắc: Mac mini = Compute Node. NAS ECC = Storage Authority. AI Node = tùy chọn riêng biệt. Gov/Military = HPE hardware thay Mac mini.
+
+Tier
+Compute (Mac mini)
+Storage (NAS ECC)
+AI Node (opt.)
+Concurrent
+Starter
+≤50 org
+Mac mini M4 Pro 24GB
+TeraChat core + relay
+Synology DS423+
+4TB ECC RAM
+Mac mini M4
+8GB + Ollama Q4
+80–120
+Business
+≤500 org
+2× Mac mini M4 Pro 48GB
+HA active-passive
+Synology DS923+
+16TB ECC RAM
+Mac Studio M2 Max
+32GB + Ollama
+300–500
+Enterprise
+≤5.000 org
+2× Mac mini M4 Pro 64GB
++ 1× Mac Studio relay
+Synology RS2423+
+Rackmount ECC 32TB
+Mac Studio M2 Ultra
+64GB + Ollama
+1.500–2.000
+Gov/Military
+Air-gapped
+HPE MicroServer Gen10+
+(ECC, IPMI, FIPS 140-3)
+HPE MSA Storage
+ECC + RAID
+On-device ONNX
+Phi-3-mini Q4
+Negotiate
+
+Lưu ý quan trọng: 'Concurrent' = số active sessions đồng thời, không phải tổng tài khoản. Một org có 500 nhân viên nhưng chỉ 150 online cùng lúc → dùng Starter tier.
+
+5. Roadmap — Cập nhật Slice Plan
+Slice timeline giữ nguyên 18 tháng. Thay đổi: bổ sung pre-code documents vào Slice 0, thêm non-technical milestone (pilot customer), điều chỉnh acceptance criteria cho mỗi Slice.
+Slice
+Timeline
+Mục tiêu chính (cập nhật)
+Milestone mới thêm
+Slice 0
+Foundation
+Tuần 1–2
+Repo compile, CI xanh, 0 Clippy warning, buf lint xanh.
+THÊM DOCS TRƯỚC CODE: Viết PLATFORM_ARCHITECTURE.md (phân tầng Open/BSL/Closed). Viết THREAT_MODEL.md (STRIDE cho 3 attack vectors). Cập nhật hardware spec table. Cập nhật invariants list thêm I-9 đến I-12.
+Slice 1
+Hello E2EE
+Tuần 3–8
+MlsClient + MlsGroup wrapping openmls. Test mls_roundtrip với 2 process. ZeroizeOnDrop verify.
+Thuê Applied Cryptographer ($15–30K) review. Implement SanitizedPrompt type (dù chưa dùng). Thêm opentelemetry traces cho mọi MLS operation từ ngay Slice 1 — không retrofit sau.
+Slice 2
+Relay + DB
+Tuần 9–14
+Tin nhắn qua VPS relay, lưu SQLite WAL trên NAS path.
+Dùng Vanta/Drata từ Slice 2 để collect SOC2 evidence tự động. Thêm: NAS-aware storage config. Thêm: async SQLCipher rekey implementation. MILESTONE: 1 paying pilot customer.
+Slice 3
+UI
+Tuần 15–22
+Mac + iPhone chat thật với nhau qua E2EE.
+Thêm: flutter_rust_bridge FFI ownership protocol (Dart không giữ raw pointer Rust quá 1 frame). Platform tối giản: macOS + iOS first, Android chỉ khi có 3+ paying customer yêu cầu.
+Slice 4
+HA + TeraLink
+Tuần 23–30
+2 Mac mini HA cluster. TeraLink Fallback Network (3-tier) thay vì chỉ BLE.
+THAY ĐỔI TÊN: 'HA + Mesh' → 'HA + TeraLink Fallback Network'. Implement Floor Subnet Architecture. SOC2 Type I audit (boutique auditor, ~$20K tổng).
+Slice 5
+.tapp Runtime
+Tuần 31–38
+3 reference .tapp chạy được: task manager, expense report, leave request.
+Publish tapp-sdk (MIT) lên GitHub. Viết TAPP_SPEC.md public. Capability enforcement ở Host ABI. network:external syscall blocked.
+Slice 6
+AI Local
+Tuần 39–46
+Tóm tắt hội thoại bằng AI chạy trên AI inference node.
+Publish ai-adapter-sdk (MIT). Implement TeraAiAdapter cho Ollama + Azure OpenAI. Measure prompt rejection rate < 0.5%. SOC2 Type II observation period bắt đầu.
+
+6. Tài liệu cần viết — Checklist cho AI
+Đây là danh sách tài liệu cần tạo mới hoặc cập nhật, theo thứ tự ưu tiên. Mỗi tài liệu có audience rõ ràng và acceptance criterion cụ thể.
+Nhóm P0 — Phải xong trước khi mở IDE
+Tài liệu
+Audience
+Nội dung cốt lõi
+Acceptance criterion
+PLATFORM_ARCHITECTURE.md
+Developer, investor, community
+Phân tầng Open/BSL/Closed. Flywheel 5 bước. Lý do từng quyết định license.
+Đọc xong trong 10 phút, hiểu ngay cái gì mở cái gì đóng và tại sao.
+THREAT_MODEL.md
+Security team, CISO, auditor
+STRIDE model cho 3 vectors: malicious .tapp, insider threat, compromised VPS relay.
+Mỗi threat có mitigation cụ thể map đến invariant hoặc code control.
+INVARIANTS.md (update)
+AI agents, all developers
+8 invariants gốc + 4 invariants mới (I-9 đến I-12). Mỗi invariant có: định nghĩa, cách enforce, cách test.
+Mỗi invariant có ít nhất 1 test case hoặc CI gate tương ứng.
+HARDWARE_SPEC.md (update)
+IT Admin, sales
+Bảng hardware tier đã cập nhật. Định nghĩa 'concurrent user'. Gov tier = HPE hardware.
+Không có số liệu mâu thuẫn với thực tế benchmark.
+
+Nhóm P1 — Phải xong trong Slice 1–2
+Tài liệu
+Audience
+Nội dung cốt lõi
+Acceptance criterion
+SECURITY_WHITEPAPER.md
+CISO, security team, enterprise buyer
+ZK invariant proof. MLS audit summary. ZeroizeOnDrop guarantees. Data Flow Diagram (DFD) chứng minh zero data egress.
+Đây là tài liệu unlock enterprise deal. Cần law firm review lần đầu.
+SETUP_GUIDE.md
+IT Admin (không cần Linux knowledge)
+Mac mini 1-command install với screenshot. Linux migration. HA cluster. Rollback procedure.
+IT Admin không có Rust knowledge cài thành công trong 15 phút.
+TAPP_SPEC.md
+App developer
+Manifest format đầy đủ. Host ABI reference. Capability model. 'Hello World .tapp' trong 30 phút.
+External developer viết .tapp mà không cần hỏi gì thêm.
+AI_ADAPTER_SPEC.md
+Enterprise AI team
+TeraAiAdapter trait. SanitizedPrompt guarantee. Ví dụ Ollama + Azure OpenAI.
+Enterprise IT team kết nối Azure OpenAI private endpoint trong 1 buổi.
+
+7. Hành động ngay — Trước khi mở IDE
+Mục đích của phần này: Đây là danh sách việc cần làm ngay trong giai đoạn tài liệu (Slice 0), trước khi bắt đầu viết code. Làm đúng thứ tự — không chạy song song.
+
+Thứ tự ưu tiên tuyệt đối
+STT
+Việc cần làm
+Nội dung cụ thể
+Done khi nào?
+1
+Viết PLATFORM_ARCHITECTURE.md
+Định nghĩa 3 tầng Open/BSL/Closed với danh sách module cụ thể. Viết BSL 'competitive use' clause. Mô tả flywheel 5 bước. Cam kết: LICENSE file sẽ không thay đổi sau khi publish.
+AI agent đọc xong, không còn câu hỏi về 'cái này mở hay đóng'.
+2
+Viết THREAT_MODEL.md
+STRIDE cho 3 attack vector: (1) malicious .tapp exploit Host ABI. (2) insider threat đọc SQLCipher key. (3) VPS relay bị compromise và đọc ciphertext. Mỗi threat: severity, mitigation, invariant reference.
+Security reviewer bên ngoài đọc, không tìm thấy threat chưa được address.
+3
+Cập nhật INVARIANTS.md
+Thêm I-9 đến I-12. Mỗi invariant bổ sung: phương pháp enforce (type system / CI gate / integration test). Xóa language 'không được vi phạm' — thay bằng 'được enforce bởi [cơ chế cụ thể]'.
+Mỗi invariant có 1 dòng code hoặc CI command tương ứng.
+4
+Cập nhật HARDWARE_SPEC.md
+Dùng bảng hardware tier đã cập nhật trong Mục 4 báo cáo này. Thêm cột 'Concurrent sessions'. Thêm note: NAS = Storage Authority, Mac mini = Compute. Gov tier = HPE hardware.
+Không còn số liệu '5.000 users / 2 Mac mini' không có footnote.
+5
+Thêm observability từ Slice 0
+Thêm vào CLAUDE.md / AGENT_CONTEXT.md: bắt buộc add opentelemetry traces cho mọi MLS operation. WAL checkpoint latency histogram. Floor Subnet election event log. Không được build Slice 1 mà không có tracing.
+CI gate: build fail nếu thiếu instrumentation trong crypto module.
+
+Không được làm: Đừng viết thêm spec kỹ thuật mới — đã có 80+ tài liệu đủ cho 18 tháng. Đừng chạy song song Slice — xong Slice 0 mới sang Slice 1. Đừng thêm platform mới (Android, Windows) khi chưa có 3+ paying customer. Đừng bắt đầu code trước khi 5 việc trên xong.
+
+Tóm lược cho AI cố vấn kỹ thuật
+TeraChat v2.0 giữ nguyên toàn bộ core vision — E2EE, self-hosted, offline mesh, AI local. Những thay đổi trong báo cáo này không phải là thay đổi triết lý mà là làm cho triết lý đó có thể thực thi được bởi 1 người trong 18 tháng.
+Giữ nguyên
+• Core vision E2EE + self-hosted
+• Rust core architecture
+• MLS RFC 9420 + ML-KEM-768
+• SQLite WAL + SQLCipher
+• 8 invariants gốc
+• 18-month Slice roadmap
+• Enterprise-only, no free tier
+• Flutter iOS + Tauri macOS
+Thay đổi quan trọng
+• Mac mini = Compute, NAS ECC = Storage
+• Gov tier → HPE hardware
+• BLE → 3-tier TeraLink Fallback
+• Floor Subnet Architecture
+• AI tách thành node riêng biệt
+• BSL + MIT SDK license split
+• 4 invariants mới (I-9 đến I-12)
+• SOC2 Type I lộ trình rõ
+Bổ sung mới hoàn toàn
+• Platform play strategy
+• tapp-sdk + ai-adapter-sdk MIT
+• TeraAiAdapter trait + SanitizedPrompt
+• 1-click setup → Linux migrate path
+• .tapp community ecosystem flywheel
+• Pricing 4-tier cụ thể
+• Pilot customer milestone Slice 2
+• PLATFORM_ARCHITECTURE.md + THREAT_MODEL.md
+
+Tổng: 18 thay đổi kiến trúc cụ thể. 12 trong số đó (màu xanh và xanh lá) không yêu cầu thay đổi code hiện tại — chỉ cần cập nhật tài liệu. 6 thay đổi (màu vàng) cần điều chỉnh trong spec trước khi code Slice 2–4. 0 thay đổi nào đòi hỏi viết lại từ đầu.

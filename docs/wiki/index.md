@@ -1,6 +1,6 @@
 # Wiki Index
 
-Last updated: 2026-05-15
+Last updated: 2026-05-18
 
 ## TeraChat — Product Definition
 
@@ -31,6 +31,9 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[Zero-Knowledge Architecture]] — Blind router model, key material isolation, mathematical security guarantees — 2026-05-10
 - [[Enterprise License Model]] — License-gated access, deployment tiers, cryptographic license entanglement — 2026-05-10
 - [[ADR-006 AI Gateway Architecture]] — **ACCEPTED** Loại bỏ local proxy: TeraRelay Extension (Phase 1) → Native Rust SDK tc-enclave (Phase 2D), PII Gate mandatory — 2026-05-12
+- [[Platform Architecture]] — 3-tier license (CLOSED/BSL 1.1/MIT), BSL boundary, module diagram, ecosystem flywheel — 2026-05-16
+- [[Threat Model]] — STRIDE for 3 attack vectors: relay compromise, device compromise, .tapp sandbox escape — 2026-05-16
+- [[Codebase Directory Guide]] — Monorepo directory tree, module dictionary, config files, onboarding navigation — 2026-05-17
 
 ### Communication Model
 - [[Hierarchical Authority Messaging]] — Authority-gated communication, internal + branch only, no customer channels — 2026-05-11
@@ -50,7 +53,9 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[openmls Self-Healing]] — AI debug loop for MLS errors, ErrorContext sanitization, local fine-tuning — 2026-05-15
 
 ### Infrastructure & Operations
-- [[Mac Mini HA Cluster]] — Zero-ops setup, mDNS discovery, Raft consensus, 99.99% SLA with mesh fallback — 2026-05-15
+- [[Mac Mini HA Cluster]] — Zero-ops setup, mDNS discovery, Raft consensus, 99.99% SLA with TeraLink fallback — 2026-05-15
+- [[Hardware Specification]] — Compute/Storage/AI Node separation, ECC RAM requirement, HPE for Gov/Military, tiers by concurrent sessions — 2026-05-16
+- [[TeraLink Fallback Network]] — 3-tier fallback (T1 LAN, T2 mDNS/Multipeer, T3 BLE), Floor Subnet Architecture — 2026-05-16
 - [[iOS Mesh Storage Tiers]] — BufferTier (Minimal/Standard/Enhanced/Full), auto-detection, LRU eviction — 2026-05-15
 - [[Tapp Community Framework]] — .tapp SDK, TappValidator CLI, TDD workflow for contributors — 2026-05-15
 
@@ -64,9 +69,9 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[Large Language Models]] — AI systems trained on text for next-token prediction — 2026-05-06
 - [[Transformer Architecture]] — Dominant LLM architecture introduced by Vaswani et al. 2017 — 2026-05-06
 
-### Agent Core Files (2026-05-15 Restructure)
-- [[Ubiquitous Language]] — Shared vocabulary EN+VI, anti-patterns, code conventions — 2026-05-15
-- [[Invariants]] — Non-negotiable architectural rules, forbidden patterns, crypto stack — 2026-05-15
+### Agent Core Files (2026-05-16 v2.1 Update)
+- [[Ubiquitous Language]] — Shared vocabulary EN+VI, anti-patterns, code conventions — 2026-05-16
+- [[Invariants]] — 13 non-negotiable architectural rules with enforcement mechanisms, forbidden patterns, crypto stack — 2026-05-16
 
 ## Sources
 

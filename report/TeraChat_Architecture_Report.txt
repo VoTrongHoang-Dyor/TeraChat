@@ -1,0 +1,348 @@
+
+TERACHAT
+ENTERPRISE MESSAGING PLATFORM
+
+Báo Cáo Kỹ Thuật — Đánh Giá Kiến Trúc Hệ Thống
+Mesh Network  •  Bảo Mật  •  SLA & Local AI
+
+Thông tin
+Chi tiết
+Phân loại
+Confidential — Internal Use Only
+Phiên bản
+v1.0 — Final
+Ngày phát hành
+Tháng 5, 2026
+Tác giả
+Tech Lead / Security Architect
+Đối tượng
+Project Lead, Engineering Team
+Phạm vi
+Mesh Network, Bảo mật MitM & PQ, Local AI Auto-fix
+
+
+TÓM TẮT ĐIỀU HÀNH
+Báo cáo này đánh giá ba nhóm nâng cấp chiến lược cho nền tảng TeraChat chạy trên cụm Local Server Mac Mini + NAS. Phân tích được thực hiện từ góc nhìn của Tech Lead và Security Architect với trọng tâm là tính khả thi kỹ thuật, rủi ro bảo mật, và tác động đến SLA doanh nghiệp.
+
+Nhóm nâng cấp
+Đánh giá
+Ưu tiên triển khai
+Mesh Network & Tối ưu iOS
+Khả thi — cần thiết kế phân tầng transport đúng
+Phase 2B (sau pilot)
+Bảo mật MitM & Kháng lượng tử
+MitM: cần vá ngay. PQ: tùy tier khách hàng
+Phase 1 (MitM) / Phase 2A (PQ)
+SLA & Local AI Auto-fix
+Khả thi với mô hình Human-in-the-Loop
+Phase 5 (sau governance)
+
+⚠  Quyết định quan trọng chưa được định nghĩa: Timeout policy khi admin không online lúc 3 giờ sáng và hệ thống đang degraded — cần xác định trước khi thiết kế escalation system cho Local AI.
+
+
+PHẦN 1: MESH NETWORK & TỐI ƯU iOS
+1.1  Phạm vi và Use Case thực tế
+Mesh Network giải quyết một window rất hẹp nhưng có giá trị cao trong môi trường doanh nghiệp: mất internet trong khi LAN hoặc không gian vật lý vẫn hoạt động. Khi Mac Mini mất điện, các thiết bị client — iPhone, laptop, Android — vẫn còn pin và có thể hình thành mạng P2P trực tiếp mà không cần anchor node.
+
+Điểm mạnh so với BitChat trong môi trường doanh nghiệp: TeraChat đã có sẵn identity infrastructure (Ed25519 key per device trong Secure Enclave) và MLS session state cached trên từng thiết bị. CRDT DAG trong hot_dag.db cho phép merge delta khi Mac Mini restore — lượng message cần sync lại rất nhỏ do cúp điện thường chỉ vài phút đến vài chục phút.
+
+1.2  Kiến trúc phân tầng Transport
+Thiết kế phân tầng theo khoảng cách là đúng hướng. Dưới đây là specification chi tiết cho từng tier:
+
+Tier
+Transport
+Khoảng cách
+Throughput
+Use case
+Tier 1
+Wi-Fi Direct (MultipeerConnectivity)
+< 60m
+30-80 Mbps thực tế
+Text, file nhẹ, void
+Tier 2
+BLE 5.0 GATT relay (BitChat model)
+> 60m, multi-hop
+5-20 kbps app layer
+Text-only, control messages
+Control Plane
+BLE Background (luôn bật)
+Mọi khoảng cách
+< 1 kbps
+Presence, key exchange, session alive
+
+Nguyên tắc thiết kế: BLE chạy background liên tục làm Control Plane để giữ session alive. Wi-Fi Direct chỉ mở khi cần Data Plane — được trigger bởi foreground app hoặc user action. Điều này phù hợp với iOS background execution model mà không cần entitlement đặc biệt.
+
+1.3  Unified Transport Abstraction — Rust Core
+Để tránh duplicate logic giữa hai transport path, cần một unified abstraction tại tầng Core:
+
+trait MeshTransport: Send + Sync {
+    async fn send(&self, peer: &PeerId, payload: &[u8]) -> Result<()>;
+    async fn recv(&self) -> Result<(PeerId, Vec<u8>)>;
+    fn estimated_throughput_kbps(&self) -> u32;
+}
+
+// WifiDirectTransport impl MeshTransport  (Tier 1, < 60m)
+// BleRelayTransport impl MeshTransport    (Tier 2, > 60m)
+
+MLS E2EE và CRDT sync layer gọi vào MeshTransport mà không cần biết transport phía dưới — đây là nguyên tắc Deep Module giúp tránh coupling giữa crypto layer và network transport.
+
+1.4  RAM Budget & iOS Background Execution
+Đây là điểm nghẽn thực sự nhất của Mesh trên iOS. Jetsam sẽ kill process nếu vượt ngưỡng RAM. Phân bổ RAM khi Mesh mode active:
+
+Thành phần
+RAM Budget
+Trạng thái khi Mesh active
+BLE GATT stack + Control Plane
+~5 MB
+Active — bắt buộc
+MLS session state (group keys)
+~10-20 MB
+Active — cached per group
+CRDT hot_dag delta buffer
+~20-50 MB
+Active — theo giới hạn device
+Wi-Fi Direct session (khi cần)
+~15-30 MB
+On-demand — foreground only
+WASM .tapp sandbox
+0 MB
+SUSPEND hoàn toàn khi Mesh active
+ZK Memory Agent / AI model
+0 MB
+KHÔNG load trong background
+Tổng cộng target
+< 120 MB
+An toàn khỏi Jetsam threshold
+
+Trade-off bắt buộc: WASM .tapp và AI inference PHẢI bị suspend khi Mesh mode active để giữ RAM dưới ngưỡng an toàn. UI cần thông báo rõ cho user: "Mesh mode đang hoạt động — một số tính năng tạm thời không khả dụng."
+
+1.5  Workflow kích hoạt Mesh
+Cơ chế kích hoạt cần cân bằng giữa UX và tránh false positive:
+
+	•	Tự động: Grace period 30 giây sau khi mất internet trước khi chuyển sang Mesh mode — tránh flicker khi mạng thoáng mất
+	•	Thủ công: Nút "Bật Mesh" trong Settings — dành cho scenario cố ý (họp ngoài trời, vùng tín hiệu yếu)
+	•	Pop-up xin phép: Chỉ lần đầu tiên per device. Sau đó lưu preference. Cần giải thích rõ: Mesh dùng BLE và Wi-Fi Direct, có thể ảnh hưởng pin.
+	•	UI indicator: Hiển thị rõ ràng khi đang ở Mesh mode (Dark Navy background theo Design System) — user cần biết latency và throughput khác bình thường
+	•	Sync khi restore: Khi Mac Mini restore, CRDT merge delta tự động. Không cần user action. Thời gian sync tỷ lệ với số message trong window offline — thường < 5 giây
+
+
+PHẦN 2: BẢO MẬT — MitM & MÃ HÓA KHÁNG LƯỢNG TỬ
+2.1  Phân tích rủi ro MitM trong Mesh Mode
+Threat model trong Mesh thay đổi đáng kể so với internet. Attacker không còn ngồi trên đường truyền internet mà là thiết bị giả mạo trong cùng không gian vật lý. Điều này thực ra dễ phòng thủ hơn với điều kiện MLS E2EE đã được implement đúng.
+
+Phân tích theo lớp bảo mật hiện tại:
+
+	•	Content: An toàn tuyệt đối — MLS E2EE mã hóa message, một relay node độc hại không đọc được nội dung
+	•	Sender identity: An toàn — Sealed Sender, node relay không biết who-to-whom
+	•	Metadata: Có rủi ro — attacker có thể thấy device ID, message size, timing pattern trên BLE
+	•	Identity commitment: CẦN VÁ NGAY — BitChat dùng HMAC(R, PK)[0:8] chỉ 64 bit, có thể brute-force trong môi trường offline
+
+Điểm yếu cần vá so với BitChat
+CRITICAL: Thay truncated 8-byte identity commitment bằng full 32-byte Ed25519 public key fingerprint trong BLE beacon. Kết hợp với challenge-response protocol trước khi accept peer vào mesh. Chi phí: thêm 2-3 giây latency khi peer discovery — hoàn toàn chấp nhận được.
+
+Attack vector
+Mức độ rủi ro
+Mitigation hiện tại
+Action cần thêm
+Rogue BLE peer giả danh
+CAO
+MLS E2EE (content)
+Full PK fingerprint trong beacon
+Replay attack trên mesh
+TRUNG BÌNH
+HLC timestamp + CRDT dedup
+Không thay đổi — đủ
+Brute-force identity commitment
+CAO (offline)
+Không có
+Thay bằng 32-byte fingerprint
+Metadata correlation attack
+THẤP-TRUNG
+Sealed Sender
+BLE padding + timing obfuscation
+Sybil attack (fake node flood)
+TRUNG BÌNH
+Enterprise CA signed Shun_Records
+Không thay đổi — đủ
+
+2.2  Mã hóa kháng lượng tử — Đánh giá và Khuyến nghị
+Câu trả lời không phải là yes hoặc no đơn giản — phụ thuộc hoàn toàn vào phân khúc khách hàng mục tiêu:
+
+Phân khúc
+Cần PQ không?
+Lý do
+Timeline
+Enterprise Standard (Finance, Healthcare)
+Không cần ngay
+Shelf-life dữ liệu < 5 năm, rủi ro quantum không tương xứng với chi phí
+Phase 3+ tùy nhu cầu
+Government / Military
+BẮT BUỘC
+Dữ liệu chiến lược có shelf-life 10-20 năm. Store Now, Decrypt Later là threat thực tế
+Phase 2A — triển khai sớm
+
+Kiến trúc Hybrid KEM được khuyến nghị
+Implement ML-KEM-768 (NIST FIPS 203) song song với X25519 theo kiến trúc Hybrid KEM. Cách tiếp cận này là "buy once, enable when needed" — implement một lần, control per-tenant theo license tier:
+
+// Hybrid KEM: cả hai phải bị break mới compromise
+Final_Session_Key = HKDF(
+    X25519_shared_secret ||
+    ML_KEM_768_shared_secret
+)
+
+// Overhead per handshake:
+//   Bandwidth: +1.2 KB (Kyber ciphertext)
+//   Latency:   +3-5 ms trên Apple Silicon
+//   Acceptable cho enterprise messaging
+
+Chiến lược triển khai theo tier:
+
+	•	Enterprise Standard tier: X25519 only — PQ disabled mặc định. Có thể bật theo yêu cầu.
+	•	Gov/Military tier: Hybrid KEM bật mặc định, không thể tắt. Ghi vào License JWT.
+	•	EMDP Key Escrow trong Mesh: Upgrade từ ECIES/Curve25519 thuần sang Hybrid ECIES + ML-KEM-768. Đây là gap lớn nhất hiện tại trong thiết kế EMDP.
+
+
+PHẦN 3: SLA & LOCAL AI AUTO-FIX
+3.1  Làm rõ mô hình — Phân tích lại theo scope đúng
+Sau khi làm rõ scope, mô hình bạn mô tả không phải là anti-pattern — nó là một thiết kế lành mạnh, rất gần với cách Claude Code hoạt động: AI phân tích, đề xuất, và human giữ quyền quyết định cuối cùng cho mọi action có rủi ro.
+
+Tầng lỗi
+AI role
+Human role
+Rủi ro
+Lỗi hệ thống (service crash, OOM)
+Phân tích log, đề xuất command + lý do
+Approve/reject rồi execute
+Thấp — có rollback path
+Lỗi dữ liệu (WAL, CRDT conflict)
+Diagnose, đề xuất recovery path cụ thể
+Xem xét, approve, monitor
+Trung bình — cần verify trước
+Bug trong .tapp (code-level)
+Analyze stack trace, suggest patch
+Review code, test, merge nếu đúng
+Thấp — AI không deploy trực tiếp
+
+Nguyên tắc cốt lõi: AI không có execution authority — chỉ có information authority. Mọi action vượt ngoài read-only operations đều cần human approve. Đây là boundary không được phép mờ.
+
+3.2  Kiến trúc hệ thống AI-Assisted Incident Response
+
+KIẾN TRÚC AI-ASSISTED INCIDENT RESPONSE
+
+[Mac Mini Monitoring Agent]  Thu thập: metrics, logs, WAL integrity, service health
+        |
+        v
+[AI Diagnosis Layer]  Local model, fine-tuned trên TeraChat error corpus
+  Output: { diagnosis, confidence, recommended_action, risk_level }
+        |
+        +---- risk_level = LOW ----> Auto-execute + notify admin
+        |
+        +---- risk_level = MED/HIGH -> Push to Admin Console
+                                        Admin approve/reject (5 min)
+                                        Timeout: escalate, NEVER auto-act
+
+3.3  Fine-tuning từ Community Contributions
+Đây là điểm thú vị nhất của thiết kế. Một số yêu cầu kỹ thuật quan trọng cần xem xét:
+
+Sanitization Pipeline — bắt buộc trước khi đưa vào training
+	•	PII Stripping: Bug reports thực tế chứa stack trace với session ID, memory address, đôi khi partial message content. Cần strip toàn bộ trước khi đưa vào training set — yêu cầu pháp lý với enterprise customer.
+	•	Structured Error Format: Thiết kế một structured error reporting format trong TeraChat client: error_type, sanitized_stack_trace, OS_version, TeraChat_version, CRDT_state (không có message content). Data này clean hơn nhiều so với free-form bug reports.
+	•	Community contribution flow: Developer / community submit error report → review và sanitize → add vào training corpus → trigger fine-tuning theo schedule (không trigger real-time)
+
+Model Selection & Infrastructure
+Yếu tố
+Khuyến nghị
+Lý do
+Base model
+Qwen2.5-3B hoặc Gemma 2B
+Đủ cho domain-specific diagnosis, chạy tốt trên Mac Mini M4 Pro với MLX
+Fine-tuning method
+LoRA adapter
+Dataset vài nghìn examples, training < vài giờ trên Apple Silicon
+Inference latency
+< 200ms per diagnosis query
+Acceptable cho incident response, không cần real-time
+Training trigger
+Scheduled (không real-time)
+Tránh thermal saturation. Chạy lúc Mac Mini idle — đêm, cuối tuần
+Model isolation
+Read-only access to logs
+AI agent không có write access vào production DB hay config
+
+3.4  Guardrails bắt buộc — Ranh giới không được mờ
+TUYỆT ĐỐI KHÔNG cho AI access vào: HSM / signing key, OPA policy engine, MLS epoch rotation trigger, production database write path, binary execution environment. Những hành động này phải có human signature.
+
+Danh sách action theo risk level:
+
+	•	[AUTO-EXECUTE — LOW RISK]: Restart crashed service, clear corrupted sled cache, WAL integrity check, vacuum trigger, rotate log files
+	•	[HUMAN APPROVE — MEDIUM RISK]: Rollback database đến WAL checkpoint cụ thể, failover sang passive node, thay đổi config parameter
+	•	[HUMAN APPROVE + SECOND APPROVAL — HIGH RISK]: Schema migration, dependency update, OPA policy suggestion (chỉ đề xuất, không apply)
+	•	[AI KHÔNG ĐƯỢC ĐỀ XUẤT]: Bất cứ thứ gì liên quan đến key material, cryptographic operation, hay security policy enforcement
+
+
+QUYẾT ĐỊNH CÒN MỞ — CẦN XÁC NHẬN
+Các quyết định dưới đây ảnh hưởng trực tiếp đến thiết kế kỹ thuật và cần được xác định ở cấp Product/Policy trước khi implementation:
+
+#
+Câu hỏi
+Tác động kỹ thuật
+Ưu tiên
+1
+Timeout policy cho AI recommendation lúc admin offline: auto-execute LOW risk sau N phút hay giữ nguyên "không action nào mà không có human approve"?
+Quyết định toàn bộ escalation system và notification architecture
+CRITICAL
+2
+Gov/Military tier có trong roadmap Phase 1-2 không? Nếu có, Hybrid PQ-KEM phải được implement trong Phase 2A.
+Ảnh hưởng đến MLS handshake protocol và EMDP Key Escrow design
+HIGH
+3
+Giới hạn RAM per-device cho CRDT buffer trong Mesh mode là bao nhiêu? (Ảnh hưởng đến offline message capacity)
+Cấu hình buffer tier per device class
+MEDIUM
+4
+Structured error report format có được community review trước khi finalize không?
+Ảnh hưởng đến quality của fine-tuning training corpus
+MEDIUM
+
+TÓM TẮT KHUYẾN NGHỊ
+Hạng mục
+Action
+Phase
+Effort
+Mesh — BLE identity commitment
+Thay 8-byte truncated hash bằng 32-byte Ed25519 fingerprint + challenge-response
+Phase 2B
+Thấp
+Mesh — Unified Transport trait
+Implement MeshTransport trait với WifiDirect và BLE implementations
+Phase 2B
+Trung bình
+Mesh — iOS RAM budget
+Cap WASM + AI khi Mesh active, giữ < 120MB total
+Phase 2B
+Thấp (config)
+Bảo mật — MitM vá ngay
+Full PK fingerprint trong BLE beacon, challenge-response protocol
+Phase 1
+Thấp-Trung
+Bảo mật — Hybrid PQ-KEM
+ML-KEM-768 + X25519, enable per-tenant theo license tier
+Phase 2A (Gov) / Phase 3 (Standard)
+Cao
+AI — Structured error format
+Design và implement error reporting format với PII stripping
+Phase 5
+Trung bình
+AI — LoRA fine-tuning pipeline
+Qwen2.5-3B + LoRA, scheduled training, inference < 200ms
+Phase 5
+Trung bình
+AI — Human-in-the-loop
+Risk-level classification, approval workflow trong Admin Console
+Phase 5
+Trung bình
+
+Thứ tự ưu tiên: (1) Vá MitM identity commitment — risk cao, effort thấp, làm ngay trong Phase 1. (2) Mesh infrastructure — làm trong Phase 2B sau khi pilot ổn định. (3) Hybrid PQ-KEM — tùy quyết định về Gov/Military tier. (4) Local AI pipeline — Phase 5 sau khi governance layer hoàn thiện.
+
+TeraChat Enterprise Platform  —  Tech Lead / Security Architect
+Báo cáo này là tài liệu nội bộ confidential. Không phân phối bên ngoài engineering team.

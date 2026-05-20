@@ -1,81 +1,83 @@
-# TeraChat Agent Context
+# AGENT_CONTEXT.md — TeraChat Agent Entry Point
 
 ```yaml
-id: "TERA-AGENT-CONTEXT"
-version: "1.0.0"
-date: "2026-05-15"
-purpose: "First file every AI agent must read before touching TeraChat code"
+id: "TERA-AGENT-CTX"
+version: "2.1.0"
+date: "2026-05-18"
+slice: "Slice 0 — Foundation"
+status: "Pre-code documentation"
 ```
 
-## What are you building?
+## Project Overview
 
-TeraChat is an **enterprise Work OS** with Zero-Knowledge E2EE, self-hosted on Mac mini + NAS, with local AI inference and a .tapp WASM ecosystem.
+TeraChat is an **enterprise Work OS** for internal and branch-company communication: Zero-Knowledge E2EE (MLS RFC 9420), self-hosted on Mac mini + NAS ECC, local AI inference (Qwen2.5/MLX), and a .tapp WASM ecosystem — all under a blind router architecture where servers never see plaintext.
 
-| Pillar | Technology | Why |
-|--------|-----------|-----|
-| E2EE Messaging | MLS RFC 9420 (openmls) | Audit-proof crypto for enterprise mid-market |
-| Self-Hosted | Mac mini + NAS cluster | No data leaves customer premises |
-| Local AI | Qwen2.5 / Gemma 2 (MLX) | AI features without sending data to cloud |
-| .tapp Ecosystem | WASM sandbox (wasmtime + wasm3) | Differentiation from Mattermost/Element |
-| Mesh Fallback | BLE/Wi-Fi Direct (emergency) | Eliminates single point of failure |
+## Current State — Slice 0 (Week 1–2)
 
-## Reading Order
+**Status:** Pre-code. Repo structure established, CI scaffolding, documentation finalization.
+**No real code written yet** — this is the optimal time to adjust architecture.
 
-1. **`CLAUDE.md`** — invariants never to violate, forbidden patterns, dependency policy
-2. **`docs/wiki/ubiquitous-language.md`** — shared vocabulary (English + Vietnamese)
-3. **`docs/wiki/invariants.md`** — detailed invariant explanations with code examples
-4. **`phase/README.md`** — current slice, priorities, timeline
-5. **Spec file** relevant to your task (from `docs/raw/MD/` or `docs/wiki/sources/`)
+## Reading Order (Mandatory)
 
-## Before Writing Code
+Every agent MUST read these files in order before writing any code:
 
-- [ ] **Is there a test?** (TDD — write the test first, then implement)
-- [ ] **Does the interface have > 5 public items?** If yes → redesign into sub-modules (Deep Module principle)
-- [ ] **Does it violate any CLAUDE.md invariant?** Check before submitting
-- [ ] **Are you using the right ubiquitous language terms?**
-- [ ] **Is key material handled correctly?** ZeroizeOnDrop on ALL key structs, no raw pointers in FFI, no println! with keys
+| # | File | What It Contains | Time |
+|---|------|-----------------|------|
+| 1 | `AGENT_CONTEXT.md` | This file — project overview, current priority | 2 min |
+| 2 | `docs/wiki/ubiquitous-language.md` | Shared vocabulary (EN + VI) — use these terms | 5 min |
+| 3 | `docs/wiki/invariants.md` | 13 non-negotiable architectural rules with enforcement | 10 min |
+| 4 | `CLAUDE.md` | Engineering guardrails, forbidden patterns, AI compatibility matrix | 10 min |
+| 5 | `phase/README.md` | Current slice + timeline + deliverables | 5 min |
+| 6 | `docs/wiki/concepts/platform-architecture.md` | License tiers (CLOSED/BSL 1.1/MIT), module diagram, flywheel | 5 min |
+| 7 | `docs/wiki/concepts/threat-model.md` | STRIDE for 3+ attack vectors, BLE identity commitment, PQ-KEM | 8 min |
+| 8 | `docs/wiki/concepts/hardware-specification.md` | Compute/Storage/AI Node separation, tier hardware tables | 5 min |
+| 9 | `docs/wiki/concepts/teralink-fallback-network.md` | TeraLink 3-tier fallback, Floor Subnet, RAM budget | 8 min |
 
-## File Scope Per Agent
+## Current Priority — Slice 0 Deliverables
 
-| Agent | Scope | Never Touch |
-|-------|-------|-------------|
-| tc-crypto | `source/core/tc-crypto/**` only | tc-mesh, tc-sync |
-| tc-mesh | `source/core/tc-mesh/**` only | tc-crypto internals |
-| tc-sync | `source/core/tc-crdt-sync/**` + `source/core/tc-store/**` | — |
-| tc-runtime | `source/core/tc-tapp/**` | — |
-| tc-proto | `source/core/tc-proto/**` + `source/core/proto/**` | — |
-| tc-client | `source/clients/**` | Rust Core |
+Before any code is written (this is the P0 checklist from the Architecture Update v2.0):
 
-## Crypto Stack (Decided — Do Not Change)
+1. **PLATFORM_ARCHITECTURE.md** — Done. License tiers, BSL boundary, module diagram, 5-step flywheel
+2. **THREAT_MODEL.md** — Done. STRIDE for 3 attack vectors + BLE identity commitment + PQ-KEM
+3. **INVARIANTS.md** — Done. 13 invariants with enforcement mechanisms
+4. **HARDWARE_SPEC.md** — Done. Updated hardware table with Compute/Storage/AI node separation
+5. **Observability from Slice 0** — Add OpenTelemetry traces requirement to CI pipeline
 
-- E2EE messaging: `openmls` (MLS RFC 9420)
-- Symmetric: `ring::aead::AES_256_GCM`
-- Signing: `ring::signature::Ed25519`
-- Hash: `blake3`
-- PQ-KEM: `ml-kem` crate (NIST FIPS 203) — Phase 2 only
-- Signal Protocol: NOT used — MLS is the decision
+## What NOT To Do
 
-## Current Priority
+- Do NOT write new technical specs — 80+ documents exist, sufficient for 18 months
+- Do NOT run slices in parallel — finish Slice 0 before Slice 1
+- Do NOT add platforms (Android, Windows) before 3+ paying customers
+- Do NOT start coding before the 5 P0 tasks above are complete
 
-<!-- Update this section daily by the human architect -->
+## Key Architecture Decisions (v2.0)
 
-- **Current Slice:** Slice 0 — Foundation (Week 1-2)
-- **Today's focus:** Repository compiles, CI green, proto scaffolding valid
-- **Next milestone:** Slice 1 "Hello E2EE" — two processes on same Mac, MLS roundtrip
+These decisions from the Architecture Update report override prior assumptions:
 
-## Deep Module Principle
+1. **Mac mini = Compute Node only** — never primary DB writer. NAS ECC = sole Storage Authority
+2. **Gov/Military = HPE hardware** — not Mac mini. Apple fails FIPS 140-3. Software identical.
+3. **BLE → 3-tier TeraLink Fallback Network** — T1 (LAN), T2 (mDNS/Multipeer), T3 (BLE emergency only)
+4. **AI Node = separate SKU** — not bundled with Compute Node. Optional add-on.
+5. **BSL + MIT SDK split** — tc-crypto/HA/engine = CLOSED, core modules = BSL 1.1, SDKs = MIT
+6. **Pricing based on org size, hardware sized for concurrent sessions** — different metrics
+7. **Full 32-byte Ed25519 fingerprint in BLE beacons** — not 8-byte truncated hash (mitigates brute-force)
 
-Every module must follow Matt Pocock's deep module design:
-- **Simple interface** (≤ 5 public functions/types)
-- **Complex interior** (hidden implementation details)
-- **CI enforced:** Public items > 7 triggers refactor warning
+## Quick Commands
 
-## Invariant Quick Reference
+```bash
+cargo test --workspace     # Must pass (currently 0 tests, compiles)
+cargo clippy -- -D warnings  # Must be 0 warnings
+buf lint                     # Proto validation
+```
 
-1. **ZeroizeOnDrop** on ALL key material types
-2. **No raw pointer** in `pub extern "C"` — use Token Protocol (opaque `u64`)
-3. **hot_dag.db is APPEND-ONLY** — no UPDATE/DELETE on CRDT events
-4. **UI is passive renderer** — no business logic in Dart/SwiftUI
-5. **All crypto through `ring` or `openmls`** — no self-implemented crypto
-6. **iOS election_weight = 0** — iPhone never becomes mesh coordinator
-7. **No persist plaintext key to disk** — not even in logs
+## Agent File Scope
+
+Each agent type has strict boundaries:
+
+| Agent | Scope | Must Read |
+|-------|-------|-----------|
+| Rust Agent | `source/core/` — tc-crypto, tc-crdt-sync, tc-mesh, tc-store, tc-ai, tc-tapp | invariants.md + CLAUDE.md |
+| Test Agent | `source/core/*/tests/` — integration + property-based tests | invariants.md + threat-model.md |
+| Security Agent | TC-ENCLAVE, tc-crypto, tc-gov — crypto + policy review | threat-model.md + invariants.md |
+| Doc Agent | `docs/wiki/` — updates only | ubiquitous-language.md |
+| Flutter Agent | `source/apps/flutter/` — UI only, no business logic | CLAUDE.md forbidden patterns |

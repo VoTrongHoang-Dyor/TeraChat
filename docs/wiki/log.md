@@ -1,12 +1,14 @@
 # Wiki Log
 
 ## [2026-05-06] init | Initialized LLM Wiki
+
 - Created folder structure: `raw/`, `wiki/`
 - Wrote `CLAUDE.md` schema
 - Set up `index.md` and `log.md`
 - Ready for first ingest
 
 ## [2026-05-06] ingest | LLM Overview Sample
+
 - Source: `raw/articles/llm-overview.md`
 - Created pages:
   - `wiki/sources/llm-overview.md` (source summary)
@@ -16,6 +18,7 @@
 - Key takeaway: LLMs use Transformer architecture, have defined capabilities/limitations
 
 ## [2026-05-10] ingest | TeraChat Full Documentation Ingest
+
 - Sources: 15 files from `raw/MD/` — all TeraChat project documentation
 - Created 15 source summary pages in `wiki/sources/`:
   - Gateway: `tera-intro`, `tera-design`, `tera-arrange`, `tera-note`
@@ -38,6 +41,7 @@
 - Cross-references: all pages linked via wikilinks between sources and concepts
 
 ## [2026-05-10] lint | Wiki Health Check Audit
+
 - Ran automated checks: `obsidian unresolved`, `obsidian tags counts`, full-text searches
 - Found 5 factual issues:
   - BLE 5.0 data rate: corrected from "4.75 kbps" to "~125 kbps PHY / ~5 kbps app-layer" in `survival-mesh-networking.md`
@@ -55,6 +59,7 @@
 - Remaining: tag consolidation (`#survival`+`#mesh`→`#survival-mesh`, `#data-sovereignty`+`#sovereignty`), legacy broken wikilinks (`OpenAI GPT-4`, `Vaswani et al.`)
 
 ## [2026-05-11] redefine | TeraChat Vision Redefinition
+
 - **Trigger:** Founder redefined TeraChat's scope, communication model, and AI strategy
 - **Scope change:** Internal + branch company messaging ONLY. Customer-facing messaging permanently out of scope — cannot force customers to switch platforms.
 - **Communication model:** Hierarchical authority-based. Messages flow along org chart (vertical up/down, horizontal peer, inter-branch via HQ authorization).
@@ -78,6 +83,7 @@
 - **Key takeaway:** TeraChat is now explicitly a Work OS with internal hierarchical messaging + local AI, not a general-purpose secure chat app. Customer messaging is permanently excluded.
 
 ## [2026-05-11] improve | Systematic Improvement & Restructuring
+
 - **Trigger:** Comprehensive evaluation (65/100) identified 14 weaknesses across structure, goals, technical, requirements, feasibility, market fit, and approach
 - **Created Improvement Hub:** `syntheses/improvement-plan-2026-05-11.md` — central navigation: 14 weaknesses → 14 solutions, step-by-step execution order, status tracking
 - **Created 9 synthesis documents** addressing specific weaknesses:
@@ -110,6 +116,7 @@
 - **Key takeaway:** TeraChat architecture is excellent but was over-scoped and under-validated. The restructuring provides a realistic 18-24 month path focused on proving value incrementally rather than building everything at once.
 
 ## [2026-05-12] query | Brainstorm AI Gateway Architecture — Thay thế Local Proxy
+
 - **Trigger:** Yêu cầu loại bỏ `ANTHROPIC_BASE_URL="http://localhost:8082"` local proxy pattern
 - **Vấn đề xác định:** 5 rủi ro production: plaintext loopback, PII Gate bypass, thiếu audit trail, không scale, single point of failure
 - **Bốn hướng đánh giá:** Native Rust SDK (H1), Unix Domain Socket (H2), TeraRelay Extension (H3), Cloudflare Gateway (H4)
@@ -186,11 +193,13 @@
 Major documentation restructure to align with new development philosophy: Vertical Slice over Horizontal Layer, Deep Modules (Matt Pocock), and Multi-Agent Harness with LangGraph.
 
 **Core agent files created:**
+
 - `AGENT_CONTEXT.md` (project root) — First file every agent reads: project overview, reading order, file scope per agent
 - `docs/wiki/ubiquitous-language.md` — Shared vocabulary EN+VI, anti-patterns, code conventions
 - `docs/wiki/invariants.md` — Non-negotiable architectural rules with code examples
 
 **New concept pages (8):**
+
 - `docs/wiki/concepts/vertical-slice-development.md` — Shippable slices every 6-8 weeks, Slice 0-6 overview
 - `docs/wiki/concepts/multi-agent-harness.md` — LangGraph orchestrator, agent types, daily workflow
 - `docs/wiki/concepts/deep-module-design.md` — Matt Pocock principle applied to Rust, CI enforcement
@@ -201,10 +210,12 @@ Major documentation restructure to align with new development philosophy: Vertic
 - `docs/wiki/concepts/openmls-self-healing.md` — AI debug loop, ErrorContext sanitization, fine-tuning
 
 **Agent orchestrator:**
+
 - `.agents/langgraph/terachat_graph.py` — LangGraph StateGraph: grooming → TDD → implement → invariant check → security → integration
 - `.agents/grooming-template.md` — Design-first checklist for task assignment
 
 **Updated files:**
+
 - `CLAUDE.md` — v2.0.0: Added Deep Module Principle, Vertical Slice, Multi-Agent Harness, Model Tiers, iOS constraints
 - `phase/README.md` — v4.0.0: Replaced Phase 1-6 with Slice 0-6, 18-month timeline, updated budget/hire triggers
 - `docs/wiki/index.md` — Added all new pages, updated product definition

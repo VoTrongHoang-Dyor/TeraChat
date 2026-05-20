@@ -1,7 +1,7 @@
 ---
 type: concept
 created: 2026-05-15
-updated: 2026-05-15
+updated: 2026-05-16
 tags: [language, agent-context, invariants]
 ---
 
@@ -22,6 +22,9 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 | SanitizedPrompt | Prompt đã lọc | AI prompt after PII redaction — mandatory before any inference |
 | Blind Router | Bộ định tuyến mù | TeraRelay routes ciphertext without ever seeing plaintext |
 | Token Protocol | Giao thức Token | FFI safety: pass opaque `u64` tokens instead of raw pointers |
+| BSL 1.1 | BSL 1.1 | Business Source License 1.1 — source-readable, competitive use prohibited, auto-converts to MIT after 4 years |
+| SanitizedPrompt (type) | Prompt đã lọc (kiểu dữ liệu) | Type-system-enforced PII-filtered prompt — `InferenceGateway::complete()` chỉ nhận `SanitizedPrompt`, không nhận raw `String` |
+| TeraAiAdapter | Bộ điều hợp AI Tera | Trait abstracting AI backend: local MLX, remote API (Azure/AWS), or custom ONNX bundle — all behind unified interface |
 
 ### Messaging & Sync
 
@@ -39,8 +42,16 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 | Term (EN) | Term (VI) | Definition |
 |-----------|-----------|------------|
 | DeviceIdentity | Định danh thiết bị | Unique cryptographic identity per device (Ed25519 keypair) |
-| MeshPeer | Đồng đẳng mạng lưới | Another device reachable via BLE or Wi-Fi Direct |
-| Relay | Máy chủ trung chuyển | TeraRelay binary — blind router between devices |
+| TeraLinkPeer | Đồng đẳng TeraLink | Another device reachable via TeraLink Fallback Network (any tier) |
+| TeraLink Fallback Network | Mạng dự phòng TeraLink | 3-tier fallback: T1 = LAN/Wi-Fi (normal), T2 = mDNS/Multipeer (server down), T3 = BLE emergency-only |
+| TeraLink Tier | Cấp TeraLink | Current network degradation level — one of T1, T2, or T3 |
+| Floor Subnet | Mạng con theo tầng | BLE subnet scoped to a physical floor — max 50 devices per subnet |
+| Floor Gateway | Cổng kết nối tầng | Device bridging a Floor Subnet to the wider network — exactly one elected per floor |
+| Relay | Máy chủ trung chuyển | TeraRelay binary — blind router between devices (T1 only) |
+| Compute Node | Nút tính toán | Mac mini or HPE MicroServer running TeraChat Core and relay — non-ECC RAM, no persistent storage authority |
+| NAS ECC Storage Node | Nút lưu trữ ECC NAS | NAS with ECC RAM — sole authority for persistent database writes (SQLite WAL, blob storage) |
+| AI Inference Node | Nút suy luận AI | Separate optional node for local AI inference — not bundled with Compute Node |
+| Concurrent Active Sessions | Phiên hoạt động đồng thời | Unit for tier sizing — peak simultaneous active users, not total registered accounts |
 | ElectionWeight | Trọng số bầu cử | Device capability score for mesh coordinator election (iOS = 0) |
 
 ### .tapp & Runtime
@@ -78,6 +89,9 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 | "webhook" or "callback" | "CoreSignal" | Events flow from Core → UI, not the reverse |
 | "State" or "Props" | "TappContext" | .tapp context is read-only and scoped |
 | "Permission" or "Role" | "DataGrant" | Data access is cryptographic, not RBAC |
+| "Mesh" or "BLE Mesh" | "TeraLink Fallback Network" | TeraLink is 3-tier; BLE is only T3 emergency tier |
+| "total accounts" or "total users" | "concurrent active sessions" | Tier sizing uses peak concurrent load, not registered count |
+| "MeshPeer" | "TeraLinkPeer" | Updated terminology — peer in TeraLink network, not just mesh |
 
 ## Language Convention
 
