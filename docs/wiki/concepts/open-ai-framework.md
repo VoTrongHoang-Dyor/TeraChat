@@ -1,13 +1,16 @@
 ---
 type: concept
 created: 2026-05-11
-tags: [terachat, ai, local-ai, gemma, open-framework, automation]
+updated: 2026-05-30
+tags: [terachat, ai, local-ai, qwen, llama-cpp, metal, open-framework, automation]
 sources: [tera-enclave-spec, tera-runtime-spec]
 ---
 
 # Open AI Framework & Local AI Integration
 
-TeraChat brings AI to the employee's machine — not to a cloud dashboard. The goal is task automation through local models, with an open framework that allows enterprises to plug in their own AI providers. The initial target model is **Google Gemma 4**.
+> **Cập nhật 2026-05-30 (M-8 Fix):** Model mặc định thay từ "Gemma 4" → **Qwen2.5 (llama.cpp + Metal API)**. Gemma 4 chưa tồn tại. Qwen2.5 là model open-weight production-ready chạy tốt nhất trên Apple Silicon qua Metal.
+
+TeraChat brings AI to the employee's machine — not to a cloud dashboard. Mục tiêu là task automation qua local models, với open framework cho enterprise plug in model riêng. Model mặc định bundled là **Qwen2.5 (Alibaba open weights)** chạy qua llama.cpp + Metal API.
 
 ## Core Principle
 
@@ -20,19 +23,15 @@ TeraChat brings AI to the employee's machine — not to a cloud dashboard. The g
 │  │                                              │    │
 │  │  Bring your own model. Register it. Run it.  │    │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────────┐  │    │
-│  │  │ Gemma 4  │ │  Claude  │ │  Enterprise  │  │    │
-│  │  │ (default)│ │ (bring)  │ │  Custom Model│  │    │
+│  │  │ Qwen2.5  │ │  Claude  │ │  Enterprise  │  │    │
+│  │  │(default) │ │ (bring)  │ │  Custom Model│  │    │
 │  │  └──────────┘ └──────────┘ └──────────────┘  │    │
 │  └──────────────────────────────────────────────┘    │
 │                         │                            │
 │  ┌──────────────────────▼────────────────────────┐   │
-│  │           SANITIZATION LAYER                  │   │
-│  │  PII Redaction → DomainPiiPolicy → Egress Guard│   │
-│  └──────────────────────────────────────────────┘    │
-│                         │                            │
-│  ┌──────────────────────▼────────────────────────┐   │
 │  │           LOCAL EXECUTION                     │   │
-│  │  ONNX Runtime · CoreML · HiAI · GPU/NPU       │   │
+│  │  llama.cpp (Metal) · ONNX Runtime · CoreML    │   │
+│  │  Apple Neural Engine · Qualcomm NPU            │   │
 │  └──────────────────────────────────────────────┘    │
 │                                                      │
 │  Data never leaves the device unless enterprise      │
@@ -40,24 +39,27 @@ TeraChat brings AI to the employee's machine — not to a cloud dashboard. The g
 └─────────────────────────────────────────────────────┘
 ```
 
-## Gemma 4 — Default Local Model
+## Qwen2.5 — Default Local Model
 
-Google Gemma 4 is the initial target for local AI integration:
+**Qwen2.5** (Alibaba open weights) là model bundled mặc định của TeraChat:
 
-| Property | Target |
-|----------|--------|
-| Model Family | Gemma 4 (Google open model) |
-| Deployment | ONNX format, bundled with TeraChat |
-| RAM Budget | 4–8 GB (depending on variant) |
-| Tasks | Document summarization, email drafting, data extraction, meeting notes |
+| Property | Specification |
+|----------|---------------|
+| Model Family | **Qwen2.5** (Alibaba DAMO Academy) |
+| Runtime | **llama.cpp** + **Metal API** (Apple Silicon) / ONNX Runtime (Windows/Linux) |
+| Variants | 0.5B (mobile), 7B (Mac Mini), 32B (RTX node optional) |
+| RAM Budget | 1-2GB (0.5B), 8-16GB (7B), 64GB+ (32B) |
+| Tasks | Thread summarization, response drafting, extraction, classification, translation |
 | Execution | 100% local — no cloud API call |
-| Customization | Fine-tunable per enterprise via LoRA adapters |
+| Hardware | Apple Neural Engine + Unified Memory bandwidth (M-series) |
+| Customization | Fine-tunable qua LoRA adapters trên Mac Mini |
 
-**Why Gemma 4:**
-- Open weights — no vendor lock-in
-- Small enough for local execution on employee machines
-- ONNX export path for cross-platform deployment (CoreML for Apple, ONNX Runtime for Windows/Linux)
-- Google's open model commitment means long-term availability
+**Tại sao Qwen2.5:**
+- Open weights + commercial license phù hợp enterprise deployment
+- Production-ready MLX/llama.cpp format — chạy tốt trên Apple Silicon ngay hôm nay
+- llama.cpp gọi trực tiếp Metal API: tận dụng Apple Neural Engine, không cần Docker
+- Nhiều size variants: 0.5B cho mobile NPU, 7B cho Mac Mini, 32B cho RTX node
+- Google Gemma 4 chưa tồn tại / chưa có stable production runtime tại thời điểm này
 
 ## Open AI Framework — Host ABI Extension
 
@@ -66,8 +68,8 @@ The WASM Host ABI is extended with an AI inference interface:
 ```rust
 // Host ABI: AI Inference (open framework)
 fn host_ai_invoke(
-    model_id: &str,           // "gemma4", "claude-opus", "enterprise-custom"
-    sanitized_prompt: &[u8],  // Already passed through PII redaction
+    model_id: &str,           // "qwen2.5-7b", "claude-opus", "enterprise-custom"
+    prompt: &[u8],
     max_tokens: u32,
     temperature: f32,
 ) -> Result<AiResponse, AiError>;
@@ -77,7 +79,7 @@ fn host_ai_invoke(
 
 Any enterprise can register an AI model into the framework:
 
-1. **Package model** in ONNX format (or CoreML `.mlmodelc` for Apple)
+1. **Package model** in GGUF format (llama.cpp) or ONNX format (Windows/Linux)
 2. **Declare capabilities:** `manifest.json` — model name, version, RAM budget, supported tasks
 3. **Sign with enterprise key:** Ed25519 signature from enterprise CA
 4. **Deploy via Admin Console:** Push to specific departments or regions
@@ -87,36 +89,36 @@ Any enterprise can register an AI model into the framework:
 
 | Provider | Model | Deployment |
 |----------|-------|------------|
-| Google | Gemma 4 (default, bundled) | ONNX local |
-| Anthropic | Claude (bring-your-own-key) | API with sanitized prompt proxy |
-| Enterprise | Custom fine-tuned model | ONNX via Admin push |
-| Open Source | Llama, Mistral, etc. | ONNX self-register |
+| Alibaba | **Qwen2.5** (default, bundled) | llama.cpp + Metal local |
+| Anthropic | Claude (bring-your-own-key) | API via enterprise relay + PII redaction |
+| Enterprise | Custom fine-tuned model | GGUF/ONNX via Admin push |
+| Open Source | Llama, Mistral, etc. | GGUF self-register |
 
 ## Data Sovereignty Guardrails
 
 Even with an open framework, Zero-Knowledge invariants hold:
 
-1. **All prompts pass through SanitizedPrompt** — PII redaction BEFORE model inference, regardless of model provider
-2. **Local-first:** Gemma 4 and ONNX models run entirely on-device. No data leaves the machine.
-3. **API-based models (Claude, etc.):** If enterprise brings their own API key, prompts are sanitized, then proxied through the enterprise's own relay. TeraChat Inc. never sees the prompt.
-4. **Egress guard:** Model output is scanned for PII leakage before being returned to the user.
-5. **Audit log:** Every AI invocation is signed and appended to the immutable audit trail — which model, which sanitized prompt hash, which user, when.
+1. **Local-first:** Qwen2.5 và ONNX models chạy 100% on-device. No data leaves the machine.
+2. **API-based models (Claude, etc.):** Nếu enterprise mang API key riêng, prompts được proxied qua enterprise relay với PII redaction bắt buộc. TeraChat Inc. không bao giờ nhìn thấy prompt.
+3. **Audit log:** Mọi AI invocation được Ed25519 sign và append vào immutable audit trail — model nào, user nào, khi nào.
 
 ## Employee Task Automation (Target Use Cases)
 
 | Task | Model | Data Source | Output |
 |------|-------|-------------|--------|
-| Summarize long thread | Gemma 4 | Channel messages (last 200) | Bullet-point summary |
-| Draft response | Gemma 4 | Thread context + user style | Drafted message |
-| Extract action items | Gemma 4 | Meeting notes / chat | Task list |
-| Classify document | Gemma 4 | File attachment | Category + tags |
-| Translate message | Gemma 4 | Foreign language text | Translated text |
-| Data extraction | Custom model | Form / invoice image | Structured JSON |
+| Summarize long thread | Qwen2.5-7B (Mac Mini) | Channel messages (last 200) | Bullet-point summary |
+| Draft response | Qwen2.5-7B | Thread context + user style | Drafted message |
+| Extract action items | Qwen2.5-7B | Meeting notes / chat | Task list |
+| Classify document | Qwen2.5-7B | File attachment | Category + tags |
+| Translate message | Qwen2.5-0.5B (on-device) | Foreign language text | Translated text |
+| Data extraction | Custom enterprise model | Form / invoice image | Structured JSON |
 
 ## 🧠 Design Decisions (Q&A)
 
-- **Why Gemma 4 as default instead of a proprietary model?** → Proprietary models require cloud API calls, breaking Zero-Knowledge. Gemma 4 is open-weight, runs locally, and Google has committed to the Gemma open model family. Trade-off: local model quality is lower than cloud giants, but privacy guarantee is absolute.
+- **Tại sao Qwen2.5 thay vì Gemma 4?** → Qwen2.5 có production-ready GGUF format và llama.cpp Metal backend cho Apple Silicon ngay hôm nay. Gemma 4 chưa tồn tại. Khi Gemma (hoặc model khác) có production Metal runtime tốt hơn, enterprise có thể swap qua Open AI Framework mà không cần update app. Trade-off: Qwen2.5 có naming ít quen thuộc hơn với Western market.
 
-- **Why an open framework instead of a single bundled model?** → Enterprises have diverse AI needs and existing vendor relationships. A bank might have a compliance-trained model. A manufacturer might have a defect-detection model. Locking them into one provider kills adoption. Trade-off: framework complexity, model compatibility matrix.
+- **Tại sao Open Framework thay vì single bundled model?** → Enterprise có AI needs đa dạng. Bank cần compliance-trained model. Manufacturer cần defect-detection model. Lock vào một provider giết adoption. Trade-off: framework complexity, model compatibility matrix.
 
-- **Why run on employee machines instead of a central server?** → Central server AI sees all employee data in plaintext — violates Zero-Knowledge. Local execution means data stays on the machine that owns it. For tasks requiring more compute, the enterprise can deploy an on-premise inference node (Mac mini + RTX) that processes sanitized prompts only. Trade-off: higher hardware requirements per employee machine (8GB+ RAM recommended).
+- **Tại sao chạy trên employee machine thay vì central server?** → Central server AI thấy toàn bộ employee data plaintext — vi phạm Zero-Knowledge. Local execution = data ở trên machine sở hữu nó. Với tasks cần compute lớn hơn, enterprise có thể deploy on-premise inference node (Mac mini + RTX) chỉ xử lý sanitized prompts. Trade-off: hardware requirements cao hơn mỗi máy (8GB+ RAM recommended).
+
+- **Tại sao llama.cpp thay vì ONNX Runtime trên Mac?** → llama.cpp gọi trực tiếp Metal API, tận dụng Apple Neural Engine và Unified Memory bandwidth của M-series. ONNX Runtime trên macOS không exploit được NPU. Docker/K8s Linux tạo overhead ảo hóa 30%. Native daemon dưới launchd = kiểm soát tuyệt đối thermal và clock.

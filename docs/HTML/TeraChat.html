@@ -1160,18 +1160,14 @@ TURN sizing: 1 node ≈ 50 concurrent HD streams (4 vCPU, 8GB RAM, 1 Gbps)</pre>
       </table>
     </div>
 
-    <div class="h3">PII Redaction Pipeline (ISDM)</div>
+    <div class="h3">Local AI Inference Pipeline</div>
     <pre>
 User Prompt
-  → Micro-NER (ONNX < 1MB) — Detect: name, phone, email, ID, bank account
-  → Alias substitution: [REDACTED_PHONE_1], [REDACTED_EMAIL_1]
-  → SanitizedPrompt (newtype — cannot construct without redaction pass)
   → AI inference (local SLM or cloud LLM)
-  → De-tokenize aliases in response
   → SessionVault::drop() — ZeroizeOnDrop within 100ms
 
 NSE CONSTRAINT: ONNX load PROHIBITED in NSE process (NsePolicy::ProhibitOnnxLoad)
-NSE chỉ dùng regex-only PII detection (Aho-Corasick) — ONNX 8MB vi phạm NSE 20MB ceiling</pre>
+Full model inference deferred to Main App.</pre>
   </div>
 </section>
 

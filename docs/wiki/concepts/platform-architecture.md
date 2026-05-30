@@ -67,7 +67,7 @@ source/core/                          License
 ├── tc-crdt-sync/      CRDT DAG + Offline Sync       [BSL 1.1]
 ├── tc-mesh/           TeraLink Fallback Network      [BSL 1.1]
 ├── tc-store/          SQLite WAL + Blob Storage      [BSL 1.1]
-├── tc-ai/             TeraAiAdapter, SanitizedPrompt [BSL 1.1]
+├── tc-ai/             TeraAiAdapter [BSL 1.1]
 ├── tc-tapp/           WASM Engine, Host ABI          [BSL 1.1]
 ├── tc-proto/          Protobuf + gRPC Definitions    [MIT]
 │

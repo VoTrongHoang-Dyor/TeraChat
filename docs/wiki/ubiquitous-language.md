@@ -19,11 +19,9 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 | KeyHandle | Tham chiếu khóa | Opaque reference to key material in the GlobalKeyArena (never a raw pointer) |
 | KeyMaterial | Vật liệu khóa | Any struct containing cryptographic key bytes — MUST derive ZeroizeOnDrop |
 | DataGrant | Quyền truy cập dữ liệu | Cryptographic permission for a .tapp to read specific data |
-| SanitizedPrompt | Prompt đã lọc | AI prompt after PII redaction — mandatory before any inference |
 | Blind Router | Bộ định tuyến mù | TeraRelay routes ciphertext without ever seeing plaintext |
 | Token Protocol | Giao thức Token | FFI safety: pass opaque `u64` tokens instead of raw pointers |
 | BSL 1.1 | BSL 1.1 | Business Source License 1.1 — source-readable, competitive use prohibited, auto-converts to MIT after 4 years |
-| SanitizedPrompt (type) | Prompt đã lọc (kiểu dữ liệu) | Type-system-enforced PII-filtered prompt — `InferenceGateway::complete()` chỉ nhận `SanitizedPrompt`, không nhận raw `String` |
 | TeraAiAdapter | Bộ điều hợp AI Tera | Trait abstracting AI backend: local MLX, remote API (Azure/AWS), or custom ONNX bundle — all behind unified interface |
 
 ### Messaging & Sync
@@ -53,6 +51,7 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 | AI Inference Node | Nút suy luận AI | Separate optional node for local AI inference — not bundled with Compute Node |
 | Concurrent Active Sessions | Phiên hoạt động đồng thời | Unit for tier sizing — peak simultaneous active users, not total registered accounts |
 | ElectionWeight | Trọng số bầu cử | Device capability score for mesh coordinator election (iOS = 0) |
+| BYO-Server | Máy chủ tự trang bị | Bring-Your-Own-Server — Khách hàng tự triển khai TeraRelay trên phần cứng của họ, không ép mua gói phần cứng của TeraChat |
 
 ### .tapp & Runtime
 
@@ -70,8 +69,8 @@ Shared vocabulary for all TeraChat contributors — humans and AI agents. Use th
 |-----------|-----------|------------|
 | InferenceGateway | Cổng suy luận | Unified interface for AI inference across device/mac/cluster |
 | ThermalMonitor | Giám sát nhiệt | Background monitor for device thermal state and RAM pressure |
-| PiiRedactor | Bộ lọc PII | Strips personally identifiable information before AI prompts |
 | ModelTier | Cấp mô hình | Device-appropriate model size (Tiny/Small/Medium/Large/XLarge) |
+| BYOM | Mang mô hình riêng | Bring-Your-Own-Model — Doanh nghiệp tự tích hợp custom model (ONNX) qua Open AI Framework |
 
 ## Anti-Patterns
 

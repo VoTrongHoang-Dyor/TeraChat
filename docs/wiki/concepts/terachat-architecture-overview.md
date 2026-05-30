@@ -45,7 +45,6 @@ TeraChat has been redefined with a clearer scope boundary:
 ├──────────────────────────────────────────────┤
 │              AI LAYER (Local + Open)           │
 │  Gemma 4 (ONNX, bundled) · Open AI Framework  │
-│  SanitizedPrompt · PII Redaction · Egress Guard│
 ├──────────────────────────────────────────────┤
 │              UI LAYER (Passive Renderer)      │
 │  Flutter (Mobile) · Tauri (Desktop)           │
@@ -105,7 +104,7 @@ NO customer-facing channels.
 | TERA-CORE | Crypto & Mesh | MLS, PQ-KEM, Hardware keys, Survival mesh |
 | TERA-SYNC | Sync & Storage | CRDT DAG, relational sync, SQLite, Blob CAS |
 | TERA-RUNTIME | WASM Runtime | .tapp sandbox, Host ABI, Event Bus, AI inference ABI |
-| TERA-ENCLAVE | Secure Enclave | AI security, PII redaction, Gemma 4, open AI framework |
+| TERA-ENCLAVE | Secure Enclave | AI security, Gemma 4, open AI framework |
 | TERA-GOV | Identity & Governance | DID, OPA, RBAC, SCIM, Audit trail, authority hierarchy |
 | TERA-CLIENT | IPC & UI Bridge | FFI protocol, UI signals, streaming proxy |
 | TERA-ECO | Ecosystem & Marketplace | .tapp PKI, Web Marketplace, self-service deploy, kill-switch |

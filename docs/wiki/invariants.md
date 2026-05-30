@@ -61,29 +61,33 @@ pub extern "C" fn encrypt(key: *const u8, len: usize) -> *mut u8;
 
 ## 4. Dual-Plane Sync
 
+> **Cập nhật 2026-05-30:** Chat messages dùng **Append-Only Event Log + Vector Clocks** (`event_log.db`), không phải CRDT DAG. CRDT giới hạn chỉ ở namespace `notes.*` và `thread.title.*`.
+
 ```
-hot_dag.db   → CRDT DAG for chat (append-only)
-cold_state.db → Relational for Finance/HR
+event_log.db  → Append-Only Event Log cho chat messages (Vector Clocks)
+              → CRDT namespace được cô lập: notes.*, thread.title.* only
+cold_state.db → Relational cho Finance/HR
 ```
 
-NEVER force Finance data into CRDT. CRDT is for chat only.
+TUYỆT ĐỐI không dùng CRDT cho chat messages tuyến tính. CRDT chỉ cho collaborative text.
+TUYỆT ĐỐI không force Finance data vào CRDT. CRDT không có transaction semantics.
 
-**Enforcement:** CI gate `sync-boundary` — forbids `INSERT`/`UPDATE`/`DELETE` on `hot_dag.db` CRDT table from any code outside `tc-crdt-sync`. Also forbids CRDT types in `tc-store` relational schema.
+**Enforcement:** CI gate `sync-boundary` — forbids `INSERT`/`UPDATE`/`DELETE` trên dòng gốc trong `event_log.db` từ bất kỳ code nào ngoài `tc-crdt-sync`. Chat messages chỉ được append. Also forbids CRDT types trong `tc-store` relational schema.
 
-## 5. AI Only After SanitizedPrompt
+## 5. AI Model Selection via InferenceScheduler
 
-Every prompt sent to an AI model MUST pass through PII redaction. No embedding egress without redaction.
+Model tier is automatically selected based on device capability — never hardcoded.
 
 ```rust
 // ✅ CORRECT
-let sanitized = pii_gate.redact(raw_prompt)?;
-let response = inference.complete(sanitized).await?;
+let tier = scheduler.decide(&request, &thermal, &network)?;
+let response = tier.execute(request).await?;
 
 // ❌ FORBIDDEN
-let response = inference.complete(raw_prompt).await?;
+let response = QwenModel::Medium.execute(request).await?; // hardcoded tier
 ```
 
-**Enforcement:** Type system — `InferenceGateway::complete()` and `stream()` accept ONLY `SanitizedPrompt`, never `String` or `&str`. `SanitizedPrompt` has a private `inner: String` field — cannot be constructed outside `tc-ai` module. Compile-time guarantee.
+**Enforcement:** `InferenceScheduler::decide()` returns `ModelTier` enum. No hardcoded model paths or tiers anywhere in the codebase.
 
 ## 6. Headless Daemon + gRPC Before UI Expansion
 
@@ -113,20 +117,22 @@ iPhone không bao giờ làm mesh coordinator. iOS devices have zero voting powe
 
 ---
 
-## 10. NAS ECC is Sole Storage Authority
+## 10. NAS ECC is Tier-dependent Storage Authority
 
-Mac mini (non-ECC RAM) KHÔNG bao giờ là primary database writer. Chỉ NAS với ECC RAM mới có `StorageAuthority`.
+Yêu cầu sử dụng NAS với ECC RAM làm primary database writer phụ thuộc vào Deployment Tier (hỗ trợ mô hình linh hoạt BYO-Server).
+- **SME (Starter/Business):** Không bắt buộc (Mac mini có thể kiêm Storage Authority).
+- **Enterprise/Gov:** BẮT BUỘC phải có NAS ECC.
 
 ```
-Compute Node (Mac mini)  →  gRPC write request  →  NAS ECC Storage Node
+Compute Node (Mac mini)  →  gRPC write request  →  Storage Node (NAS ECC cho Enterprise, Mac mini cho SME)
                                                        ↓
                                                   SQLite WAL write
                                                   (authoritative)
 ```
 
-**Why:** Non-ECC RAM có thể gây silent data corruption — bit flip trong WAL journal trước khi flush ra disk sẽ phá hủy toàn bộ database. NAS ECC RAM phát hiện và sửa single-bit errors.
+**Why:** Non-ECC RAM có thể gây silent data corruption — bit flip trong WAL journal trước khi flush ra disk sẽ phá hủy toàn bộ database. NAS ECC RAM phát hiện và sửa single-bit errors. Tuy nhiên, áp đặt NAS ECC cho SME tạo rào cản triển khai quá lớn.
 
-**Enforcement:** Type system — `StorageAuthority` enum có exactly one variant `NasEcc`. `tc-store` write path (`WALWriter`, `JournalAppender`) chỉ compile cho `aarch64-linux` (NAS target), không compile cho `aarch64-darwin` (Mac mini). Compile-time guarantee.
+**Enforcement:** Runtime Config — `StorageAuthority` check được bypass nếu license JWT mang flag `tier: starter` hoặc `tier: business`. Với Enterprise/Gov, `tc-store` write path sẽ reject nếu host OS không phải là NAS.
 
 ---
 
@@ -190,9 +196,6 @@ fn calculate_balance() -> f64;  // Blocked by CI float-detection gate
 // ❌ FORBIDDEN: BLE payload > 500 bytes
 fn ble_send(payload: Vec<u8>)  // Must use [u8; 500] fixed array
 
-// ❌ FORBIDDEN: InferenceGateway::complete() with raw String
-async fn complete(&self, prompt: String) -> Result<InferenceResponse>;  // Must accept SanitizedPrompt only
-
 // ❌ FORBIDDEN: .tapp manifest declares network:external capability
 // Host ABI must permanently block this capability — no negotiation possible
 
@@ -232,7 +235,7 @@ pub trait InferenceGateway: Send + Sync {
     fn health(&self) -> GatewayHealth;
 }
 
-// Interior: ThermalMonitor, InferenceScheduler, PiiRedactionGate — all hidden
+// Interior: ThermalMonitor, InferenceScheduler — all hidden
 
 // ❌ WRONG: Shallow module — exposes internals
 pub struct InferenceGateway {

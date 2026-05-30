@@ -1,8 +1,8 @@
 ---
 type: concept
 created: 2026-05-16
-updated: 2026-05-18
-tags: [teralink, fallback, mesh, ble, mDNS, multipeer, network, floor-subnet]
+updated: 2026-05-30
+tags: [teralink, fallback, mesh, ble, mDNS, multipeer, network, floor-subnet, dms, dynamic-mesh-score]
 sources: [CLAUDE.md, invariants.md, Spec-Core-Cryptography-And-Mesh.md]
 ---
 
@@ -33,6 +33,23 @@ Mạng dự phòng 3 tầng cho TeraChat khi TeraRelay không khả dụng. Thay
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## DMS — Dynamic Mesh Score (Phân hạng Thiết bị)
+
+> **M-9 Fix 2026-05-30:** Cơ chế phân hạng thiết bị được gọi là **DMS (Dynamic Mesh Score)**, không phải EMDP. EMDP đã deprecated.
+
+Định kỳ mỗi 60 giây, tầng `tc-mesh` chạy ngầm luồng đánh giá DMS để tự xếp hạng thiết bị vào đồ thị định tuyến:
+
+| Hạng (Tier) | Loại thiết bị | Điều kiện | Vai trò trong Mesh |
+|-------------|--------------|-----------|--------------------|
+| **Tier 1** | Desktop/Laptop cắm sạc | AC power, RAM dồi dào, CPU đa nhân | **Super Relay (Lõi):** Store-and-Forward full bandwidth, buffer 10,000 msgs |
+| **Tier 2** | Laptop chạy pin | Pin > 50%, Wi-Fi LAN/Direct active | **Active Relay:** Tiếp sóng thông thường. Tự hạ xuống Leaf khi pin < 40% |
+| **Tier 3** | Android | Pin > 50%, RAM trống > 50% | **Edge Relay (Biên):** Gossip local cluster, buffer 2,000 msgs |
+| **Tier 4** | iPhone (iOS) | RSSI mạnh, app đang mở hoặc background < 3 phút | **Passive Relay / Leaf:** Chỉ tiếp sóng khi không có Tier 1-3 gần đó. Buffer 300 msgs. `election_weight = 0` |
+
+**Tại sao iOS `election_weight = 0`:** iOS áp đặt cơ chế tự đình chỉ cổng BLE GATT khi khóa màn hình. iOS không bao giờ được bầu làm Floor Gateway.
+
+**iOS Micro-Daemon Mode:** Khi iPhone chuyển sang Background T3, Flutter UI bị đóng băng và giải phóng RAM (Zero-UI footprint). Chỉ duy trì headless `tc-mesh` Rust Core với **< 15MB RAM** — an toàn dưới ngưỡng Jetsam 50MB.
+
 ## Tier Transition Logic
 
 | Transition | Trigger | Detection Time | Impact |
@@ -44,6 +61,20 @@ Mạng dự phòng 3 tầng cho TeraChat khi TeraRelay không khả dụng. Thay
 | T3 → T1 | Relay health check passes (2 consecutive pings) | < 3s | Full feature restore (skip T2) |
 
 Transition logic is implemented in `tc-mesh` with `TeraLinkStateMachine`. Each transition is logged as an event for observability.
+
+## PQ-KEM Offline Disable (T3 BLE)
+
+> **M-5 Fix 2026-05-30:** PQ-KEM (ML-KEM-768/Kyber768) tự động disable khi T3 BLE mode. Không phải "luôn active".
+
+ML-KEM-768 (Kyber768) ciphertext chiếm ~1,100 bytes — gần gấp đôi MTU BLE 500 bytes, gây nghẽn mạng nghiêm trọng nếu đẩy qua BLE.
+
+**Khi T3 BLE Emergency active:**
+- PQ-KEM tự động disable (`KemMode::Classical` thay vì `KemMode::Hybrid`)
+- Chỉ duy trì E2EE tiêu chuẩn **Curve25519/X25519** để bảo toàn bandwidth
+- MLS Epoch Rotation bị đóng băng (Mesh-Freeze mode): chỉ dùng Static Session Keys
+- PQ-KEM tự động re-enable khi quay về T1/T2
+
+**Lý do chấp nhận:** Trong emergency offline, priority tuyệt đối là duy trì liên lạc. Curve25519 vẫn cung cấp E2EE security đủ mạnh cho communication ngắn hạn trong môi trường khẩn cấp.
 
 ### Activation Workflow
 

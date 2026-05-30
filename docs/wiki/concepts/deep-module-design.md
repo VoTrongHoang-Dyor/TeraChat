@@ -89,7 +89,7 @@ impl InferenceGateway for TeraInferenceGateway {
 }
 ```
 
-Callers see only `complete()`, `stream()`, `health()`. They don't know about thermal monitoring, scheduling algorithms, or PII redaction internals.
+Callers see only `complete()`, `stream()`, `health()`. They don't know about thermal monitoring or scheduling algorithms.
 
 ## Example: MeshBuffer
 

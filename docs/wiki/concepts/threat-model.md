@@ -48,7 +48,7 @@ Nhân viên nội bộ với quyền truy cập vật lý vào thiết bị củ
 | **S**poofing | Attacker clones device identity | Critical | `DeviceIdentityKey` in Secure Enclave (iOS/Mac) / TPM (Windows/Linux) — cannot be exported; key attestation at enrollment | Code: `tc-crypto` SE/TPM binding |
 | **T**ampering | Attacker modifies local database | High | `cold_state.db` encrypted at rest via `KDF(license_jwt, device_identity_key)`; CRDT integrity via BLAKE3 hashes | Code: `tc-store` SQLCipher |
 | **R**epudiation | Attacker denies sending message | High | Ed25519 signature on every message; immutable audit trail; signatures verified by all group members | Code: MLS application-level signing |
-| **I**nfo Disclosure | Attacker extracts key material from memory | Critical | `ZeroizeOnDrop` on all key types; Secure Enclave sealed keys; no plaintext key on disk; `SanitizedPrompt` for AI | Code: I-2 enforcement |
+| **I**nfo Disclosure | Attacker extracts key material from memory | Critical | `ZeroizeOnDrop` on all key types; Secure Enclave sealed keys; no plaintext key on disk | Code: I-2 enforcement |
 | **D**oS | Attacker fills device storage | Low | Per-device quota enforced by relay; LRU eviction on iOS; storage alerts at 80% capacity | Code: `tc-store` quota manager |
 | **E**levation | Attacker escalates from user to admin | Critical | OPA RBAC engine; admin actions require quorum; all admin actions logged to immutable cold_state audit trail | Code: `tc-gov` OPA policies |
 
@@ -96,7 +96,6 @@ Theo Architecture Report v1.0 Section 2.2 — quyết định PQ phụ thuộc v
 | I-1 (Server never sees plaintext) | A1 Info Disclosure — relay compromise | Integration test: intercept relay traffic, assert no plaintext |
 | I-2 (Private key never leaves Secure Enclave) | A2 Info Disclosure — key extraction, A1 Spoofing — device clone | CI lint `zeroize-verify` + SE/TPM binding |
 | I-3 (No self-implemented crypto) | ALL — crypto implementation bugs | Dependency audit: only `ring` or `openmls` |
-| I-5 (SanitizedPrompt only) | A2 Info Disclosure — PII leak via AI | Type system: compile-time |
 | I-8 (AI Local prompt rejection < 0.5%) | A2 Info Disclosure — adversarial prompt bypass | Metric: prompt rejection rate measured in Slice 6 |
 | I-10 (NAS ECC Storage Authority) | A2 Tampering — silent DB corruption | Type system: compile-time |
 | I-11 (BLE ≤ 500 bytes) | A1B DoS — BLE broadcast storm | Type system: `[u8; 500]` |

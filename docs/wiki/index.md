@@ -1,6 +1,6 @@
 # Wiki Index
 
-Last updated: 2026-05-18
+Last updated: 2026-05-30 — **Wiki Sync Sprint (v2.0)** — Đồng bộ với nguồn sự thật (Senior Architect Perspective). Sửa 9 mâu thuẫn kiến trúc.
 
 ## TeraChat — Product Definition
 
@@ -34,12 +34,14 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[Platform Architecture]] — 3-tier license (CLOSED/BSL 1.1/MIT), BSL boundary, module diagram, ecosystem flywheel — 2026-05-16
 - [[Threat Model]] — STRIDE for 3 attack vectors: relay compromise, device compromise, .tapp sandbox escape — 2026-05-16
 - [[Codebase Directory Guide]] — Monorepo directory tree, module dictionary, config files, onboarding navigation — 2026-05-17
+- [[ADR-007 Shadow Graph AI Resolution]] — **ACCEPTED 2026-05-30** AI chỉ được tạo Shadow Branch, human approval bảt buộc trước commit, fallback manual merge — 2026-05-30
+- [[ADR-008 Delegated Proposer TreeKEM]] — **ACCEPTED 2026-05-30** Mobile ủy quyền tính toán TreeKEM cho Fat Client, TEE chỉ Verify + Sequence — 2026-05-30
 
 ### Communication Model
 - [[Hierarchical Authority Messaging]] — Authority-gated communication, internal + branch only, no customer channels — 2026-05-11
 
 ### Data & Sync
-- [[CRDT Dual-Sync Pattern]] — Two-plane sync (CRDT DAG + Relational), why not CRDT for everything — 2026-05-10
+- [[Dual-Sync Pattern]] — **[Cập nhật v2.0]** Append-Only Event Log + Vector Clocks cho chat; CRDT chỉ cho Collaborative Notes/Titles; Relational cho Finance/HR — 2026-05-30
 - [[Data Sovereignty & Export]] — SPF format, streaming decryption export, migration from Slack/Teams — 2026-05-10
 
 ### Runtime & Work OS
@@ -47,15 +49,16 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[Survival Mesh Networking]] — BLE/Wi-Fi Direct P2P, EMDP protocol, BLE QoS priority system — 2026-05-10
 
 ### AI & Security
-- [[Secure Enclave & AI Security]] — Gemma 4 on-device AI, open AI framework, PII redaction, ZK Memory Agent — 2026-05-11
-- [[Open AI Framework]] — Bring-your-own-model, Gemma 4 default, Host ABI for AI inference, model registration — 2026-05-11
+- [[Secure Enclave & AI Security]] — **[Cập nhật v2.0]** Qwen2.5 (llama.cpp + Metal) on-device AI; SEP = key storage ONLY (không phải general compute); ZK Memory Agent — 2026-05-30
+- [[Open AI Framework]] — **[Cập nhật v2.0]** Bring-your-own-model, Qwen2.5 default (không phải Gemma 4), Host ABI cho AI inference, model registration — 2026-05-30
 - [[AI Inference Offloading]] — Distributed inference scheduler, ThermalMonitor, ModelTier per device, PII gateway — 2026-05-15
-- [[openmls Self-Healing]] — AI debug loop for MLS errors, ErrorContext sanitization, local fine-tuning — 2026-05-15
+- [[openmls Self-Healing]] — **[Cập nhật v2.0]** Shadow Graph AI (không auto-apply), human approval bảt buộc, fallback manual merge — 2026-05-30
+- [[PII Redaction Rules]] — SanitizedPrompt newtype, pipeline flow, bang redaction rules (CCCD/Phone/Email/CC/Custom), DomainPiiPolicy — 2026-05-22
 
 ### Infrastructure & Operations
 - [[Mac Mini HA Cluster]] — Zero-ops setup, mDNS discovery, Raft consensus, 99.99% SLA with TeraLink fallback — 2026-05-15
 - [[Hardware Specification]] — Compute/Storage/AI Node separation, ECC RAM requirement, HPE for Gov/Military, tiers by concurrent sessions — 2026-05-16
-- [[TeraLink Fallback Network]] — 3-tier fallback (T1 LAN, T2 mDNS/Multipeer, T3 BLE), Floor Subnet Architecture — 2026-05-16
+- [[TeraLink Fallback Network]] — **[Cập nhật v2.0]** 3-tier fallback (T1/T2/T3), DMS 4-tier device classification, PQ-KEM tự disable khi T3 BLE — 2026-05-30
 - [[iOS Mesh Storage Tiers]] — BufferTier (Minimal/Standard/Enhanced/Full), auto-detection, LRU eviction — 2026-05-15
 - [[Tapp Community Framework]] — .tapp SDK, TappValidator CLI, TDD workflow for contributors — 2026-05-15
 
@@ -89,7 +92,7 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[tera-core-spec]] — TERA-CORE: MLS E2EE, Hybrid PQ-KEM, Hardware Root of Trust, Survival Mesh — 2026-05-10
 - [[tera-sync-spec]] — TERA-SYNC: CRDT DAG + Relational dual-sync, SQLite WAL, Blob CAS, FTS5 — 2026-05-10
 - [[tera-runtime-spec]] — TERA-RUNTIME: WASM dual-engine, Host ABI, Event Bus, AI inference ABI, Background Execution — 2026-05-10
-- [[tera-enclave-spec]] — TERA-ENCLAVE: AI security, PII redaction, Gemma 4 local AI, open framework, ZK Memory Agent — 2026-05-10
+- [[tera-enclave-spec]] — TERA-ENCLAVE: AI security, PII redaction, Qwen2.5 local AI (không phải Gemma 4), open framework, ZK Memory Agent — 2026-05-10
 - [[tera-gov-spec]] — TERA-GOV: DID, OPA ABAC, SCIM/OIDC/SAML, Audit Trail, RBAC, Legal Hold, authority hierarchy — 2026-05-10
 - [[tera-client-spec]] — TERA-CLIENT: FFI Token Protocol, IPC Data Plane, CoreSignals, Streaming Proxy — 2026-05-10
 - [[tera-eco-spec]] — TERA-ECO: .tapp Web Marketplace, self-service deploy, App Signing PKI, MDM, Kill-switch — 2026-05-10
@@ -102,6 +105,12 @@ TeraChat is an **enterprise Work OS** for internal and branch-company communicat
 - [[llm-overview]] — Sample LLM intro: training, Transformer, capabilities, limitations — 2026-05-06
 
 ## Syntheses
+
+### Master Documents
+- [[00_Architecture_Overview]] — Kiến trúc tổng quan, WorkOS, BYO-Server, UI/UX, Phase roadmap — 2026-05-21
+- [[01_Mesh_and_Crypto]] — Chi tiết mật mã (Zero-Knowledge, MLS, PQ-KEM), Mạng lưới TeraLink Mesh, Crypto audit fixes — 2026-05-21
+- [[02_WorkOS_and_Tapp_Ecosystem]] — Hệ sinh thái .tapp, Marketplace vs Enterprise, DataGrant, Trust Chain — 2026-05-21
+- [[03_Local_AI_Integration]] — Tích hợp AI cục bộ: Qwen2.5 default, PII redaction pipeline, ZK Memory Agent, inference offloading, BYOM, multi-agent harness, ADR-006 — 2026-05-21
 
 ### Improvement & Restructuring (2026-05-11 / 2026-05-12)
 - [[improvement-plan-2026-05-11]] — **IMPROVEMENT HUB** — Central navigation: 14 weaknesses → 14 solutions, step-by-step execution order
