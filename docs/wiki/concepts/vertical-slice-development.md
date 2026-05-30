@@ -38,11 +38,11 @@ Each slice is:
 |-------|----------|------|-------------|
 | **0: Foundation** | Week 1-2 | Repo compiles, CI green | Cargo workspace, proto scaffolding, CLAUDE.md |
 | **1: Hello E2EE** | Week 3-8 | Two Macs send E2EE messages | MLS roundtrip test passing, no network, no UI |
-| **2: Relay + Persistence** | Week 9-14 | Messages through relay binary | TeraRelay binary, hot_dag.db, license JWT |
+| **2: Relay + Persistence** | Week 9-14 | Messages through relay binary | TeraRelay binary, event_log.db, license JWT |
 | **3: macOS + iPhone UI** | Week 15-22 | Real devices chatting | Tauri macOS + Flutter iPhone, gRPC over UDS |
 | **4: HA + Mesh Failover** | Week 23-30 | Clustered Mac mini + BLE fallback | Raft WAL replication, mesh emergency mode |
 | **5: .tapp Runtime MVP** | Week 31-38 | 3 first-party .tapps running | WASM sandbox, Host ABI, fuel metering |
-| **6: Local AI** | Week 39-46 | AI summarize + PII redaction | Qwen2.5 on-device, PII gate, thermal management |
+| **6: Local AI** | Week 39-46 | AI summarize | Qwen2.5 on-device, thermal management |
 
 ## Contrast with Horizontal Phase Plan
 

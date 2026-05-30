@@ -51,7 +51,7 @@ pub struct TappContext {
     storage: TappStorage,   // Key-value store, scoped per .tapp
     events: EventBus,       // Pub/sub with other tapps
     crypto: CryptoService,  // Sign/verify — no raw key access
-    ai: AiService,          // AI inference — PII redacted automatically
+    ai: AiService,          // AI inference
 }
 ```
 

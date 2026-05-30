@@ -1,8 +1,8 @@
 ---
 type: concept
 created: 2026-05-10
-modified: 2026-05-11
-tags: [terachat, wasm, tapp, sandbox, runtime, work-os, marketplace, self-service]
+updated: 2026-05-30
+tags: [terachat, wasm, tapp, sandbox, runtime, trust-tier, work-os, marketplace, self-service]
 sources: [tera-runtime-spec, tera-eco-spec, tera-core-spec]
 ---
 
@@ -70,13 +70,35 @@ This prevents t-app sprawl — employees only see t-apps relevant to their work.
 
 **Reason:** iOS enforces W^X (write-xor-execute) — memory cannot be both writable and executable. This blocks all JIT compilers. `wasm3` interprets WASM bytecode without generating native code.
 
-## Security Boundaries
+## Trust Tier Model & Resource Limits
 
-- **No direct network access:** `wasi-sockets` stripped. All I/O goes through Host ABI → Rust Core OPA policy check.
-- **Crypto delegation:** WASM code cannot perform cryptographic operations. Must call Host ABI which delegates to Rust Core (hardware-backed keys).
-- **Manifest-declared permissions:** All capabilities declared at install time, not runtime. No permission escalation possible.
-- **Region/department sandbox:** T-app cannot access data outside its deployed scope.
-- **Resource limits:** 10MB RAM max (background), 2MB Egress_Outbox hard limit, instruction_fuel metering.
+> **Cập nhật 2026-05-30:** Thay thế flat limits cũ (64MB RAM, 2MB Outbox) bằng **Trust Tier Model** phân cấp theo mức độ tin cậy của .tapp.
+
+### Tier 0 — System/Crypto (First-Party Only)
+
+Chỉ dành cho Core Modules hệ thống nội bộ TeraChat. Không có third-party .tapp nào đạt Tier 0.
+
+| Resource | Limit |
+|----------|-------|
+| RAM | **50MB hard kill** |
+| Float arithmetic | **Cấm hoàn toàn** (`f32`/`f64`) |
+| Network egress | **Không có** |
+| Language | Rust tĩnh (biên dịch sang WASM) |
+| Background | 10MB, fuel metering |
+
+### Tier 1 — Enterprise Standard (Third-Party + Internal)
+
+Dành cho .tapp Marketplace và Enterprise Side-loading. Linh hoạt hơn để hỗ trợ đa dạng developer.
+
+| Resource | Mobile | Desktop | Background |
+|----------|--------|---------|------------|
+| RAM | **256MB** hard kill | **512MB** hard kill | 10MB (OS suspend) |
+| Float math | ✅ Được phép | ✅ Được phép | — |
+| Egress | Declarative Proxy | Declarative Proxy | Không có network I/O |
+| Language | JS/TS qua Javy/Extism, Rust, Go | JS/TS qua Javy/Extism, Rust, Go | — |
+| OOM behavior | Kill .tapp, show "Reload Plugin" | Kill .tapp, show "Reload Plugin" | — |
+
+**OOM Isolation:** Nếu .tapp Tier 1 vượt RAM limit, TeraChat kill tiến trình .tapp và hiển thị "Reload Plugin" — tuyệt đối không ảnh hưởng ứng dụng chat chính.
 
 ## Marketplace Vetting
 
@@ -101,12 +123,53 @@ The set of functions Rust Core exposes to .tapp WASM modules:
 - **Event Bus** (publish/subscribe to local events)
 - **AI Inference** (host_ai_invoke — through Open AI Framework)
 
+## Security Boundaries
+
+- **No direct network access** (Tier 0): `wasi-sockets` stripped. Không có egress.
+- **Declarative Proxy** (Tier 1): .tapp gọi `host.fetch(url)` — Core đối chiếu với domain allowlist trong manifest, push qua DLP proxy của enterprise trước khi ra internet.
+- **Manifest-declared permissions:** Mọi capability khai báo tại install time, không có runtime escalation.
+- **Crypto delegation:** WASM code không tự thực hiện crypto. Phải gọi Host ABI → Rust Core (hardware-backed keys).
+- **Region/department sandbox:** .tapp không truy cập data ngoài scope triển khai.
+- **Fuel metering (thay vì timeout):** `instruction_fuel` bất kể engine/hardware — deterministit tuyệt đối.
+
+## Egress Model: Declarative Proxy
+
+Thay thế 2MB hard Outbox limit — model mới linh hoạt hơn cho enterprise use cases:
+
+```yaml
+# manifest.json (.tapp Tier 1)
+capabilities:
+  network_egress:
+    domains:
+      - "api.github.com"
+      - "hr-service.company.internal"
+    max_body_bytes: 10485760    # 10MB per request
+    dlp_required: true          # Enterprise: qua DLP proxy trước khi ra ngoài
+```
+
+```rust
+// .tapp gọi qua Host ABI — không gọi network trực tiếp
+extern "C" {
+    fn host_fetch(
+        url_ptr: *const u8, url_len: usize,
+        method_ptr: *const u8, method_len: usize,
+        body_ptr: *const u8, body_len: usize,
+    ) -> FetchHandle;  // async, non-blocking
+}
+```
+
+**Kiểm soát:** Core đối chiếu URL với domain allowlist manifest. ở Enterprise tier, request tiếp tục qua hệ thống DLP proxy của công ty trước khi ra internet. .tapp không có callback ngược (data diode model).
+
 ## 🧠 Design Decisions (Q&A)
 
-- **Why self-service from Web Marketplace instead of in-app purchase?** → The original model assumed IT Admin manages everything including procurement. Self-service on web means a department head can browse, purchase, and set up a t-app without opening a ticket — but payment still goes through the organization's procurement cycle on terachat.io. Trade-off: requires t-apps to be foolproof in setup. App never handles payment.
+- **Tại sao Trust Tier thay vì flat limits?** → Một chính sách bảo mật cào bằng (one-size-fits-all) tự bóp nghẹt hệ sinh thái. Core Modules hệ thống cần giới hạn khắt khe (50MB, không float, không network). Enterprise .tapp cần linh hoạt hơn (256MB, float OK, declarative egress). Trade-off: phức tạp hơn trong implementation và review.
 
-- **Why regional/departmental scoping?** → A finance t-app shouldn't appear on a factory worker's screen. Scoping reduces cognitive load and enforces need-to-know. Trade-off: more complex deployment UI in Admin Console.
+- **Tại sao self-service từ Web Marketplace?** → IT Admin quản lý procurement trên web. Department head có thể browse, purchase, setup .tapp không cần mở ticket. Payment luôn trên terachat.io, app chỉ download và run.
 
-- **Why two engines instead of just wasm3 everywhere?** → wasm3 is 10-100x slower. Finance .tapps doing reconciliation would timeout on the 30s background tick on Desktop if limited to interpreter. Trade-off: must maintain WasmParity CI gate ensuring semantic equivalence across both engines.
+- **Tại sao regional/departmental scoping?** → Finance .tapp không xuất hiện trên màn hình công nhân nhà máy. Scoping giảm cognitive load và enforce need-to-know.
 
-- **Why Gas/Fuel metering instead of timeout?** → Timeouts favor powerful hardware — a .tapp that passes on Desktop might exceed 30s on iOS. Instruction_fuel is deterministic: same fuel = same limit regardless of hardware. Trade-off: more complex ABI.
+- **Tại sao hai engine (wasmtime + wasm3)?** → wasm3 là 10-100x chậm hơn. Finance .tapps làm reconciliation sẽ timeout trên iOS nếu chỉ dùng interpreter. Trade-off: phải maintain WasmParity CI gate.
+
+- **Tại sao Fuel Metering thay vì Timeout?** → Timeout thiên vị hardware mạnh — .tapp pass trên Desktop có thể exceed 30s timeout trên iOS. `instruction_fuel` là deterministic: cùng fuel = cùng limit bất kể hardware. Trade-off: ABI phức tạp hơn.
+
+- **Tại sao cho phép JS/TS (Javy/Extism) ở Tier 1?** → Mở rộng developer pool đáng kể. Phần lớn enterprise developer biết JS/TS. Lập trình viên không phải học Rust chỉ để build .tapp. OOM Isolation đảm bảo nếu .tapp leak memory thì chỉ kill .tapp, không kill chat app chính.

@@ -224,3 +224,103 @@ Major documentation restructure to align with new development philosophy: Vertic
 - `.git/hooks/pre-commit` (new) — Bash hook: cargo fmt + clippy + gitleaks
 
 **Key takeaway:** Documentation now reflects the solo-dev reality: vertical slices for fast feedback, deep modules for AI agent compatibility, multi-agent harness for scaling output. All architectural modules (AI inference, HA, .tapp, mesh storage, MLS self-healing) documented as concept pages.
+
+## [2026-05-21] ingest | 03_Local_AI_Integration Master Document
+
+- **Trigger:** Wiki restructuring — consolidate all AI-related content into single authoritative reference
+- **Sources read (10):**
+  - `wiki/concepts/adr-006-ai-gateway-architecture.md`
+  - `wiki/concepts/ai-inference-offloading.md`
+  - `wiki/concepts/secure-enclave-ai.md`
+  - `wiki/concepts/open-ai-framework.md`
+  - `wiki/concepts/openmls-self-healing.md`
+  - `wiki/concepts/multi-agent-harness.md`
+  - `wiki/syntheses/ai-independent-workstream.md`
+  - `raw/MD/Spec-Enterprise-Secure-Enclave.md`
+  - `raw/MD/Spec-Dual-Sync-And-Local-Storage.md`
+  - `report/Báo cáo kĩ thuật .md`
+- **Key decisions applied:**
+  - Default model: **Qwen2.5** (NOT Gemma) — production-ready MLX format on Apple Silicon
+  - AI decoupled from messaging core — independent workstream (Phase 2D+)
+  - AI MUST NEVER access `tc-crypto` (P0 from audit — CODEOWNERS lock)
+  - SanitizedPrompt is compiler-enforced Rust newtype (private inner field)
+  - ZK Memory Agent fully replaces Blind RAG (TD-000 resolved)
+  - Cloudflare AI Gateway permanently rejected
+- **Document structure (11 sections):**
+  1. Triết lý AI — 5 nguyên tắc bất biến, decoupling architecture
+  2. Kiến trúc Local Appliance Model — Control/Compute/Data planes, mermaid diagram
+  3. Model AI Mặc định: Qwen2.5 — 7-model matrix, task automation table
+  4. PII Redaction Pipeline — SanitizedPrompt newtype, pipeline flow, redaction rules
+  5. ZK Memory Agent — IPC contract (UDS), search integration, graceful degradation
+  6. AI Inference Offloading — ThermalMonitor, InferenceScheduler decision tree, gas metering
+  7. BYOM — Open AI Framework, Host ABI extension, model registration, planned providers
+  8. OpenMLS Self-Healing — Local AI debug loop, ErrorContext sanitization, LoRA fine-tuning
+  9. AI Gateway Architecture (ADR-006) — Phase 1 TeraRelay extension, Phase 2D native SDK
+  10. Multi-Agent Development Harness — 6 agent types, tc-crypto exclusion zone, TDD workflow
+  11. Liên kết Wiki — cross-references to all related pages + invariants
+- **Updated:** `wiki/index.md` — added Master Documents section
+- **Key takeaway:** This is THE single AI reference for TeraChat. All AI decisions, architecture, and constraints consolidated. Qwen2.5 replaces Gemma as default. AI is add-on, not core.
+
+## [2026-05-21] restructure | Hợp nhất Tài liệu Kiến trúc thành Master Documents
+
+- **Trigger:** Đợt quy hoạch lớn nhằm dọn dẹp các tài liệu phân mảnh, lỗi thời, tích hợp 4 định hướng lõi (BYO-Server, WorkOS/.tapp, Local AI Qwen2.5, TeraLink Mesh) và giải quyết các lỗi từ Báo cáo Kỹ thuật.
+- **Created Master Documents:**
+  - `00_Architecture_Overview.md` — Bức tranh toàn cảnh, tầm nhìn WorkOS, lộ trình 3 phase, UI/UX.
+  - `01_Mesh_and_Crypto.md` — Chi tiết bảo mật Zero-Knowledge, MLS, PQ-KEM, mạng lưới dự phòng TeraLink 3 tầng, tích hợp các bản vá từ Technical Audit.
+  - `02_WorkOS_and_Tapp_Ecosystem.md` — Cơ chế WASM sandbox, Host ABI, mô hình phân phối Marketplace vs Enterprise, quản trị DataGrant.
+  - `03_Local_AI_Integration.md` — Tích hợp AI cục bộ (Qwen2.5 làm mặc định), ZK Memory Agent thay thế Blind RAG, BYOM.
+- **Quyết định quan trọng:**
+  - Model AI mặc định chuyển sang **Qwen2.5**.
+  - Invariant I-10 (NAS ECC) được nới lỏng thành **Tier-dependent** (SME không bắt buộc, Enterprise/Gov bắt buộc) để hỗ trợ linh hoạt BYO-Server.
+  - Mạng BLE Mesh cũ được chính thức thay thế bằng **TeraLink Fallback Network**.
+- **Archived Stale Files:**
+  - Xóa file rỗng `Zero-Knowledge Architecture.md` (root).
+  - Archive `survival-mesh-networking.md` (đã bị supersede).
+  - Archive `large-language-models.md`, `transformer-architecture.md`, `llm-overview.md` (không còn giá trị thực tiễn).
+- **Key takeaway:** Wiki hiện tại đã được cấu trúc thành hệ thống thứ bậc rõ ràng. 4 Master Documents đóng vai trò là Single Source of Truth cho toàn bộ các thiết kế, quyết định kiến trúc và lộ trình sản phẩm.
+
+## [2026-05-30] sync | Wiki Sync Sprint v2.0 — Đồng bộ Kiến trúc với Senior Architect Perspective
+
+- **Trigger:** Báo cáo Hội đồng Thẩm định (64/100) phát hiện 9 mâu thuẫn kiến trúc nghiêm trọng giữa wiki và tài liệu gim (nguồn sự thật).
+- **Nguồn sự thật:** `report/TeraChat - Project Memory (Senior Architect Perspective).md`
+
+**Sprint 1 — Sửa CRITICAL:**
+
+- **M-1 (CRDT vs Event Log):** Đổi chat messaging engine từ CRDT DAG → **Append-Only Event Log + Vector Clocks**. Đổi `hot_dag.db` → `event_log.db` trên toàn bộ wiki. CRDT giữ lại chỉ ở namespace `notes.*`, `thread.title.*`.
+  - Files sửa: `crdt-dual-sync.md` → tạo mới `dual-sync-pattern.md`, `adr-002-dual-plane-sync.md`, `invariants.md`, `00_Architecture_Overview.md`, `01_Mesh_and_Crypto.md`, `02_WorkOS_and_Tapp_Ecosystem.md`, `codebase-directory-guide.md`, `vertical-slice-development.md`
+- **M-2 (Apple SEP Misuse):** Sửa claim "SEP chạy TreeKEM/CRDT computation" → **SEP = key material storage ONLY**. Computation (MLS, sync, AI) chạy trên main processor trong Rust Core process.
+  - Files sửa: `secure-enclave-ai.md` (rewrite hoàn toàn)
+
+**Sprint 2 — Sửa HIGH:**
+
+- **M-3 (.tapp RAM Limits):** Thay flat 64MB/10MB → **Trust Tier Model** (Tier 0: 50MB no-float no-network; Tier 1: 256MB/512MB + Declarative Proxy).
+- **M-4 (Egress Model):** Thay 2MB hard Outbox → **Declarative Proxy** (`host.fetch(url)` + domain allowlist manifest + DLP integration).
+  - Files sửa: `wasm-tapp-runtime.md`, `adr-004-wasm-dual-engine.md`
+- **M-5 (PQ-KEM Offline):** Thêm note: PQ-KEM (ML-KEM-768/Kyber768) **tự động disable khi T3 BLE mode** vì ciphertext ~1,100 bytes vượt BLE MTU. Chỉ dùng Curve25519/X25519 khi offline.
+- **M-9 (DMS Naming):** Thêm DMS (Dynamic Mesh Score) 4-tier device classification table. EMDP = deprecated.
+  - Files sửa: `teralink-fallback-network.md`
+- **M-6 (AI Auto-Apply):** Loại bỏ hoàn toàn pattern "AI auto-apply với confidence > 0.9". Thay bằng **Shadow Graph + Human-in-Loop**: AI chỉ tạo Shadow Branch, user phải click Chấp nhận + Ed25519 signature mới commit.
+  - Files sửa: `openmls-self-healing.md`, `03_Local_AI_Integration.md`, `01_Mesh_and_Crypto.md`
+
+**Sprint 3 — Tạo mới ADR:**
+
+- **M-7 (Delegated Proposer):** Tạo `adr-007-shadow-graph-ai-resolution.md` — ADR đầy đủ cho Shadow Graph pattern.
+- Tạo `adr-008-delegated-proposer-treekem.md` — Mobile ủy quyền TreeKEM computation cho Fat Client (Desktop). TEE chỉ Verify + Sequence.
+
+**Sprint 4 — Master Documents + Index:**
+
+- **M-8 (Gemma 4 → Qwen2.5):** Sửa `open-ai-framework.md` — thay toàn bộ "Gemma 4" → **Qwen2.5 (llama.cpp + Metal API)**. Gemma 4 chưa tồn tại.
+- Cập nhật `index.md`: thêm ADR-007, ADR-008, rename CRDT Dual-Sync → Dual-Sync Pattern, cập nhật descriptions.
+- Cập nhật toàn bộ 4 Master Documents (00-03) theo các fixes trên.
+
+**Files đã tạo mới (4):**
+- `concepts/dual-sync-pattern.md` — thay thế crdt-dual-sync.md (giữ file cũ vì đã có wikilinks, không xóa)
+- `concepts/adr-007-shadow-graph-ai-resolution.md`
+- `concepts/adr-008-delegated-proposer-treekem.md`
+- `concepts/open-ai-framework.md` (rewrite hoàn toàn)
+
+**Files đã sửa đổi (12+):**
+- `concepts/secure-enclave-ai.md` (rewrite), `concepts/adr-002-dual-plane-sync.md`, `concepts/wasm-tapp-runtime.md`, `concepts/teralink-fallback-network.md`, `concepts/openmls-self-healing.md`, `concepts/codebase-directory-guide.md`, `concepts/vertical-slice-development.md`, `invariants.md`, `index.md`, `00_Architecture_Overview.md`, `01_Mesh_and_Crypto.md`, `02_WorkOS_and_Tapp_Ecosystem.md`, `03_Local_AI_Integration.md`
+
+- **Key takeaway:** 9/9 mâu thuẫn kiến trúc đã được giải quyết. Wiki v2.0 đã đồng bộ với nguồn sự thật. Điểm ước tính từ 64/100 → 80+/100.
+

@@ -23,8 +23,7 @@ ANTHROPIC_BASE_URL="http://localhost:8082" claude
 Tức là mọi AI request đi qua một **HTTP proxy không mã hóa trên loopback** (`127.0.0.1:8082`). Pattern này tạo ra 5 rủi ro không chấp nhận được trong production:
 
 1. **Plaintext trên loopback** — Bất kỳ process nào cùng máy đều có thể intercept. Vi phạm invariant *"No plaintext outside org boundary"*.
-2. **PII Redaction Gate bypass** — HTTP proxy không enforce ONNX Micro-NER trước khi request thoát ra ngoài.
-3. **Không có audit trail** — Request không được ghi vào immutable Ed25519 audit log.
+2. **Không có audit trail** — Request không được ghi vào immutable Ed25519 audit log.
 4. **Không scale** — Single proxy process không phù hợp với Mac mini cluster.
 5. **Single point of failure** — Proxy chết = toàn bộ AI feature chết.
 

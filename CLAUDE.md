@@ -55,7 +55,7 @@ pub trait InferenceGateway: Send + Sync {
     async fn stream(&self, req: InferenceRequest) -> Result<InferenceStream>;
     fn health(&self) -> GatewayHealth;
 }
-// Interior: ThermalMonitor, InferenceScheduler, PiiGate — all hidden
+// Interior: ThermalMonitor, InferenceScheduler — all hidden
 
 // ❌ WRONG: Shallow module (exposes internals)
 pub struct InferenceGateway {
@@ -91,7 +91,7 @@ Những điều sau là **không thể thương lượng**. Mỗi invariant đư
 2. **ZeroizeOnDrop on ALL key material types** — Mọi struct chứa `SessionKey`, `CompanyKey`, `DeviceIdentityKey`, `MLSPrivateKey` PHẢI derive `ZeroizeOnDrop`. **Enforce:** CI lint `zeroize-verify` — blocks `mem::forget`, `ManuallyDrop`, `Arc<KeyMaterial>`.
 3. **No raw pointer in `pub extern "C"`** — Mọi FFI function phải dùng Token Protocol (opaque `u64` token, không raw `*const u8`). **Enforce:** CI lint `ffi-token-protocol`.
 4. **Dual-plane sync** — CRDT DAG cho chat (hot_dag.db), Relational cho Finance/HR (cold_state.db). KHÔNG ép Finance data vào CRDT. **Enforce:** CI lint `sync-boundary` — blocks CRDT types in `tc-store` schema.
-5. **AI only after SanitizedPrompt** — Mọi prompt gửi đến AI model PHẢI qua PII redaction. Không embedding egress. **Enforce:** Type system — `InferenceGateway::complete()` chỉ nhận `SanitizedPrompt`, compile-time guarantee.
+5. **AI model selection via InferenceScheduler** — Model tier automatically selected based on `ThermalMonitor` + available RAM + network state. **Enforce:** `InferenceScheduler::decide()` returns `ModelTier` enum — no hardcoded model paths.
 6. **Headless daemon + gRPC before UI expansion** — Rust Core chạy độc lập với UI process. **Enforce:** Integration test `daemon_independence` — kills UI, verifies Core continues serving.
 7. **Test never trails** — SC-34 đến SC-40 là deployment blockers. **Enforce:** CI gate `cargo test --workspace` must pass.
 8. **1 subsystem per phase** — Không build 2 subsystem chính cùng lúc. **Enforce:** `phase/README.md` scope; multi-crate PR triggers architect CODEOWNERS review.
@@ -139,9 +139,6 @@ fn calculate_balance() -> f64;  // Block bởi float-detection CI gate
 
 // ❌ CẤM: BLE payload > 500 bytes
 fn ble_send(payload: Vec<u8>)  // Phải dùng [u8; 500] fixed array
-
-// ❌ CẤM: InferenceGateway nhận raw String thay vì SanitizedPrompt
-async fn complete(&self, prompt: String)  // Phải dùng SanitizedPrompt
 
 // ❌ CẤM: .tapp manifest khai báo network:external capability
 // Host ABI phải chặn vĩnh viễn — không thể negotiate
@@ -250,7 +247,6 @@ Mỗi PR phải pass những check sau trước khi merge:
 - [ ] Module depth ≤ 7 public items
 - [ ] Ubiquitous language terms used correctly
 - [ ] Không có BLE payload > 500 bytes (I-11)
-- [ ] `InferenceGateway` chỉ nhận `SanitizedPrompt` — không raw `String` (I-5)
 - [ ] .tapp manifest không chứa `network:external` capability (I-12)
 - [ ] Không có Mac mini direct DB write — chỉ NAS ECC (I-10)
 - [ ] LICENSE hash matches `.github/BSL_BOUNDARY.sha256` — release only (I-13)

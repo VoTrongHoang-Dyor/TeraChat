@@ -25,7 +25,7 @@ TeraChat-Project/
 │   └── skills/                     #   Kỹ năng chuyên biệt (Rust, Cloudflare)
 │
 ├── .context/                       # Agent entry point context
-│   └── AGENT_CONTEXT.md            #   File đầu tiên mọi AI agent phải đọc
+│   └── AGENT_CONTEXT.md            # File đầu tiên mọi AI agent phải đọc
 │
 ├── .github/workflows/              # CI/CD pipelines
 │   ├── ci.yml                      #   Build, clippy, test, audit
@@ -72,7 +72,7 @@ TeraChat-Project/
 │   │   ├── tc-crypto/              #     MLS E2EE, key management, FFI token protocol
 │   │   ├── tc-mesh/                #     BLE/WiFi Direct mesh, peer discovery, EMDP
 │   │   ├── tc-crdt-sync/           #     CRDT DAG sync engine
-│   │   ├── tc-store/               #     Dual-plane storage (hot_dag.db + cold_state.db)
+│   │   ├── tc-store/               #     Dual-plane storage (event_log.db + cold_state.db)
 │   │   ├── tc-tapp/                #     WASM sandbox runtime (wasmtime + wasm3)
 │   │   └── tc-proto/               #     Generated Rust code from proto definitions
 │   └── server/                     #   Server deployment configurations
@@ -119,7 +119,7 @@ TeraChat-Project/
 | `tc-crypto/` | MLS RFC 9420 E2EE, quản lý key material, FFI Token Protocol, ZeroizeOnDrop enforcement | openmls, ring, zeroize, subtle, Secure Enclave/StrongBox/TPM 2.0 | **CLOSED** |
 | `tc-mesh/` | BLE 5.0 + Wi-Fi Direct P2P mesh, peer discovery, EMDP emergency protocol, TeraLink 3-tier fallback | Bluetooth LE, mDNS, Wi-Fi Direct, MultipeerConnectivity (iOS) | BSL 1.1 |
 | `tc-crdt-sync/` | CRDT DAG engine cho chat sync — append-only DAG, HLC timestamp, vector clock | sled, blake3, HLC | BSL 1.1 |
-| `tc-store/` | Dual-plane storage — hot_dag.db (CRDT append-only) + cold_state.db (SQLite relational cho Finance/HR) | SQLite WAL, SQLCipher, rusqlite | BSL 1.1 |
+| `tc-store/` | Dual-plane storage — event_log.db (Event Log + CRDT namespace) + cold_state.db (SQLite relational cho Finance/HR) | SQLite WAL, SQLCipher, rusqlite | BSL 1.1 |
 | `tc-tapp/` | WASM sandbox runtime — dual-engine (wasmtime desktop + wasm3 iOS), fuel metering, Host ABI, capability enforcement | wasmtime, wasm3, WASM | BSL 1.1 |
 | `tc-proto/` | Generated Rust code từ Protobuf definitions — build.rs với tonic-build | Prost, Tonic, Protocol Buffers | **MIT** |
 
@@ -197,7 +197,7 @@ Sau khi hiểu kiến trúc, đọc **terachat.proto** — đây là "hợp đ�
 - **RuntimeService** — .tapp load, Host ABI invoke, metrics
 - **GovService** — License validation, OPA policy evaluation, audit trail
 - **EcoService** — .tapp signature verification, DataGrant quorum, kill-switch
-- **EnclaveService** — AI completion với PII redaction bắt buộc
+- **EnclaveService** — AI completion
 
 ### 3. `source/core/tc-crypto/src/` + `source/core/tc-mesh/src/` — Hiểu Implementation
 

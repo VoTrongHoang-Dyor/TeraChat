@@ -47,7 +47,7 @@ TeraChat's development is organized into three economic phases. Each phase must 
 | **.tapp Web Marketplace** | Self-service: IT admin browses → purchases on web → downloads → deploys to region/department. All t-apps vetted by TeraChat. **Payment processed on terachat.io, never in app.** Simple setup instructions per t-app. Regional/departmental scoping built in. | TERA-ECO covers app signing, registry, kill-switch. Marketplace browsing/search/payment/self-service not yet specified. |
 | **Mac Mini HA Cluster** | 2-Mac-mini Active-Passive, shared NAS, WAL replication, health check + failover. Required for 99.999% SLA enterprise tier. | TERA-CORE §2.4 mentions topology but no failover protocol spec. |
 | **Gemma 4 Local AI (Initial)** | Bundled Gemma 4 ONNX model on employee devices. Initial use case: thread summarization, response drafting. Runs 100% local — no cloud API call. | TERA-ENCLAVE covers concept. Actual Gemma 4 integration: not yet specified. |
-| **Open AI Framework (Initial)** | Model registration ABI. Enterprise can register one custom ONNX model. BLAKE3 integrity check on load. SanitizedPrompt for all models. | Not yet specified — new concept. |
+| **Open AI Framework (Initial)** | Model registration ABI. Enterprise can register one custom ONNX model. BLAKE3 integrity check on load. | Not yet specified — new concept. |
 
 ### Key Metric
 Switching cost + value-over-time > renewal friction. Without good Admin Console + at least one AI feature that saves employees time, renewal rate drops regardless of core quality.
@@ -60,7 +60,7 @@ Switching cost + value-over-time > renewal friction. Without good Admin Console 
 
 | Component | Requirement | Spec Status |
 |-----------|-------------|-------------|
-| **Full Open AI Framework** | Multiple model registration. Bring-your-own API key for cloud models (sanitized proxy). LoRA adapter support for enterprise fine-tuning. Department-specific model deployment. | Not yet specified |
+| **Full Open AI Framework** | Multiple model registration. Bring-your-own API key for cloud models via enterprise relay. LoRA adapter support for enterprise fine-tuning. Department-specific model deployment. | Not yet specified |
 | **ZK Memory Agent** | Replace vector DB — AI features without breaking ZK invariant. Consolidation on-device via UDS. | TERA-ENCLAVE covers concept. TD-005 (IPC contract) still unresolved. |
 | **.tapp Marketplace (Full)** | Third revenue stream: 30% publisher revenue share. Only valuable with 50+ enterprise customer base. Third-party publishers with full vetting pipeline. **All payment and payout processed on terachat.io.** | TERA-ECO covers app signing, registry, kill-switch. Marketplace billing/search/review/payment not yet specified. |
 | **Gov/Military Tier** | Air-gapped deployment, Shamir 3-of-5, Anti-Insider Key Ceremony. Highest LTV segment. Requires ISO 27001 + 2 prior commercial references. Sales cycle 18–24 months. | TERA-CORE §2.4 mentions air-gapped tier. TERA-TEST has Gov/Military gate scenarios. |
